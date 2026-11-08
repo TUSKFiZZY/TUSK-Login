@@ -114,10 +114,10 @@ LIVE_GAP = 60  # a page that asks again within this many seconds is told what th
 # most, until the window's Save dialog has a place for it, and for ten minutes at most. Its name is the one the dialog
 # offers, and no other is taken.
 PICTURE_HELD = timedelta(minutes=10)
-PICTURE_NAME = re.compile(r"Guild Board Wrapped [0-9]{4} (?:Story|Wide)\.png")
+PICTURE_NAME = re.compile(r"TUSKFiZZY Wrapped [0-9]{4} (?:Story|Wide)\.png")
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
-NOT_A_PICTURE = "This is not a picture of Guild Board's Wrapped."
-SOURCE_BUILD_FAILED = "Guild Board could not load its HoYoLAB library. See the log file."
+NOT_A_PICTURE = "This is not a picture of TUSKFiZZY's Wrapped."
+SOURCE_BUILD_FAILED = "TUSKFiZZY could not load its HoYoLAB library. See the log file."
 NO_PICTURE = "There is no picture to save. Press Save as picture again."
 PICTURE_GAME_FOLDER = "A picture cannot be saved in the game's folders. Choose another place."
 PICTURE_REPLACED = "This picture was not saved: a newer one took its place, and it has a Save dialog of its own."
@@ -350,7 +350,7 @@ class Core:
         self._picture: tuple[int, str, bytes, datetime] | None = None
         self._picture_timer: asyncio.TimerHandle | None = None
         self._pictures_held = 0
-        # set by the shell when its tray icon keeps Guild Board running after the window closes
+        # set by the shell when its tray icon keeps TUSKFiZZY running after the window closes
         self.has_tray = False
         # Set by the shell: shows a notification from the tray icon, a reminder or a test, with its text.
         self.notifier: Callable[[str, str], bool] | None = None
@@ -366,7 +366,7 @@ class Core:
         # What the shell reported about the overlay, by overlay_shell: its displays and the state of its hotkey. None
         # while there is no shell.
         self._overlay_report: tuple[list[dict[str, Any]], str] | None = None
-        # Whether Guild Board's window is maximized, as the shell reports it (window_state): the Board then shows its
+        # Whether TUSKFiZZY's window is maximized, as the shell reports it (window_state): the Board then shows its
         # arrangement for a maximized window. False while there is no shell.
         self._window_maximized = False
         self._watch_task: asyncio.Task[None] | None = None
@@ -420,7 +420,7 @@ class Core:
             notify=self.remind, quick=self.quick,
         )
         self._reminders_task: asyncio.Task[None] | None = None
-        # Pulls. An import that Guild Board's closing cut short is ended as failed, as a sync is. The planner reads what
+        # Pulls. An import that TUSKFiZZY's closing cut short is ended as failed, as a sync is. The planner reads what
         # is kept. The banners and the icons are read from HoYoverse's own pages, through netpolicy; the demo's stay
         # without any read, as the demo contacts nothing.
         now = self.clock.now()
@@ -449,7 +449,7 @@ class Core:
             read_links, pages, pause = gamecache.read_history_links, wishapi.fetch_page, asyncio.sleep
             ledger_pages, ledger_user = ledger_api.fetch_page, ledger_api.fetch_user
         # Both histories also update themselves with read-only keys HoYoverse gives the stored HoYoLAB login, reading no
-        # file of the game's: at the start, once the first sync has run, and then every AUTO_EVERY while Guild Board
+        # file of the game's: at the start, once the first sync has run, and then every AUTO_EVERY while TUSKFiZZY
         # runs. A refusal of the login stops them until the next login; Import stays, reading the game's files. The
         # demo's keys are stand-ins, and its first update waits for AUTO_EVERY or POST /api/demo/refresh.
         self._login_refused = False
@@ -495,7 +495,7 @@ class Core:
         # for an update every AUTO_EVERY; when it closes, one more is asked for, in a task of its own.
         self._auto_task: asyncio.Task[None] | None = None
         self._last_auto_task: asyncio.Task[None] | None = None
-        # Guild Board's own updates, for the installed copy alone: a checkout updates itself with git, and the demo
+        # TUSKFiZZY's own updates, for the installed copy alone: a checkout updates itself with git, and the demo
         # contacts nothing.
         self.updater = Updater(
             paths.data_dir / "updates", self.bus, enabled=not demo and getattr(sys, "frozen", False),
@@ -1000,7 +1000,7 @@ class Core:
 
     def backup_file_name(self) -> str:
         """The name the export offers: the core's date, in the player's own time zone."""
-        return f"Guild Board backup {self.clock.now().astimezone().date().isoformat()}{BACKUP_SUFFIX}"
+        return f"TUSKFiZZY backup {self.clock.now().astimezone().date().isoformat()}{BACKUP_SUFFIX}"
 
     async def export_backup(self, target: Path) -> str:
         """Write the backup file the player chose; the file name written. Refused in the game's folders, and no folder is
@@ -1084,7 +1084,7 @@ class Core:
         return target.name
 
     def _game_folders(self) -> list[Path]:
-        """The game's folders Guild Board knows without reading anything of the game's: the folder of its log, and the
+        """The game's folders TUSKFiZZY knows without reading anything of the game's: the folder of its log, and the
         ScreenShot folder the gallery has, found through the log or pasted. Its install folder is not among them: the
         settings keep a folder that was found and one that was pasted alike, and the folder beside a pasted one may be a
         whole drive. An install folder is told by the program it holds (backups.export_target)."""
@@ -1109,7 +1109,7 @@ class Core:
 
     async def restore_from(self, source: Path) -> dict[str, bool]:
         """Stage a restore of a backup file, or of one of the copies in the backups folder, and ask the shell to restart
-        Guild Board, which puts it in place at its start. Without a shell the player restarts it. Staging unpacks and
+        TUSKFiZZY, which puts it in place at its start. Without a shell the player restarts it. Staging unpacks and
         checks a file of up to 200 MB, so it runs in a worker thread; it reads no store."""
         if self.demo:
             raise BackupRefused(BACKUP_DEMO)
@@ -1429,8 +1429,8 @@ class Core:
                 self.codebook.mark_noticed([item["code"] for item in fresh], now)
                 if self.settings.notifications:
                     self.notify("codes", (
-                        "1 new livestream code. Open Guild Board to redeem it." if len(fresh) == 1
-                        else f"{len(fresh)} new livestream codes. Open Guild Board to redeem them."
+                        "1 new livestream code. Open TUSKFiZZY to redeem it." if len(fresh) == 1
+                        else f"{len(fresh)} new livestream codes. Open TUSKFiZZY to redeem them."
                     ))
         if changed:
             self.codes_changed()
@@ -1445,7 +1445,7 @@ class Core:
             await asyncio.sleep(LIVE_EVERY)
 
     async def _daily_backups(self) -> None:
-        """The daily copy for the date a Guild Board left running reaches: the start makes the first of a day, and one kept in
+        """The daily copy for the date a TUSKFiZZY left running reaches: the start makes the first of a day, and one kept in
         the tray for a week would make none after it. Real waits, as the banners' are. The copy is cheap while it is made on
         the loop's thread (SQLite's backup API, about 20 ms for 18 MB), and the connection is the loop's alone."""
         while True:
@@ -1776,7 +1776,7 @@ class Core:
         self.bus.publish("overlay_changed")
 
     def window_state(self, maximized: bool) -> None:
-        """Whether Guild Board's window is maximized, as the shell reports it each time it changes: the Board shows its
+        """Whether TUSKFiZZY's window is maximized, as the shell reports it each time it changes: the Board shows its
         arrangement for that window, so the pages are told."""
         self._window_maximized = maximized
         self.bus.publish("window_changed")
@@ -1834,6 +1834,6 @@ class Core:
         await self.characters.stop()
         await self.updater.stop()
         await self.wish_import.stop()  # an import cut short is recorded as failed at the next start
-        self.wish_import.drop_link()  # the key of the link it kept goes with Guild Board
+        self.wish_import.drop_link()  # the key of the link it kept goes with TUSKFiZZY
         await self.scheduler.stop()
         self.store.close()
