@@ -1240,7 +1240,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
                 return _error(422, "A daily record has an invalid calendar date.")
             clean_profiles: dict[str, list[Any]] = {}
             resin_meta = profiles.get("_resinLast", {})
-            if resin_meta and not isinstance(resin_meta, dict):
+            if not isinstance(resin_meta, dict):
                 return _error(422, "The resin history metadata is malformed.")
             if any(ident not in account_ids or type(value) is not bool for ident, value in resin_meta.items()):
                 return _error(422, "The resin history metadata refers to an unknown profile or invalid value.")
