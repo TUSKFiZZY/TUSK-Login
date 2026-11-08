@@ -787,3 +787,25 @@ def test_tracker_applies_fresh_notes_only_to_the_linked_genshin_profile(client, 
     core.store.set_latest_doc("notes", core.clock.now(), {"resin": 49, "extra_reward_claimed": True})
     client.get("/api/tuskfizzy/tracker", params={"day": day})
     assert core.store.tuskfizzy_daily_for(day)[profile["id"]] == [False, True, True]
+
+
+def test_tuskfizzy_daily_note_only_marks_resin_on_observed_crossing_and_keeps_it_checked(core):
+    store = core.store
+    store.tuskfizzy_put_account("profile-a", "Main", "", None, "2026-11-09T00:00:00")
+
+    # The first observation is already below 50: it must not auto-complete Resin.
+    assert store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 30, False)
+    assert store.tuskfizzy_daily_for("2026-11-09")["profile-a"] == [False, False, False]
+
+    # A later observation above the threshold followed by one below it is a real crossing.
+    assert store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 55, False)
+    assert store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 49, False)
+    assert store.tuskfizzy_daily_for("2026-11-09")["profile-a"] == [False, False, True]
+
+    # Refilling must not clear the completed Resin task; claiming the bonus completes Commission.
+    assert store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 160, True)
+    assert store.tuskfizzy_daily_for("2026-11-09")["profile-a"] == [False, True, True]
+
+
+def test_tuskfizzy_daily_note_does_not_update_unknown_profile(core):
+    assert not core.store.tuskfizzy_observe_daily_note("2026-11-09", "missing", 20, True)
