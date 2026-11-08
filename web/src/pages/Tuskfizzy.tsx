@@ -7,8 +7,9 @@ import { type Live, useModel } from '../live.ts'
 type Account = { id: string; name: string; portrait: string; genshinId: string | null; createdAt: string }
 type GenshinAccount = { id: string; name: string; uid: string; server: string; createdAt?: string; sessionConnected?: boolean }
 type DailyNote = { profileName: string; resin: number | null; resinMax: number | null; resinReadAt?: string | null; commissionDone: number | null; commissionTotal: number | null; bonusClaimed: boolean; expeditionsDone: number | null; expeditionsTotal: number | null; readAt: string }
-type Tracker = { accounts: Account[]; genshinAccounts: GenshinAccount[]; daily: Record<string, boolean[]>; selectedGenshinId?: string | null; dailyNote?: DailyNote | null }
+type Tracker = { accounts: Account[]; genshinAccounts: GenshinAccount[]; daily: Record<string, boolean[]>; selectedGenshinId?: string | null; dailyNote?: DailyNote | null; battleChronicle?: BattleChronicle | null }
 type MonthTracker = { records: Record<string, Record<string, boolean[]>> }
+type BattleChronicle = { uid: string; nickname: string; server: string; adventureRank: number; abyssProgress: string; counters: Record<string, number>; regions: Array<{ name: string; progress: number; areas: Array<{ name: string; progress: number }> }>; endgame: Array<{ mode: string; label: string; hasData: boolean; result: string; score: number | null; period: string }>; readAt: string }
 type EnkaProfile = { uid: string; playerInfo: { nickname?: string; level?: number; worldLevel?: number; finishAchievementNum?: number; signature?: string }; avatarInfoList: Array<{ avatarId?: number; level?: number; fetterInfo?: { expLevel?: number } }>; ttl: number; fetchedAt: number; cached: boolean }
 const TASKS = [{ key: 'login', label: 'Login' }, { key: 'commission', label: 'Commission' }, { key: 'resin', label: 'Resin' }] as const
 
@@ -242,6 +243,19 @@ export function Tuskfizzy({ live }: { live: Live }) {
               <div><span>Expeditions</span><b>{data.dailyNote.expeditionsDone ?? '—'} / {data.dailyNote.expeditionsTotal ?? '—'}</b></div>
               <div><span>Bonus Reward</span><b>{data.dailyNote.bonusClaimed ? 'Claimed' : 'Not claimed'}</b></div>
             </div>
+          </section>
+        )}
+        {selectedGenshin && data?.battleChronicle?.uid === selectedGenshin.uid && (
+          <section className="gb-panel tf-daily-note">
+            <div className="tf-note-heading"><div><h2>Battle Chronicle</h2><span>{data.battleChronicle.nickname} · Adventure Rank {data.battleChronicle.adventureRank}</span></div><span className="tf-note-updated">UID {data.battleChronicle.uid}</span></div>
+            <div className="tf-note-grid">
+              <div><span>Spiral Abyss</span><b>{data.battleChronicle.abyssProgress || 'No record'}</b></div>
+              {Object.entries(data.battleChronicle.counters).slice(0, 4).map(([key, value]) => <div key={key}><span>{key.replaceAll('_', ' ')}</span><b>{value.toLocaleString()}</b></div>)}
+            </div>
+            {data.battleChronicle.regions.length > 0 && <div className="tf-chronicle-regions">{data.battleChronicle.regions.map(region => (
+              <div key={region.name}><div><b>{region.name}</b><span>{Math.round(region.progress)}%</span></div><progress max="100" value={region.progress} />{region.areas.length > 0 && <small>{region.areas.map(area => area.name + ' ' + Math.round(area.progress) + '%').join(' · ')}</small>}</div>
+            ))}</div>}
+            {data.battleChronicle.endgame.length > 0 && <div className="tf-chronicle-modes">{data.battleChronicle.endgame.map(mode => <div key={mode.mode}><b>{mode.label}</b><span>{mode.hasData ? mode.result || mode.period : 'No record'}</span></div>)}</div>}
           </section>
         )}
         {selectedGenshin && (
