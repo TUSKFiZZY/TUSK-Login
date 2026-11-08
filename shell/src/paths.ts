@@ -4,7 +4,7 @@ import { win32 as path } from 'node:path'
 import type { ShellArgs } from './args.js'
 
 /**
- * The core's own rule: `--data-dir`, else `TUSKFIZZY_DATA_DIR`, else `%LOCALAPPDATA%\GuildBoard` (the demo: `TUSKFiZZY-demo`).
+ * The core's own rule: `--data-dir`, else `TUSKFIZZY_DATA_DIR`, else `%LOCALAPPDATA%\TUSKFiZZY` (the demo: `TUSKFiZZY-demo`).
  * A relative folder is made absolute here: the core would read it against its own folder, and Electron refuses it.
  */
 export function dataFolder(args: ShellArgs, env: NodeJS.ProcessEnv): string {
