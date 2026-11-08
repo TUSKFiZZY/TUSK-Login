@@ -1082,6 +1082,7 @@ class Core:
         query.update({
             "authkey_ver": query.get("authkey_ver", "1"),
             "auth_appid": "webview_gacha",
+            "sign_type": query.get("sign_type", "2"),
             "game_biz": "hk4e_global",
             "region": region,
             "lang": query.get("lang", "en"),
