@@ -1338,9 +1338,23 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             datetime.strptime(day, "%Y-%m-%d")
         except ValueError:
             return _error(422, "Choose a valid calendar date.")
+        accounts = core.store.tuskfizzy_accounts_list()
+        genshin_accounts = core.store.tuskfizzy_genshin_accounts_list()
+        # Apply automatic checklist changes only to today's local record and only when the saved HoYoLAB UID
+        # matches a Genshin profile explicitly linked to a TUSKFiZZY checklist profile.
+        if day == core.clock.now().astimezone().date().isoformat():
+            active_uid = core._account_uid()
+            notes = core.store.latest_doc("notes")
+            if active_uid is not None and notes is not None:
+                linked_genshin = next((item for item in genshin_accounts if item["uid"] == str(active_uid)), None)
+                linked_profile = next((item for item in accounts if linked_genshin is not None and item["genshinId"] == linked_genshin["id"]), None)
+                resin = notes[1].get("resin")
+                claimed = notes[1].get("extra_reward_claimed") is True
+                if linked_profile is not None and type(resin) is int:
+                    core.store.tuskfizzy_observe_daily_note(day, linked_profile["id"], resin, claimed)
         return JSONResponse({
-            "accounts": core.store.tuskfizzy_accounts_list(),
-            "genshinAccounts": core.store.tuskfizzy_genshin_accounts_list(),
+            "accounts": accounts,
+            "genshinAccounts": genshin_accounts,
             "daily": core.store.tuskfizzy_daily_for(day),
         })
 
