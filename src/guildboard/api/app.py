@@ -1340,9 +1340,10 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             return _error(422, "Choose a valid calendar date.")
         accounts = core.store.tuskfizzy_accounts_list()
         genshin_accounts = core.store.tuskfizzy_genshin_accounts_list()
+        daily_note = None
         # Apply automatic checklist changes only to today's local record and only when the saved HoYoLAB UID
         # matches a Genshin profile explicitly linked to a TUSKFiZZY checklist profile.
-        if day == core.clock.now().astimezone().date().isoformat():
+        if day == core.clock.now().astimezone().date().isoformat() and not core.demo:
             active_uid = core._account_uid()
             notes = core.store.latest_doc("notes")
             if active_uid is not None and notes is not None:
@@ -1355,10 +1356,25 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
                 # A stale note from yesterday must never mark today's commission as claimed.
                 if linked_profile is not None and 0 <= notes_age <= 45 * 60 and type(resin) is int:
                     core.store.tuskfizzy_observe_daily_note(day, linked_profile["id"], resin, claimed)
+                    account = core._account() or {}
+                    note = notes[1]
+                    daily_note = {
+                        "profileName": linked_genshin["name"],
+                        "resin": account.get("resin"),
+                        "resinMax": account.get("resin_max"),
+                        "resinReadAt": account.get("resin_read_at"),
+                        "commissionDone": note.get("finished_task_num"),
+                        "commissionTotal": note.get("total_task_num"),
+                        "bonusClaimed": claimed,
+                        "expeditionsDone": note.get("current_expedition_num"),
+                        "expeditionsTotal": note.get("max_expedition_num"),
+                        "readAt": notes[0].isoformat(),
+                    }
         return JSONResponse({
             "accounts": accounts,
             "genshinAccounts": genshin_accounts,
             "daily": core.store.tuskfizzy_daily_for(day),
+            "dailyNote": daily_note,
         })
 
     @app.post("/api/tuskfizzy/accounts")
