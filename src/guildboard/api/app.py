@@ -1369,8 +1369,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         name, portrait, genshin_id = body.get("name"), body.get("portrait", current["portrait"]), body.get("genshinId", current["genshinId"])
         if not isinstance(name, str) or not name.strip() or len(name.strip()) > 80:
             return _error(422, "Enter a profile name of up to 80 characters.")
-        if (not isinstance(portrait, str) or len(portrait) > 1_000_000
-                or (portrait and re.fullmatch(r"data:image/(?:png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}", portrait) is None)):
+        if not _valid_tuskfizzy_portrait(portrait):
             return _error(422, "Choose a valid PNG, JPEG or WebP profile picture smaller than 1 MB.")
         if genshin_id is not None and (not isinstance(genshin_id, str) or len(genshin_id) > 128):
             return _error(422, "Choose a valid linked Genshin profile.")
