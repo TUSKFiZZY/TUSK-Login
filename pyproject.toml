@@ -1,5 +1,5 @@
 [project]
-name = "tuskfizzy"
+name = "guildboard"
 version = "2.0.1"
 description = "TUSKFiZZY: personal Genshin Impact companion."
 requires-python = ">=3.12,<3.13"
