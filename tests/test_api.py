@@ -856,3 +856,18 @@ def test_tuskfizzy_selected_genshin_profile_can_be_changed_and_removed(client):
 
     assert client.delete(f"/api/tuskfizzy/genshin-accounts/{ident}").status_code == 200
     assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-09"}).json()["selectedGenshinId"] is None
+
+
+def test_tuskfizzy_import_without_a_selected_profile_clears_old_selection(client, core):
+    core.store.tuskfizzy_put_genshin_account("genshin-a", "Asia", "1234567890", "os_asia", "2026-11-09T00:00:00")
+    assert core.store.tuskfizzy_select_genshin_account("genshin-a")
+    response = client.post("/api/tuskfizzy/import", json={
+        "format": "tuskfizzy-local-data",
+        "version": 1,
+        "accounts": [],
+        "genshinAccounts": [],
+        "dailyRecords": {},
+        "selectedGenshinId": "",
+    })
+    assert response.status_code == 200
+    assert core.store.tuskfizzy_selected_genshin_id() is None
