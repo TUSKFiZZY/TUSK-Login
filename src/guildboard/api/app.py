@@ -1257,6 +1257,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         except (ValueError, TypeError) as error:
             return _error(422, f"The export could not be imported: {error}")
         core.bus.publish("tuskfizzy_imported", counts=counts)
+        core.bus.publish("tuskfizzy_changed")
         return JSONResponse({"imported": counts})
 
     @app.get("/api/tuskfizzy/month")
@@ -1297,6 +1298,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         ident = secrets.token_hex(12)
         created = datetime.now().astimezone().isoformat(timespec="seconds")
         core.store.tuskfizzy_put_account(ident, name.strip(), portrait, genshin_id, created)
+        core.bus.publish("tuskfizzy_changed")
         return JSONResponse({"account": next(item for item in core.store.tuskfizzy_accounts_list() if item["id"] == ident)})
 
     @app.put("/api/tuskfizzy/accounts/{account_id}")
@@ -1315,12 +1317,14 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         if genshin_id and not any(item["id"] == genshin_id for item in core.store.tuskfizzy_genshin_accounts_list()):
             return _error(422, "That Genshin profile is not available.")
         core.store.tuskfizzy_put_account(account_id, name.strip(), portrait, genshin_id, current["createdAt"])
+        core.bus.publish("tuskfizzy_changed")
         return JSONResponse({"account": next(item for item in core.store.tuskfizzy_accounts_list() if item["id"] == account_id)})
 
     @app.delete("/api/tuskfizzy/accounts/{account_id}")
     async def tuskfizzy_remove_account(account_id: str) -> Response:
         if not core.store.tuskfizzy_delete_account(account_id):
             return _error(404, "That TUSKFiZZY profile no longer exists.")
+        core.bus.publish("tuskfizzy_changed")
         return JSONResponse({"deleted": True})
 
     @app.put("/api/tuskfizzy/daily")
@@ -1338,6 +1342,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             return _error(422, "Choose Login, Commission or Resin and a valid checkbox value.")
         if not core.store.tuskfizzy_set_task(day, account_id, task, checked):
             return _error(404, "That TUSKFiZZY profile no longer exists.")
+        core.bus.publish("tuskfizzy_changed")
         return JSONResponse({"saved": True, "daily": core.store.tuskfizzy_daily_for(day)})
 
     @app.post("/api/import/preview")
