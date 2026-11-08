@@ -242,14 +242,14 @@ test('every page carries the CSP default-src \'self\', and fetches nothing remot
 
 test('the pages are in the interface’s colours and say the Qt dialogs’ words', () => {
   const css = readFileSync(join(PAGES_SRC, 'dialog.css'), 'utf8')
-  expect(css).toContain('#E6DDCA')
-  expect(css).toContain('#3B4255')
+  expect(css).toContain('#100E18')
+  expect(css).toContain('#39334C')
   const paste = readFileSync(join(PAGES_SRC, 'paste.html'), 'utf8')
   expect(paste).toContain('ltoken_v2=...; ltuid_v2=...; ltmid_v2=...')
   expect(paste).toContain('Use this login')
   expect(paste).toContain('Cancel')
   const choose = readFileSync(join(PAGES_SRC, 'choose.html'), 'utf8')
-  expect(choose).toContain('This HoYoLAB account holds more than one Genshin Impact game account. Guild Board follows one of them.')
+  expect(choose).toContain('This HoYoLAB account holds more than one Genshin Impact game account. TUSKFiZZY follows one of them.')
   expect(choose).toContain('Follow this account')
   expect(choose).toContain('Cancel login')
   const bar = readFileSync(join(PAGES_SRC, 'bar.html'), 'utf8')
