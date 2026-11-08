@@ -1360,7 +1360,11 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             if active_uid is not None and notes is not None:
                 now = core.clock.now()
                 notes_age = (now - notes[0]).total_seconds()
-                linked_genshin = next((item for item in genshin_accounts if item["uid"] == str(active_uid)), None)
+                selected_genshin_id = core.store.tuskfizzy_selected_genshin_id()
+                linked_genshin = next(
+                    (item for item in genshin_accounts if item["id"] == selected_genshin_id and item["uid"] == str(active_uid)),
+                    None,
+                )
                 linked_profile = next((item for item in accounts if linked_genshin is not None and item["genshinId"] == linked_genshin["id"]), None)
                 resin = notes[1].get("resin")
                 claimed = notes[1].get("extra_reward_claimed") is True
