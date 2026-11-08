@@ -1265,8 +1265,8 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             resin_meta = profiles.get("_resinLast", {})
             if not isinstance(resin_meta, dict):
                 return _error(422, "The resin history metadata is malformed.")
-            if any(ident not in account_ids or type(value) is not bool for ident, value in resin_meta.items()):
-                return _error(422, "The resin history metadata refers to an unknown profile or invalid value.")
+            if any(ident not in account_ids or type(value) not in (int, float) or not 0 <= value <= 300 for ident, value in resin_meta.items()):
+                return _error(422, "The resin history metadata refers to an unknown profile or invalid resin value.")
             for ident, flags in profiles.items():
                 if ident == "_resinLast":
                     continue
