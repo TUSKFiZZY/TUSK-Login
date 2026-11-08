@@ -385,7 +385,7 @@ MIGRATIONS: tuple[str, ...] = (
         SELECT entry_page_id, kind, name, data, version, read_at FROM wiki_entries;
     DROP TABLE wiki_entries;
     ALTER TABLE wiki_entries_new RENAME TO wiki_entries;
-    """,,
+    """,
     # TUSKFiZZY's own checklist profiles and imported legacy history. Authentication is deliberately not stored here.
     """
     CREATE TABLE tuskfizzy_accounts (
