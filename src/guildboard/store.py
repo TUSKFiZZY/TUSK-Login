@@ -24,8 +24,8 @@ DAILY_BACKUPS_KEPT = 14
 SKIPPED_RUNS_KEPT_DAYS = 90  # a refused trigger leaves a record, and only the recent ones say anything
 RAW_FULL_DAYS = 30  # how long every raw body is kept; after that, the last one of each endpoint on each game day
 BUSY_SECONDS = 5.0  # how long to wait for another program that is writing to the database
-# How an import of the wish history that Guild Board's closing cut short ended, as the next start records it.
-IMPORT_CUT_SHORT = "Guild Board closed before this import finished."
+# How an import of the wish history that TUSKFiZZY's closing cut short ended, as the next start records it.
+IMPORT_CUT_SHORT = "TUSKFiZZY closed before this import finished."
 CHAR_FOCUS_MAX = 4  # the Characters pages' focus (the plan's FOCUS_MAX, which the store may not import)
 
 # What schema 12 watches for sync (the online plan, Task C2): the tables the player makes rows in, each with the columns that
@@ -671,7 +671,7 @@ def _open_problem(path: Path, backups_dir: Path, error: sqlite3.Error) -> str:
     reason = str(error).lower()
     if "locked" in reason or "busy" in reason:
         return (
-            f"The history database at {path} is in use by another program (or by a second Guild Board). "
+            f"The history database at {path} is in use by another program (or by a second TUSKFiZZY). "
             "Close it and start again. The file has been left untouched."
         )
     if "readonly" in reason or "read-only" in reason:
@@ -689,7 +689,7 @@ def _full_check(conn: sqlite3.Connection) -> list[str]:
 
 
 def _closed_cleanly(conn: sqlite3.Connection) -> bool:
-    """Whether the last Guild Board that had the database closed it itself. A database from before `meta` was made, or one
+    """Whether the last TUSKFiZZY that had the database closed it itself. A database from before `meta` was made, or one
     whose flag is not there, was not."""
     try:
         row = conn.execute("SELECT value FROM meta WHERE key = 'closed_cleanly'").fetchone()
@@ -828,7 +828,7 @@ class Store:
         if version > len(MIGRATIONS):
             conn.close()
             raise StoreError(
-                f"The history database at {path} was written by a newer Guild Board (schema {version})."
+                f"The history database at {path} was written by a newer TUSKFiZZY (schema {version})."
             )
         store = cls(conn, path, backups_dir)
         try:
@@ -904,7 +904,7 @@ class Store:
         self._backups_dir.mkdir(parents=True, exist_ok=True)
         stamp = now.astimezone(timezone.utc).strftime("%Y%m%d-%H%M%S")
         target = self._backups_dir / f"guildboard-{label}-{stamp}.db"
-        # Written under another name and renamed when whole: a Guild Board that is killed while it copies leaves no file
+        # Written under another name and renamed when whole: a TUSKFiZZY that is killed while it copies leaves no file
         # that would count as the day's copy, and be offered for restore.
         partial = target.with_name(target.name + ".tmp")
         partial.unlink(missing_ok=True)
@@ -948,7 +948,7 @@ class Store:
 
     def _prune_auto_backups(self) -> None:
         """Only the newest automatic backups are kept, and the newest copy made before an upgrade (`auto-v<schema>`) besides
-        them: five imports after an update must not take away the one copy an older Guild Board can still open. This is
+        them: five imports after an update must not take away the one copy an older TUSKFiZZY can still open. This is
         housekeeping: an old one that another program holds open stays until the next time, and nothing waits for it."""
         if self._backups_dir is None:
             return
@@ -1157,7 +1157,7 @@ class Store:
         with self._commit():
             self._conn.execute(
                 "UPDATE sync_runs SET finished_at = ?, outcome = 'failed', error_kind = 'error', "
-                "message = 'Guild Board closed before this sync finished.' WHERE outcome = 'running'",
+                "message = 'TUSKFiZZY closed before this sync finished.' WHERE outcome = 'running'",
                 (iso(at),),
             )
 
@@ -1824,7 +1824,7 @@ class Store:
 
     def wish_uids(self) -> list[int]:
         """The accounts a wish is kept of, the one the newest import found first. An import found an account when it
-        named it or kept a wish of it: an import that Guild Board's closing cut short kept wishes and named none."""
+        named it or kept a wish of it: an import that TUSKFiZZY's closing cut short kept wishes and named none."""
         rows = self._conn.execute(
             "SELECT uid FROM ("
             "  SELECT uid, MAX(id) AS newest FROM wish_imports WHERE uid IS NOT NULL GROUP BY uid"
@@ -1868,7 +1868,7 @@ class Store:
         self, import_id: int, rows: Iterable[WishRow], pools: Sequence[str], uid: int | None
     ) -> int:
         """Keep the new wishes of a pool an import fetched to its end, and note the pools it has finished so far, its
-        account and the wishes it kept, as one write: an import that Guild Board's closing cuts short still credits the
+        account and the wishes it kept, as one write: an import that TUSKFiZZY's closing cuts short still credits the
         pools it kept. How many wishes were new."""
         with self.transaction():
             kept = self.add_wishes(rows)
@@ -1879,7 +1879,7 @@ class Store:
         return kept
 
     def fail_running_wish_imports(self, at: datetime) -> None:
-        """At a start: an import still marked as running was cut short by Guild Board closing (IMPORT_CUT_SHORT)."""
+        """At a start: an import still marked as running was cut short by TUSKFiZZY closing (IMPORT_CUT_SHORT)."""
         with self._commit():
             self._conn.execute(
                 "UPDATE wish_imports SET finished_at = ?, outcome = 'failed', message = ? WHERE outcome = 'running'",
