@@ -1442,10 +1442,28 @@ def test_tuskfizzy_legacy_import_keeps_profiles_and_daily_history_idempotently(s
     assert store.import_tuskfizzy_data(accounts, daily, genshin, "genshin-a") == expected
     assert store.import_tuskfizzy_data(accounts, daily, genshin, "genshin-a") == expected
     rows = store._conn.execute(
-        "SELECT day, account_id, login, commission, resin FROM tuskfizzy_daily ORDER BY account_id"
+        "SELECT day, account_id, login, commission, resin, resin_last, resin_transition FROM tuskfizzy_daily ORDER BY account_id"
     ).fetchall()
     assert rows == [
-        ("2026-11-08", "profile-a", 1, 0, 1),
-        ("2026-11-08", "profile-b", 0, 1, 0),
+        ("2026-11-08", "profile-a", 1, 0, 1, None, 1),
+        ("2026-11-08", "profile-b", 0, 1, 0, None, None),
     ]
     assert store.meta("tuskfizzy_selected_genshin_id") == "genshin-a"
+
+
+def test_tuskfizzy_daily_note_uses_same_day_resin_transition_and_claimed_commission(store):
+    accounts = [{"id": "profile-a", "name": "Main", "portrait": "", "genshinId": None, "createdAt": ""}]
+    store.import_tuskfizzy_data(accounts, {}, [], "")
+
+    # Starting the day below 50 must not auto-complete Resin.
+    assert store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 40, False)
+    assert store.tuskfizzy_daily_for("2026-11-09")["profile-a"] == [False, False, False]
+
+    # A later observed crossing from 50+ to below 50 completes it.
+    store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 55, False)
+    store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 49, False)
+    assert store.tuskfizzy_daily_for("2026-11-09")["profile-a"] == [False, False, True]
+
+    # Resin remains checked after refill; Commission only checks after the bonus is claimed.
+    store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 120, True)
+    assert store.tuskfizzy_daily_for("2026-11-09")["profile-a"] == [False, True, True]
