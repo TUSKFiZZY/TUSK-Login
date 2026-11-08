@@ -56,13 +56,13 @@ The export must be generated locally by the old app. Do not ask the user to past
 
 The migration branch now includes SQLite tables for TUSKFiZZY checklist profiles, Genshin profile references, and dated Login/Commission/Resin records. The authenticated local API route `POST /api/tuskfizzy/import` validates the versioned export shape before writing it in one transaction; repeated imports update matching IDs rather than duplicating them. The database migration backs up an existing database before upgrading, following the normal Store migration path.
 
-Implemented on the migration branches: a legacy-app JSON export button; a Settings importer with file selection, local preview, and explicit confirmation; a validated local API route; SQLite profile/history tables; idempotent transactional import; and store/API tests. The imported records are stored in dedicated TUSKFiZZY tables and are now wired into a Daily Tracker page with add/edit/remove profiles, picture upload, Login/Commission/Resin checkboxes, date navigation and a monthly overview. Past month days are selectable; today and future days are neutral and not selectable in the overview. Live HoYoLAB/Enka feature integration is also still outstanding. No cookies or HoYoLAB credentials are exported or accepted.
+Implemented on the migration branches: a legacy-app JSON export button; a Settings importer with file selection, local preview, and explicit confirmation; a validated local API route; SQLite profile/history tables; idempotent transactional import; and store/API tests. The imported records are stored in dedicated TUSKFiZZY tables and are now wired into a Daily Tracker page with add/edit/remove profiles, picture upload, Login/Commission/Resin checkboxes, date navigation and a monthly overview. Past month days are selectable; today and future days are neutral and not selectable in the overview. The current Guild Board connection supplies fresh Daily Note data for the single active HoYoLAB login and applies it only to the matching linked TUSKFiZZY profile. Independent per-Genshin-account HoYoLAB sessions, Enka profile and Battle Chronicle integration are still outstanding. No cookies or HoYoLAB credentials are exported or accepted.
 
 
 ## Still to port
 
-- Resin auto-completion on a same-day observed transition from at least 50 to below 50; do not auto-complete when the first observation is already below 50, and do not uncheck after refill.
-- Commission auto-completion only after HoYoLAB reports the bonus reward claimed.
+- [x] Resin auto-completion on a same-day observed transition from at least 50 to below 50; the first observation already below 50 does not auto-complete, and a completed check remains checked after refill. This runs only for fresh notes matching the linked active HoYoLAB UID.
+- [x] Commission auto-completion only after fresh HoYoLAB Daily Note data reports the extra reward claimed; stale notes cannot mark today's checklist.
 - Live HoYoLAB Daily Note, Enka profile and Battle Chronicle connections for each selected Genshin profile.
 - Achievements and wish-history/pity feature integration.
 - Windows packaging and end-to-end verification on a real Windows machine.
