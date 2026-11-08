@@ -19,29 +19,29 @@
 
 .el-cryo {
   --card-bg: #070A1F; --card-glow: rgba(79, 168, 207, .30); --el: #8ED3E8; --el2: #4FA8CF;
-  --el-glow: rgba(142, 211, 232, .38); --el-soft: rgba(142, 211, 232, .42); --giant: rgba(142, 211, 232, .34); --el-ink: #2A7FA3;
+  --el-glow: rgba(142, 211, 232, .38); --el-soft: rgba(142, 211, 232, .42); --giant: rgba(142, 211, 232, .34); --el-ink: #8ED3E8;
 }
 .el-pyro {
   --card-bg: #1A0806; --card-glow: rgba(214, 92, 58, .30); --el: #F4A27E; --el2: #D9663F;
-  --el-glow: rgba(244, 162, 126, .38); --el-soft: rgba(244, 162, 126, .42); --giant: rgba(244, 162, 126, .34); --el-ink: #C2502B;
+  --el-glow: rgba(244, 162, 126, .38); --el-soft: rgba(244, 162, 126, .42); --giant: rgba(244, 162, 126, .34); --el-ink: #F4A27E;
 }
 .el-hydro {
   --card-bg: #050C24; --card-glow: rgba(64, 128, 230, .32); --el: #7CB4F5; --el2: #3F7FD9;
-  --el-glow: rgba(124, 180, 245, .38); --el-soft: rgba(124, 180, 245, .42); --giant: rgba(124, 180, 245, .34); --el-ink: #3A74C9;
+  --el-glow: rgba(124, 180, 245, .38); --el-soft: rgba(124, 180, 245, .42); --giant: rgba(124, 180, 245, .34); --el-ink: #7CB4F5;
 }
 .el-anemo {
   --card-bg: #041816; --card-glow: rgba(64, 196, 170, .28); --el: #8FE3CF; --el2: #3FB89C;
-  --el-glow: rgba(143, 227, 207, .38); --el-soft: rgba(143, 227, 207, .42); --giant: rgba(143, 227, 207, .34); --el-ink: #1F8F78;
+  --el-glow: rgba(143, 227, 207, .38); --el-soft: rgba(143, 227, 207, .42); --giant: rgba(143, 227, 207, .34); --el-ink: #8FE3CF;
 }
 .el-electro {
   --card-bg: #110824; --card-glow: rgba(156, 98, 230, .32); --el: #C7A3F5; --el2: #8F5CD9;
-  --el-glow: rgba(199, 163, 245, .38); --el-soft: rgba(199, 163, 245, .42); --giant: rgba(199, 163, 245, .34); --el-ink: #7D4BC7;
+  --el-glow: rgba(199, 163, 245, .38); --el-soft: rgba(199, 163, 245, .42); --giant: rgba(199, 163, 245, .34); --el-ink: #C7A3F5;
 }
 .el-dendro {
   --card-bg: #091806; --card-glow: rgba(132, 196, 64, .28); --el: #B5E07F; --el2: #7DB33F;
-  --el-glow: rgba(181, 224, 127, .38); --el-soft: rgba(181, 224, 127, .42); --giant: rgba(181, 224, 127, .34); --el-ink: #5A8A1C;
+  --el-glow: rgba(181, 224, 127, .38); --el-soft: rgba(181, 224, 127, .42); --giant: rgba(181, 224, 127, .34); --el-ink: #B5E07F;
 }
 .el-geo {
   --card-bg: #181106; --card-glow: rgba(222, 170, 70, .28); --el: #F0CD7A; --el2: #C9952F;
-  --el-glow: rgba(240, 205, 122, .38); --el-soft: rgba(240, 205, 122, .42); --giant: rgba(240, 205, 122, .34); --el-ink: #A27410;
+  --el-glow: rgba(240, 205, 122, .38); --el-soft: rgba(240, 205, 122, .42); --giant: rgba(240, 205, 122, .34); --el-ink: #F0CD7A;
 }
