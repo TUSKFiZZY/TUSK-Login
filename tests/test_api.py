@@ -659,3 +659,39 @@ def test_static_files_get_their_content_type_from_guild_board_not_the_registry(c
 def test_api_answers_say_nosniff_too(client):
     assert client.get("/api/status").headers["x-content-type-options"] == "nosniff"
     assert client.get("/api/icon/no.such.key").headers["x-content-type-options"] == "nosniff"
+
+
+def test_tuskfizzy_legacy_import_is_validated_and_repeatable(client, core):
+    payload = {
+        "format": "tuskfizzy-local-data",
+        "version": 1,
+        "accounts": [{"id": "profile-a", "name": "Main", "portrait": "", "genshinId": "genshin-a"}],
+        "genshinAccounts": [{"id": "genshin-a", "name": "Asia", "uid": "1234567890", "server": "asia"}],
+        "dailyRecords": {"2026-11-08": {"profile-a": [True, False, True], "_resinLast": {"profile-a": True}}},
+        "selectedGenshinId": "genshin-a",
+    }
+    first = client.post("/api/tuskfizzy/import", json=payload)
+    assert first.status_code == 200
+    assert first.json() == {"imported": {"accounts": 1, "genshinAccounts": 1, "dailyRecords": 1}}
+    second = client.post("/api/tuskfizzy/import", json=payload)
+    assert second.status_code == 200
+    assert second.json() == first.json()
+    row = core.store._conn.execute(
+        "SELECT login, commission, resin FROM tuskfizzy_daily WHERE day = ? AND account_id = ?",
+        ("2026-11-08", "profile-a"),
+    ).fetchone()
+    assert row == (1, 0, 1)
+    assert core.store.meta("tuskfizzy_selected_genshin_id") == "genshin-a"
+
+
+def test_tuskfizzy_legacy_import_rejects_invalid_uid_without_writing(client, core):
+    payload = {
+        "format": "tuskfizzy-local-data",
+        "version": 1,
+        "accounts": [{"id": "profile-a", "name": "Main"}],
+        "genshinAccounts": [{"id": "genshin-a", "name": "Asia", "uid": "12345"}],
+        "dailyRecords": {},
+    }
+    response = client.post("/api/tuskfizzy/import", json=payload)
+    assert response.status_code == 422
+    assert core.store.tuskfizzy_import_counts() == {"accounts": 0, "genshinAccounts": 0, "dailyRecords": 0}
