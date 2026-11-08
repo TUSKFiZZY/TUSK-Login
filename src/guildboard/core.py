@@ -1051,6 +1051,8 @@ class Core:
 
     def tuskfizzy_import_wish_link(self, account_id: str, url: str) -> None:
         """Start a TUSKFiZZY profile-scoped import from the legacy PowerShell wish-history URL."""
+        if self.demo:
+            raise ValueError("Demo mode cannot import a real wish-history URL.")
         profile = next((item for item in self.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
         if profile is None:
             raise ValueError("That Genshin profile no longer exists.")
