@@ -1001,3 +1001,28 @@ def test_tuskfizzy_tracker_includes_selected_profile_battle_chronicle(client, co
     assert response.status_code == 200
     assert response.json()["battleChronicle"]["abyssProgress"] == "12-3"
     assert calls == [profile["id"]]
+
+
+
+def test_tuskfizzy_profile_wish_import_passes_url_to_uid_scoped_importer(client, monkeypatch):
+    from guildboard.api import app as api_app
+
+    seen = []
+    monkeypatch.setattr(
+        api_app.core, "tuskfizzy_import_wish_link",
+        lambda profile_id, url: seen.append((profile_id, url)),
+        raising=False,
+    )
+    url = "https://webstatic-sea.hoyoverse.com/genshin/event/gacha?authkey=private&authkey_ver=1"
+    response = client.post(
+        "/api/tuskfizzy/genshin-accounts/profile-a/wish-import",
+        json={"url": url},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"started": True}
+    assert seen == [("profile-a", url)]
+
+
+def test_tuskfizzy_profile_wish_import_requires_url(client):
+    response = client.post("/api/tuskfizzy/genshin-accounts/profile-a/wish-import", json={})
+    assert response.status_code == 422
