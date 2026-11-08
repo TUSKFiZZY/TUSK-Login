@@ -1,7 +1,7 @@
 [project]
-name = "guildboard"
+name = "tuskfizzy"
 version = "2.0.1"
-description = "Personal Genshin Impact companion: backlog, stats, goals and pull planning."
+description = "TUSKFiZZY: personal Genshin Impact companion."
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "genshin==1.7.31",
@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-guildboard = "guildboard.__main__:main"
+tuskfizzy = "guildboard.__main__:main"
 
 [dependency-groups]
 dev = [
