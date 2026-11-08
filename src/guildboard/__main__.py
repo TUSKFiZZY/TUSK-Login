@@ -25,7 +25,7 @@ from guildboard.store import StoreError
 
 _TLS_READY = False
 NO_SHELL_TEXT = (
-    "TUSKFiZZY's window is its shell. Start it with guildboard-app.exe, or with npm start --prefix shell in a checkout."
+    "TUSKFiZZY's window is its shell. Start it with tuskfizzy-app.exe, or with npm start --prefix shell in a checkout."
 )
 
 
@@ -136,7 +136,7 @@ def _run_for_shell(paths: AppPaths, *, demo: bool, demo_now: datetime | None) ->
 
 def main(argv: Sequence[str] | None = None) -> int:
     use_the_windows_store()
-    parser = argparse.ArgumentParser(prog="guildboard", description="TUSKFiZZY")
+    parser = argparse.ArgumentParser(prog="tuskfizzy", description="TUSKFiZZY")
     parser.add_argument("link", nargs="?", default=None, help="an invite link, which Windows hands over when one is opened")
     parser.add_argument("--demo", action="store_true", help="run on a synthetic account, with no network access")
     parser.add_argument("--no-shell", action="store_true", help="run the core alone and print a launch link")
