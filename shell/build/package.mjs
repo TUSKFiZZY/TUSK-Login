@@ -1,4 +1,4 @@
-// Packs the shell and the core into shell/out/Guild Board-win32-x64, the folder the installer carries.
+// Packs the shell and the core into shell/out/TUSKFiZZY-win32-x64, the folder the installer carries.
 //
 //     node build/package.mjs --core <the core's folder> --version <version>
 //
@@ -48,7 +48,7 @@ function keeps(name) {
 
 const [app] = await packager({
   dir: shellRoot,
-  name: 'Guild Board',
+  name: 'TUSKFiZZY',
   executableName: 'guildboard-app',
   platform: 'win32',
   arch: 'x64',
@@ -57,13 +57,13 @@ const [app] = await packager({
   icon: join(shellRoot, 'assets', 'icon.ico'),
   extraResource: [core, join(shellRoot, 'assets', 'icon.ico')],
   appVersion: values.version,
-  win32metadata: { ProductName: 'Guild Board', FileDescription: 'Guild Board' },
+  win32metadata: { ProductName: 'TUSKFiZZY', FileDescription: 'TUSKFiZZY Genshin companion' },
   ignore: (name) => !keeps(name),
   out: join(shellRoot, 'out'),
   overwrite: true,
 })
 
-const exe = join(app, 'guildboard-app.exe')
+const exe = join(app, 'tuskfizzy-app.exe')
 const wanted = {
   [FuseV1Options.RunAsNode]: false,
   [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
