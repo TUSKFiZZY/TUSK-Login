@@ -175,7 +175,7 @@ test('the text of week.css reaches 4.5:1 on its grounds', () => {
   const soft = '#F1E3C2'
   expect(contrast('#7A5418', soft)).toBeGreaterThanOrEqual(4.5) // the alert's text and the step numbers
   expect(contrast(t['--gold-ink'], t['--ledger-light'])).toBeGreaterThanOrEqual(4.5)
-  expect(contrast(t['--gold-ink'], t['--ledger-light'])).toBeGreaterThanOrEqual(4.5) // the ready date on a focus card, today's head
+  expect(contrast(t['--gold-ink'], t['--surface'])).toBeGreaterThanOrEqual(4.5) // the ready date on a focus card, today's head
   expect(contrast('#2E6B1F', '#DDEBD3')).toBeGreaterThanOrEqual(4.5) // the ready chip
   expect(contrast(t['--muted'], t['--ledger-light'])).toBeGreaterThanOrEqual(4.5)
   expect(contrast(t['--button-text'], t['--button'])).toBeGreaterThanOrEqual(4.5) // the numbers on the resin bar and the focus badge
