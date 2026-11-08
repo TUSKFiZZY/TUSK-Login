@@ -991,12 +991,14 @@ class Core:
         path = self._tuskfizzy_session_path(account_id)
         TokenStore(path).save(StoredToken(dict(cookies), chosen.uid, chosen.server, chosen.nickname))
         self._tuskfizzy_note_cache.pop(account_id, None)
+        self._tuskfizzy_chronicle_cache.pop(account_id, None)
         self.bus.publish("tuskfizzy_changed")
         return {"uid": str(chosen.uid), "nickname": chosen.nickname, "server": chosen.server}
 
     def tuskfizzy_logout(self, account_id: str) -> None:
         TokenStore(self._tuskfizzy_session_path(account_id)).delete()
         self._tuskfizzy_note_cache.pop(account_id, None)
+        self._tuskfizzy_chronicle_cache.pop(account_id, None)
         self.bus.publish("tuskfizzy_changed")
 
     async def tuskfizzy_profile_chronicle(self, account_id: str) -> dict[str, Any] | None:
