@@ -1411,11 +1411,11 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             if selected_genshin_id is not None:
                 try:
                     battle_chronicle = await core.tuskfizzy_profile_chronicle(selected_genshin_id)
-                except (OSError, RuntimeError, ValueError):
+                except Exception:
                     battle_chronicle = None
                 try:
                     note = await core.tuskfizzy_profile_note(selected_genshin_id)
-                except (OSError, RuntimeError, ValueError):
+                except Exception:
                     note = None
                 if note is not None:
                     resin, claimed = note["resin"], note["bonusClaimed"]
