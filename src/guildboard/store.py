@@ -938,6 +938,24 @@ class Store:
             for row in rows
         ]
 
+    def tuskfizzy_selected_genshin_id(self) -> str | None:
+        return self.meta("tuskfizzy_selected_genshin_id")
+
+    def tuskfizzy_select_genshin_account(self, ident: str | None) -> bool:
+        if ident is not None and self._conn.execute(
+            "SELECT 1 FROM tuskfizzy_genshin_accounts WHERE id = ?", (ident,)
+        ).fetchone() is None:
+            return False
+        with self._commit():
+            if ident is None:
+                self._conn.execute("DELETE FROM meta WHERE key = ?", ("tuskfizzy_selected_genshin_id",))
+            else:
+                self._conn.execute(
+                    "INSERT INTO meta(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    ("tuskfizzy_selected_genshin_id", ident),
+                )
+        return True
+
     def tuskfizzy_genshin_accounts_list(self) -> list[dict[str, Any]]:
         rows = self._conn.execute(
             "SELECT id, name, uid, server, created_at FROM tuskfizzy_genshin_accounts ORDER BY name, id"
