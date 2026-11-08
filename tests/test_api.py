@@ -745,3 +745,20 @@ def test_tuskfizzy_genshin_profiles_can_be_managed_and_unlinked(client):
     tracker = client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"}).json()
     assert tracker["genshinAccounts"] == []
     assert tracker["accounts"][0]["genshinId"] is None
+
+
+def test_tuskfizzy_daily_note_endpoint_applies_threshold_rules(client):
+    account = client.post("/api/tuskfizzy/accounts", json={"name": "Main"}).json()["account"]
+    ident = account["id"]
+    base = {"day": "2026-11-09", "accountId": ident, "extraRewardClaimed": False}
+
+    first = client.post("/api/tuskfizzy/observe-note", json={**base, "resin": 42})
+    assert first.status_code == 200
+    assert first.json()["daily"][ident] == [False, False, False]
+
+    client.post("/api/tuskfizzy/observe-note", json={**base, "resin": 55})
+    crossed = client.post("/api/tuskfizzy/observe-note", json={**base, "resin": 49})
+    assert crossed.json()["daily"][ident] == [False, False, True]
+
+    claimed = client.post("/api/tuskfizzy/observe-note", json={**base, "resin": 120, "extraRewardClaimed": True})
+    assert claimed.json()["daily"][ident] == [False, True, True]
