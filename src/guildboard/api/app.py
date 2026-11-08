@@ -1346,11 +1346,14 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             active_uid = core._account_uid()
             notes = core.store.latest_doc("notes")
             if active_uid is not None and notes is not None:
+                now = core.clock.now()
+                notes_age = (now - notes[0]).total_seconds()
                 linked_genshin = next((item for item in genshin_accounts if item["uid"] == str(active_uid)), None)
                 linked_profile = next((item for item in accounts if linked_genshin is not None and item["genshinId"] == linked_genshin["id"]), None)
                 resin = notes[1].get("resin")
                 claimed = notes[1].get("extra_reward_claimed") is True
-                if linked_profile is not None and type(resin) is int:
+                # A stale note from yesterday must never mark today's commission as claimed.
+                if linked_profile is not None and 0 <= notes_age <= 45 * 60 and type(resin) is int:
                     core.store.tuskfizzy_observe_daily_note(day, linked_profile["id"], resin, claimed)
         return JSONResponse({
             "accounts": accounts,
