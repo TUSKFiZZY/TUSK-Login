@@ -673,6 +673,9 @@ class WishImporter:
                      "stop until Import is pressed again.")
             self._auto_stopped = "expired"
             return str(error)
+        except ProfileMismatch as error:
+            self.drop_wish_link()
+            return str(error)
         except WishApiError as error:
             return str(error)
         return None
