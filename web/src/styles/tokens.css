@@ -22,14 +22,14 @@
   --hairline: #302A40;
   --ink: #F5F1FF;
   --ink2: #D4CBE5;
-  /* Small text: 5.14:1, and 4.79:1 on the tint. It was #7E7A6C, 3.85:1. */
+  /* Small text: 7.15:1 on cards and 6.71:1 on the tint. */
   --muted: #AAA2BD;
   /* The lavender accent of progress marks, bars, rings and pips; --r1 remains the deeper interactive purple. */
   --fill: #B58CFF;
   --track: #39334B;
   /* The outline of an unticked box and of an empty pip: 3.50:1, and 3.25:1 on the tint. */
   --outline: #8D82A5;
-  /* Edit's landing outline, the resize grips and the size tag's plate: 4.63:1, and 3.83:1 on the page. */
+  /* Edit's landing outline, resize grips and size-tag plate: 9.97:1 on cards and 10.94:1 on the page. */
   --gold-ink: #D1B8FF;
   /* Ready marks. Light green text is used on dark cards; the pale completion chips use a separate dark green ink. */
   --done: #69E39A;
@@ -85,7 +85,7 @@
   --medal-light: #F6D98A;
   --medal: #C8962F;
   --medal-ink: #3E2A08;
-  /* Ready text: 5.81:1, and 4.84:1 on the ready seal's tint. */
+  /* Ready text: 11.73:1 on cards and 7.75:1 on the completion tint. */
   --good: #8FE7A5;
   /* The focus ring: 4.45:1, and 3.69:1 on the page. The dark panel sets it again. */
   --focus: #C7A8FF;
