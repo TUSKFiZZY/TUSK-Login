@@ -33,8 +33,8 @@ test('small text on a card and on the header tint reaches 4.5:1', () => {
 test("small text on the page's own background is in --ink, which reaches 4.5:1 where the page is darkest", () => {
   // --page-dark is the page everywhere but near its top right. --ink2 and --muted are tuned for the cards and fall short.
   expect(contrast(t['--ink'], t['--page-dark'])).toBeGreaterThanOrEqual(4.5)
-  expect(contrast(t['--ink2'], t['--page-dark'])).toBeLessThan(4.5)
-  expect(contrast(t['--muted'], t['--page-dark'])).toBeLessThan(4.5)
+  expect(contrast(t['--ink2'], t['--page-dark'])).toBeGreaterThanOrEqual(4.5)
+  expect(contrast(t['--muted'], t['--page-dark'])).toBeGreaterThanOrEqual(4.5)
   const onThePage: [string, string][] = [
     [frame, '.gb-status'], // the top bar's status line
     [board, '.board-help'], // Edit's line of help
@@ -93,10 +93,10 @@ test('contrast gives the ratios of the spec, whichever colour comes first', () =
   expect(contrast('#FFFFFF', '#000000')).toBeCloseTo(21, 5)
   expect(contrast('#3B4255', '#3B4255')).toBe(1)
   expect(contrast('#3B4255', '#F7F2E7')).toBeCloseTo(8.97, 2)
-  expect(contrast('#6A6659', '#F7F2E7')).toBeCloseTo(5.14, 2)
-  expect(contrast('#8A806B', '#F1EAD9')).toBeCloseTo(3.25, 2)
-  expect(contrast('#E6DDCA', '#8E661B')).toBeCloseTo(3.83, 2)
-  expect(contrast('#2E6B1F', '#DCE1CC')).toBeCloseTo(4.84, 2)
+  expect(contrast('#AAA2BD', '#F7F2E7')).toBeCloseTo(5.14, 2)
+  expect(contrast('#8D82A5', '#F1EAD9')).toBeCloseTo(3.25, 2)
+  expect(contrast('#E6DDCA', '#D1B8FF')).toBeCloseTo(3.83, 2)
+  expect(contrast('#8FE7A5', '#DCE1CC')).toBeCloseTo(4.84, 2)
 })
 
 test('a colour that is not #RRGGBB is refused by name', () => {
@@ -105,7 +105,7 @@ test('a colour that is not #RRGGBB is refused by name', () => {
 })
 
 test('over mixes a colour at an opacity into the one below it', () => {
-  expect(over('#5F9550', 0.18, '#F7F2E7')).toBe('#DCE1CC') // the ready seal's tint
+  expect(over('#69E39A', 0.18, '#F7F2E7')).toBe('#DCE1CC') // the ready seal's tint
   expect(over('#2B3142', 0.93, '#FFFFFF')).toBe('#3A3F4F')
   expect(over('#2B3142', 0.93, '#000000')).toBe('#282E3D')
   expect(over('#2B3142', 1, '#FFFFFF')).toBe('#2B3142')
@@ -123,21 +123,21 @@ test('tokenValues reads the colours of :root and nothing else', () => {
 })
 
 test('tokenValues finds the real palette', () => {
-  expect(t['--surface']).toBe('#F7F2E7')
-  expect(t['--page-dark']).toBe('#E6DDCA')
+  expect(t['--surface']).toBe('#1B1826')
+  expect(t['--page-dark']).toBe('#100E18')
   expect(t['--page']).toBeUndefined() // a gradient, not a colour
 })
 
 // Spec 6.1: the three changed colours and the two new ones.
 test('the changed and new colours have the values of spec 6.1', () => {
   expect(t['--muted']).toBe('#6A6659')
-  expect(t['--fill']).toBe('#A6751F')
-  expect(t['--r1']).toBe('#C9A24B') // the playtime calendar's first level keeps the lighter gold
+  expect(t['--fill']).toBe('#B58CFF')
+  expect(t['--r1']).toBe('#8D61E8') // the playtime calendar's first level keeps the lighter gold
   expect(t['--outline']).toBe('#8A806B')
   expect(t['--gold-ink']).toBe('#8E661B')
   expect(t['--good']).toBe('#2E6B1F')
   expect(t['--done']).toBe('#5F9550') // stays for marks
-  expect(t['--focus']).toBe('#4470B4')
+  expect(t['--focus']).toBe('#C7A8FF')
 })
 
 // The Pulls history's monthly graph (the second pass): the plan's palette in its order. The dataviz validator passes every
@@ -145,7 +145,7 @@ test('the changed and new colours have the values of spec 6.1', () => {
 // to the plan's values and each mark to the 3:1 of a mark on the card.
 test("the monthly graph's wishes have the plan's colours, in its order, and each reaches 3:1 on the card", () => {
   const wishes = ['--wish-character', '--wish-weapon', '--wish-standard', '--wish-chronicled']
-  expect(wishes.map((name) => t[name])).toEqual(['#A6751F', '#4470B4', '#B5546A', '#6A4FB8'])
+  expect(wishes.map((name) => t[name])).toEqual(['#B58CFF', '#83A9F0', '#E58BA2', '#8D75D6'])
   for (const name of wishes) expect(contrast(t[name], t['--surface']), name).toBeGreaterThanOrEqual(3)
 })
 
@@ -160,35 +160,35 @@ function declarations(selector: string, sheet = css): Record<string, string> {
 
 // Spec 6.2: the role, its parchment value, its dark value and the token the parchment value stands for.
 const roles: [role: string, parchment: string, dark: string, stands: string | null][] = [
-  ['--w-bg', '#F7F2E7', 'rgba(43, 49, 66, .93)', '--surface'],
-  ['--w-gap', '#F7F2E7', '#2B3142', '--surface'],
-  ['--w-plate', '#F1EAD9', 'rgba(241, 234, 219, .07)', '--tint'],
-  ['--w-border', '#D9CDB0', 'rgba(211, 188, 142, .42)', '--border'],
-  ['--w-line', '#E6DBC2', 'rgba(241, 234, 219, .13)', '--hairline'],
-  ['--w-ink', '#3B4255', '#F1EADB', '--ink'],
-  ['--w-ink2', '#5E6272', '#D9D2C3', '--ink2'],
-  ['--w-muted', '#6A6659', '#A9B0C0', '--muted'],
-  ['--w-fill', '#A6751F', '#E2C98F', '--fill'],
-  ['--w-track', '#DDD3BB', 'rgba(241, 234, 219, .17)', '--track'],
-  ['--w-icon', '#B8923F', '#D3BC8E', null],
-  ['--w-done', '#5F9550', '#9DC48C', '--done'],
-  ['--w-good', '#2E6B1F', '#9DC48C', '--good'],
-  ['--w-outline', '#8A806B', 'rgba(241, 234, 219, .45)', '--outline'],
-  ['--w-btn', '#4A5366', '#E2C98F', '--button'],
-  ['--w-btn-text', '#F1EADB', '#2B3142', '--button-text'],
-  ['--w-quiet', '#D9CDB0', 'rgba(241, 234, 219, .3)', '--border'],
-  ['--w-focus', '#4470B4', '#F1EADB', '--focus'],
+  ['--w-bg', '#1B1826', '#1B1826', '--surface'],
+  ['--w-gap', '#1B1826', '#1B1826', '--surface'],
+  ['--w-plate', '#211D30', '#211D30', '--tint'],
+  ['--w-border', '#39334C', '#39334C', '--border'],
+  ['--w-line', '#302A40', '#302A40', '--hairline'],
+  ['--w-ink', '#F5F1FF', '#F5F1FF', '--ink'],
+  ['--w-ink2', '#D4CBE5', '#D4CBE5', '--ink2'],
+  ['--w-muted', '#AAA2BD', '#AAA2BD', '--muted'],
+  ['--w-fill', '#B58CFF', '#B58CFF', '--fill'],
+  ['--w-track', '#39334B', '#39334B', '--track'],
+  ['--w-icon', '#C4A6FF', '#C4A6FF', null],
+  ['--w-done', '#69E39A', '#69E39A', '--done'],
+  ['--w-good', '#8FE7A5', '#8FE7A5', '--good'],
+  ['--w-outline', '#8D82A5', '#8D82A5', '--outline'],
+  ['--w-btn', '#7752C8', '#7752C8', '--button'],
+  ['--w-btn-text', '#FFFFFF', '#FFFFFF', '--button-text'],
+  ['--w-quiet', '#514760', '#514760', '--border'],
+  ['--w-focus', '#C7A8FF', '#C7A8FF', '--focus'],
   // The Pulls plan, Task 11: the mark of soft pity on a pity ring, dark as --gold-ink is on parchment and light as the
   // overlay's --gold-ink is over the game.
-  ['--w-gold-ink', '#8E661B', '#E2C98F', '--gold-ink'],
+  ['--w-gold-ink', '#D1B8FF', '#D1B8FF', '--gold-ink'],
   // The Pulls plan, Task 12: the purple frame of a 4★'s face, as the gold one (--w-fill) is a 5★'s. The pages have no
   // purple of their own to stand for.
   ['--w-four', '#8A6BBE', '#B9A2E0', null],
   // The Pulls review's M6: the washes of a 5★'s and a 4★'s row in the history, in the gold and the purple; and the
   // shade under words laid over a picture, as a banner's name over its art, light on parchment and dark on the panel.
-  ['--w-five-wash', 'rgba(232, 190, 100, .28)', 'rgba(226, 201, 143, .2)', null],
-  ['--w-four-wash', 'rgba(160, 120, 210, .22)', 'rgba(185, 162, 224, .18)', null],
-  ['--w-shade', 'rgba(247, 242, 231, .85)', 'rgba(18, 22, 40, .85)', null],
+  ['--w-five-wash', 'rgba(181, 140, 255, .24)', 'rgba(226, 201, 143, .2)', null],
+  ['--w-four-wash', 'rgba(141, 97, 232, .20)', 'rgba(185, 162, 224, .18)', null],
+  ['--w-shade', 'rgba(16, 14, 24, .88)', 'rgba(18, 22, 40, .85)', null],
 ]
 
 test("the soft pity's mark reaches 3:1 on the ring's track, on parchment and over a white and a black game", () => {
@@ -225,11 +225,8 @@ test("the gap colour is the background's, opaque on parchment and in the dark pa
   const dark = declarations('.on-dark')
   for (const gap of [root['--w-gap'], dark['--w-gap']]) expect(gap).toMatch(/^#[0-9A-F]{6}$/)
   expect(root['--w-gap']).toBe(root['--w-bg'])
-  // The dark one is the panel's rgba(43, 49, 66, .93) without its opacity.
-  const panel = /^rgba\((\d+), (\d+), (\d+), \.\d+\)$/.exec(dark['--w-bg'])
-  expect(panel).not.toBeNull()
-  const hex = panel!.slice(1, 4).map((part) => Number(part).toString(16).padStart(2, '0').toUpperCase())
-  expect(dark['--w-gap']).toBe(`#${hex.join('')}`)
+  expect(root['--w-gap']).toBe(root['--w-bg'])
+  expect(dark['--w-gap']).toBe(dark['--w-bg'])
 })
 
 // The overlay's page (plan 2A-4): its bar, Edit and the sheets draw with the page's own tokens, which .ov sets dark
@@ -255,7 +252,7 @@ test('the dark panel sets every widget role again, and the focus ring', () => {
   const widgetRoles = Object.keys(declarations(':root')).filter((name) => name.startsWith('--w-'))
   expect(widgetRoles.sort()).toEqual(roles.map(([role]) => role).sort())
   expect(Object.keys(declarations('.on-dark')).sort()).toEqual([...widgetRoles, '--focus'].sort())
-  expect(declarations('.on-dark')['--focus']).toBe('#F1EADB')
+  expect(declarations('.on-dark')['--focus']).toBe('#C7A8FF')
 })
 
 // Spec 6.3.
