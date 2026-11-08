@@ -266,7 +266,7 @@ async function main(): Promise<void> {
   try {
     const icon = nativeImage.createFromPath(appIcon)
     tray = new Tray(icon)
-    tray.setToolTip('Guild Board')
+    tray.setToolTip('TUSKFiZZY')
     const made = tray
     notifier = new Notifier(made, (place) => openDashboard(place))
     trayMenu = new TrayMenu({
