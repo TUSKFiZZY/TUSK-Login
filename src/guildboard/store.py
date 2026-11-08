@@ -915,12 +915,15 @@ class Store:
                 )
             for day, profiles in daily.items():
                 for account_id, flags in profiles.items():
+                    if account_id == "_resinLast":
+                        continue
+                    resin_last = profiles.get("_resinLast", {}).get(account_id) if isinstance(profiles.get("_resinLast"), dict) else None
                     self._conn.execute(
                         "INSERT INTO tuskfizzy_daily(day,account_id,login,commission,resin,resin_last) VALUES(?,?,?,?,?,?) "
                         "ON CONFLICT(day,account_id) DO UPDATE SET login=excluded.login, commission=excluded.commission, "
-                        "resin=resin.excluded, resin_last=excluded.resin_last".replace("resin=resin.excluded", "resin=excluded.resin"),
+                        "resin=excluded.resin, resin_last=excluded.resin_last",
                         (day, account_id, int(flags[0]), int(flags[1]), int(flags[2]),
-                         int(profiles.get("_resinLast", {}).get(account_id, 0)) if isinstance(profiles.get("_resinLast"), dict) else None),
+                         int(resin_last) if isinstance(resin_last, bool) else None),
                     )
             if selected_genshin_id:
                 self.set_meta("tuskfizzy_selected_genshin_id", selected_genshin_id)
