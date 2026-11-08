@@ -5,8 +5,8 @@
 
 import type { LedgerHistory, LedgerKind } from './ledgertypes.ts'
 
-export const NOT_ANSWERING = 'Guild Board is not answering. It may have been closed.'
-export const NO_SESSION = 'Open Guild Board from its own window or launch link.'
+export const NOT_ANSWERING = 'TUSKFiZZY is not answering. It may have been closed.'
+export const NO_SESSION = 'Open TUSKFiZZY from its own window or launch link.'
 
 export class ApiError extends Error {
   /** The HTTP status, or 0 when the core did not answer at all. */
@@ -25,7 +25,7 @@ function sentence(status: number, data: unknown): string {
   if (status === 401) return NO_SESSION
   // Why a hotkey is refused (PUT /api/settings). FastAPI's own refusals put a list here, which is not a sentence.
   if ('detail' in fields && typeof fields.detail === 'string') return fields.detail
-  return `Guild Board answered with an error (${status}).`
+  return `TUSKFiZZY answered with an error (${status}).`
 }
 
 /**
