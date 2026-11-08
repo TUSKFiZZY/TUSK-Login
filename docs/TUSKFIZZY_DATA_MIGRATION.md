@@ -7,7 +7,7 @@ This note records the legacy browser-storage keys and the portable export/import
 | Key | Contents |
 | --- | --- |
 | `tuskfizzy_accounts_v1` | User-created checklist profiles (name, portrait data URL, optional UID/server and linked Genshin account fields) |
-| `tuskfizzy_daily_multi_v1` | Daily records keyed by local calendar date, then profile ID; each profile value is `[login, commission, resin]` booleans. May also contain `_resinLast` transition data. |
+| `tuskfizzy_daily_multi_v1` | Daily records keyed by local calendar date, then profile ID; each profile value is `[login, commission, resin]` booleans. May also contain `_resinLast`, a per-profile numeric Resin reading used to detect a threshold crossing. |
 | `tuskfizzy_genshin_accounts_v1` | Genshin account profiles (id, name, UID, server, cached Daily Note, Enka profile and Battle Chronicle data) |
 | `tuskfizzy_selected_genshin_v1` | Selected Genshin profile ID |
 | `tuskfizzy_daily_v1` | Legacy single-profile record key; old built-in Main/Alternate profiles are removed by newer app versions. |
@@ -17,7 +17,7 @@ This note records the legacy browser-storage keys and the portable export/import
 1. Parse and validate the export before writing anything. Reject malformed JSON, duplicate profile IDs, invalid date keys, invalid task arrays, and UIDs that are not 9 or 10 digits.
 2. Keep user-created profile names, IDs, portraits, Genshin UID/server associations, selected Genshin profile, and every dated checklist record.
 3. Preserve the three task meanings in order: Login, Commission, Resin.
-4. Preserve the resin transition marker only as history metadata. Do not auto-complete Resin merely because the first imported Daily Note already reports fewer than 50 resin; the old app only auto-completed on a same-day observed transition from 50 or more to below 50.
+4. Preserve the previous numeric Resin reading as history metadata. Do not auto-complete Resin merely because the first imported Daily Note already reports fewer than 50 resin; the old app only auto-completed on a same-day observed transition from 50 or more to below 50.
 5. Preserve Commission auto-completion only when HoYoLAB reports the extra commission reward as claimed.
 6. Treat cached Daily Note, Enka, and Battle Chronicle responses as stale display cache; refresh them after the user signs into the matching account.
 7. Never import or export HoYoLAB cookies, ltoken/ltuid values, browser session partitions, wish-history URLs, or any other authentication material. The user signs in again in the new app, per account.
@@ -46,9 +46,9 @@ The export must be generated locally by the old app. Do not ask the user to past
 - [x] Export from the legacy desktop app includes the documented profiles, selected Genshin account and daily records, and excludes secrets.
 - [x] Import preview reports profile and day counts before the user confirms.
 - [x] Re-import is idempotent.
-- [ ] Portrait data URLs are size-limited and decoded safely.
+- [x] Portrait data URLs are size-limited, type-checked and base64-decoded before storage.
 - [x] Account-to-Genshin associations are preserved as profile references.
-- [ ] Resin and Commission automatic completion rules match the legacy app.
+- [x] Resin and Commission automatic completion rules match the legacy app for the active linked HoYoLAB session.
 - [x] Failed import leaves the destination database unchanged (validated before the transaction; transactional write).
 
 
@@ -63,6 +63,6 @@ Implemented on the migration branches: a legacy-app JSON export button; a Settin
 
 - [x] Resin auto-completion on a same-day observed transition from at least 50 to below 50; the first observation already below 50 does not auto-complete, and a completed check remains checked after refill. This runs only for fresh notes matching the linked active HoYoLAB UID.
 - [x] Commission auto-completion only after fresh HoYoLAB Daily Note data reports the extra reward claimed; stale notes cannot mark today's checklist.
-- Live HoYoLAB Daily Note, Enka profile and Battle Chronicle connections for each selected Genshin profile.
-- Achievements and wish-history/pity feature integration.
+- Independent HoYoLAB sessions per Genshin profile, plus Enka profile and Battle Chronicle integration.
+- Map TUSKFiZZY's prior wish-history/pity state to the foundation's Pulls page; Guild Board's Achievements and Pulls pages are already present.
 - Windows packaging and end-to-end verification on a real Windows machine.
