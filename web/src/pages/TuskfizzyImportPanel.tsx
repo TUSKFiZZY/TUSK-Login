@@ -5,7 +5,7 @@ type LegacyExport = {
   format: 'tuskfizzy-local-data'
   version: 1
   accounts: Array<{ id: string; name: string; portrait?: string; genshinId?: string | null; createdAt?: string }>
-  dailyRecords: Record<string, Record<string, boolean[] | Record<string, boolean>>>
+  dailyRecords: Record<string, Record<string, boolean[] | Record<string, number>>>
   genshinAccounts: Array<{ id: string; name: string; uid: string; server?: string; createdAt?: string }>
   selectedGenshinId?: string
 }
