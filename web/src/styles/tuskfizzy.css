@@ -68,7 +68,7 @@
 .tf-session-editor{display:grid;gap:10px;padding:13px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
 .tf-session-editor h3{margin:0;font-size:14px}
 .tf-session-editor label{display:grid;gap:6px;color:var(--muted);font-size:12px}
-.tf-session-editor textarea{width:100%;min-width:0;resize:vertical;font:12px/1.5 ui-monospace,Consolas,monospace}
+.tf-session-editor input{width:100%;min-width:0;font:12px/1.5 ui-monospace,Consolas,monospace}
 
 .tf-chronicle-regions{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:12px}
 .tf-chronicle-regions>div{display:grid;gap:5px;padding:10px;border:1px solid var(--border);border-radius:10px}
