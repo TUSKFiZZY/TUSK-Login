@@ -871,3 +871,31 @@ def test_tuskfizzy_import_without_a_selected_profile_clears_old_selection(client
     })
     assert response.status_code == 200
     assert core.store.tuskfizzy_selected_genshin_id() is None
+
+
+
+def test_tuskfizzy_enka_endpoint_validates_uid_and_returns_public_profile(client, monkeypatch):
+    from guildboard.api import app as api_app
+
+    seen = []
+    monkeypatch.setattr(api_app.enka, "get_profile", lambda uid: seen.append(uid) or {
+        "uid": uid, "playerInfo": {"nickname": "Traveler"}, "avatarInfoList": [], "ttl": 300,
+        "fetchedAt": 1, "cached": False,
+    })
+    invalid = client.get("/api/tuskfizzy/enka/12345678")
+    assert invalid.status_code == 422
+    response = client.get("/api/tuskfizzy/enka/1234567890")
+    assert response.status_code == 200
+    assert response.json()["playerInfo"]["nickname"] == "Traveler"
+    assert seen == ["1234567890"]
+
+
+def test_tuskfizzy_enka_endpoint_maps_missing_profile(client, monkeypatch):
+    from guildboard.api import app as api_app
+
+    def missing(uid):
+        raise api_app.enka.EnkaNotFound("No public profile.")
+    monkeypatch.setattr(api_app.enka, "get_profile", missing)
+    response = client.get("/api/tuskfizzy/enka/123456789")
+    assert response.status_code == 404
+    assert response.json() == {"error": "No public profile."}
