@@ -1,0 +1,173 @@
+import { useState } from 'react'
+import '../styles/tuskfizzy.css'
+import { api, messageOf } from '../api.ts'
+import { Frame } from '../frame/Frame.tsx'
+import { type Live, useModel } from '../live.ts'
+
+type Account = { id: string; name: string; portrait: string; genshinId: string | null; createdAt: string }
+type Tracker = { accounts: Account[]; genshinAccounts: { id: string; name: string; uid: string; server: string }[]; daily: Record<string, boolean[]> }
+const TASKS = [{ key: 'login', label: 'Login' }, { key: 'commission', label: 'Commission' }, { key: 'resin', label: 'Resin' }] as const
+
+function todayKey(): string {
+  const now = new Date()
+  return [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-')
+}
+
+async function pictureData(file: File): Promise<string> {
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 700_000) {
+    throw new Error('Choose a PNG, JPEG or WebP picture smaller than 700 KB.')
+  }
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('The picture could not be read.'))
+    reader.onerror = () => reject(new Error('The picture could not be read.'))
+    reader.readAsDataURL(file)
+  })
+}
+
+export function Tuskfizzy({ live }: { live: Live }) {
+  const [day, setDay] = useState(todayKey)
+  const [revision, setRevision] = useState(0)
+  const { data, error } = useModel<Tracker>(`/api/tuskfizzy/tracker?day=${day}`, live.version + revision)
+  const [name, setName] = useState('')
+  const [portrait, setPortrait] = useState('')
+  const [genshinId, setGenshinId] = useState('')
+  const [editing, setEditing] = useState<string | null>(null)
+  const [saving, setSaving] = useState<string | null>(null)
+  const [problem, setProblem] = useState<string | null>(null)
+
+  const edit = (account: Account) => {
+    setEditing(account.id)
+    setName(account.name)
+    setPortrait(account.portrait)
+    setGenshinId(account.genshinId ?? '')
+    setProblem(null)
+  }
+  const clearForm = () => {
+    setEditing(null)
+    setName('')
+    setPortrait('')
+    setGenshinId('')
+    setProblem(null)
+  }
+  const save = async () => {
+    if (!name.trim() || saving !== null) return
+    setSaving('profile')
+    setProblem(null)
+    try {
+      const body = { name: name.trim(), portrait, genshinId: genshinId || null }
+      if (editing) await api.put(`/api/tuskfizzy/accounts/${encodeURIComponent(editing)}`, body)
+      else await api.post('/api/tuskfizzy/accounts', body)
+      clearForm()
+      setRevision(value => value + 1)
+    } catch (failure) {
+      setProblem(messageOf(failure))
+    } finally {
+      setSaving(null)
+    }
+  }
+  const remove = async (account: Account) => {
+    if (saving !== null || !window.confirm(`Remove ${account.name} and its saved checklist history?`)) return
+    setSaving(account.id)
+    setProblem(null)
+    try {
+      await api.delete(`/api/tuskfizzy/accounts/${encodeURIComponent(account.id)}`)
+      if (editing === account.id) clearForm()
+      setRevision(value => value + 1)
+    } catch (failure) {
+      setProblem(messageOf(failure))
+    } finally {
+      setSaving(null)
+    }
+  }
+  const check = async (account: Account, task: typeof TASKS[number]['key'], checked: boolean) => {
+    const key = `${account.id}:${task}`
+    if (saving !== null) return
+    setSaving(key)
+    setProblem(null)
+    try {
+      await api.put('/api/tuskfizzy/daily', { day, accountId: account.id, task, checked })
+      setRevision(value => value + 1)
+    } catch (failure) {
+      setProblem(messageOf(failure))
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  return (
+    <Frame page="tuskfizzy" live={live} wide>
+      <section className="tf-tracker">
+        <div className="tf-date">
+          <button className="gb-btn quiet" type="button" onClick={() => {
+            const next = new Date(`${day}T12:00:00`); next.setDate(next.getDate() - 1)
+            setDay(todayKey.call(null) === day ? [next.getFullYear(), String(next.getMonth()+1).padStart(2,'0'), String(next.getDate()).padStart(2,'0')].join('-') : [next.getFullYear(), String(next.getMonth()+1).padStart(2,'0'), String(next.getDate()).padStart(2,'0')].join('-'))
+          }}>Previous day</button>
+          <label>
+            <span className="sr-only">Selected date</span>
+            <input type="date" value={day} max={todayKey()} onChange={event => setDay(event.target.value)} />
+          </label>
+          <button className="gb-btn quiet" type="button" disabled={day >= todayKey()} onClick={() => {
+            const next = new Date(`${day}T12:00:00`); next.setDate(next.getDate() + 1)
+            setDay([next.getFullYear(), String(next.getMonth()+1).padStart(2,'0'), String(next.getDate()).padStart(2,'0')].join('-'))
+          }}>Next day</button>
+          <button className="gb-btn quiet" type="button" onClick={() => setDay(todayKey())}>Today</button>
+        </div>
+        <p className="tf-caption">Daily checklist · {day}</p>
+        {error && <p className="gb-banner" role="alert">{error}</p>}
+        {problem && <p className="gb-banner" role="alert">{problem}</p>}
+        {data === null ? <div className="gb-panel gb-empty">Loading your TUSKFiZZY profiles…</div> : (
+          <>
+            {data.accounts.length === 0 && <div className="gb-panel gb-empty">No checklist profiles yet. Add your first profile below.</div>}
+            <div className="tf-account-grid">
+              {data.accounts.map(account => {
+                const flags = data.daily[account.id] ?? [false, false, false]
+                const done = flags.filter(Boolean).length
+                return (
+                  <article className="gb-panel tf-account" key={account.id}>
+                    <div className="tf-account-head">
+                      {account.portrait ? <img className="tf-avatar" src={account.portrait} alt="" /> : <div className="tf-avatar tf-avatar-fallback">{account.name.slice(0,1).toUpperCase()}</div>}
+                      <div className="tf-account-name"><h2>{account.name}</h2><span>{done}/3 completed</span></div>
+                      <div className="tf-account-actions">
+                        <button type="button" className="gb-link" onClick={() => edit(account)}>Edit</button>
+                        <button type="button" className="gb-link" onClick={() => void remove(account)}>Remove</button>
+                      </div>
+                    </div>
+                    <div className="tf-tasks">
+                      {TASKS.map((task,index) => (
+                        <label className={flags[index] ? 'tf-task checked' : 'tf-task'} key={task.key}>
+                          <input type="checkbox" checked={Boolean(flags[index])} disabled={saving !== null || day > todayKey()} onChange={event => void check(account,task.key,event.target.checked)} />
+                          <span>{task.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+            <section className="gb-panel tf-editor">
+              <h2>{editing ? 'Edit profile' : 'Add checklist profile'}</h2>
+              <label>Profile name<input value={name} maxLength={80} onChange={event => setName(event.target.value)} placeholder="Enter a profile name" /></label>
+              <label>Profile picture<input type="file" accept="image/png,image/jpeg,image/webp" onChange={event => {
+                const file = event.target.files?.[0]
+                event.target.value = ''
+                if (file) void pictureData(file).then(setPortrait).catch(failure => setProblem(messageOf(failure)))
+              }} /></label>
+              {portrait && <div className="tf-picture-preview"><img src={portrait} alt="Profile picture preview" /><button className="gb-link" type="button" onClick={() => setPortrait('')}>Remove picture</button></div>}
+              <label>Linked Genshin profile
+                <select value={genshinId} onChange={event => setGenshinId(event.target.value)}>
+                  <option value="">Not linked</option>
+                  {data.genshinAccounts.map(profile => <option key={profile.id} value={profile.id}>{profile.name} · {profile.uid}</option>)}
+                </select>
+              </label>
+              <div className="tf-editor-actions">
+                <button className="gb-btn" type="button" disabled={!name.trim() || saving !== null} onClick={() => void save()}>{saving === 'profile' ? 'Saving…' : editing ? 'Save changes' : 'Add profile'}</button>
+                {editing && <button className="gb-btn quiet" type="button" disabled={saving !== null} onClick={clearForm}>Cancel</button>}
+              </div>
+            </section>
+          </>
+        )}
+      </section>
+    </Frame>
+  )
+}
