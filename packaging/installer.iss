@@ -62,7 +62,7 @@ Name: "{userprograms}\TUSKFiZZY"; Filename: "{app}\tuskfizzy-app.exe"
 Name: "{userdesktop}\TUSKFiZZY"; Filename: "{app}\tuskfizzy-app.exe"; Tasks: desktop
 
 [Registry]
-; tuskfizzy:// opens TUSKFiZZY, for an invite link. The current user's own classes, removed on uninstall. This is Guild
+; guildboard:// opens TUSKFiZZY, for an invite link. The current user's own classes, removed on uninstall. This is Guild
 ; Board's own key; nothing in the program itself touches the registry. The -- keeps whatever a link holds from being an option.
 Root: HKCU; Subkey: "Software\Classes\guildboard"; ValueType: string; ValueName: ""; ValueData: "URL:TUSKFiZZY"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\guildboard"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
