@@ -267,7 +267,7 @@ export function Tuskfizzy({ live }: { live: Live }) {
             <section className="gb-panel tf-editor">
               <h2>{editing ? 'Edit profile' : 'Add checklist profile'}</h2>
               <label>Profile name<input value={name} maxLength={80} onChange={event => setName(event.target.value)} placeholder="Enter a profile name" /></label>
-              <label>Profile picture<input type="file" accept="image/png,image/jpeg,image/webp" onChange={event => {
+              <label>Profile picture<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={event => {
                 const file = event.target.files?.[0]
                 event.target.value = ''
                 if (file) void pictureData(file).then(setPortrait).catch(failure => setProblem(messageOf(failure)))
