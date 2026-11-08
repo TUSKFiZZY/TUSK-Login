@@ -1295,6 +1295,27 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         core.bus.publish("tuskfizzy_changed")
         return JSONResponse({"selectedGenshinId": ident})
 
+    @app.post("/api/tuskfizzy/genshin-accounts/{account_id}/login")
+    async def tuskfizzy_genshin_login(account_id: str, body: dict[str, Any] = Body(...)) -> Response:
+        cookie_text = body.get("cookieText")
+        if not isinstance(cookie_text, str):
+            return _error(422, "Paste the complete HoYoLAB Cookie header.")
+        try:
+            account = await core.tuskfizzy_login(account_id, cookie_text)
+        except ValueError as error:
+            return _error(422, str(error))
+        except Exception:
+            return _error(503, "HoYoLAB could not verify this profile login. Check the connection and try again.")
+        return JSONResponse({"connected": True, "account": account})
+
+    @app.delete("/api/tuskfizzy/genshin-accounts/{account_id}/login")
+    async def tuskfizzy_genshin_logout(account_id: str) -> Response:
+        try:
+            core.tuskfizzy_logout(account_id)
+        except ValueError as error:
+            return _error(404, str(error))
+        return JSONResponse({"connected": False})
+
     @app.post("/api/tuskfizzy/genshin-accounts")
     async def tuskfizzy_create_genshin_account(body: dict[str, Any] = Body(...)) -> Response:
         name, uid, server = body.get("name"), body.get("uid"), body.get("server", "")
@@ -1370,39 +1391,22 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         accounts = core.store.tuskfizzy_accounts_list()
         genshin_accounts = core.store.tuskfizzy_genshin_accounts_list()
         daily_note = None
-        # Apply automatic checklist changes only to today's local record and only when the saved HoYoLAB UID
-        # matches a Genshin profile explicitly linked to a TUSKFiZZY checklist profile.
+        # Each Genshin profile reads from its own encrypted HoYoLAB session. Selecting a profile never
+        # borrows the primary Guild Board login or another profile's cookies.
         if day == core.clock.now().astimezone().date().isoformat() and not core.demo:
-            active_uid = core._account_uid()
-            notes = core.store.latest_doc("notes")
-            if active_uid is not None and notes is not None:
-                now = core.clock.now()
-                notes_age = (now - notes[0]).total_seconds()
-                selected_genshin_id = core.store.tuskfizzy_selected_genshin_id()
-                linked_genshin = next(
-                    (item for item in genshin_accounts if item["id"] == selected_genshin_id and item["uid"] == str(active_uid)),
-                    None,
-                )
-                linked_profile = next((item for item in accounts if linked_genshin is not None and item["genshinId"] == linked_genshin["id"]), None)
-                resin = notes[1].get("resin")
-                claimed = notes[1].get("extra_reward_claimed") is True
-                # A stale note from yesterday must never mark today's commission as claimed.
-                if linked_profile is not None and 0 <= notes_age <= 45 * 60 and type(resin) is int:
-                    core.store.tuskfizzy_observe_daily_note(day, linked_profile["id"], resin, claimed)
-                    account = core._account() or {}
-                    note = notes[1]
-                    daily_note = {
-                        "profileName": linked_genshin["name"],
-                        "resin": account.get("resin"),
-                        "resinMax": account.get("resin_max"),
-                        "resinReadAt": account.get("resin_read_at"),
-                        "commissionDone": note.get("finished_task_num"),
-                        "commissionTotal": note.get("total_task_num"),
-                        "bonusClaimed": claimed,
-                        "expeditionsDone": note.get("current_expedition_num"),
-                        "expeditionsTotal": note.get("max_expedition_num"),
-                        "readAt": notes[0].isoformat(),
-                    }
+            selected_genshin_id = core.store.tuskfizzy_selected_genshin_id()
+            if selected_genshin_id is not None:
+                try:
+                    note = await core.tuskfizzy_profile_note(selected_genshin_id)
+                except (OSError, RuntimeError, ValueError):
+                    note = None
+                if note is not None:
+                    resin, claimed = note["resin"], note["bonusClaimed"]
+                    if type(resin) is int:
+                        for linked_profile in accounts:
+                            if linked_profile["genshinId"] == selected_genshin_id:
+                                core.store.tuskfizzy_observe_daily_note(day, linked_profile["id"], resin, claimed)
+                    daily_note = note
         return JSONResponse({
             "accounts": accounts,
             "genshinAccounts": genshin_accounts,
