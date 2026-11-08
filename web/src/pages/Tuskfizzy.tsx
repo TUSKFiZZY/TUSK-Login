@@ -6,7 +6,7 @@ import { type Live, useModel } from '../live.ts'
 
 type Account = { id: string; name: string; portrait: string; genshinId: string | null; createdAt: string }
 type GenshinAccount = { id: string; name: string; uid: string; server: string; createdAt?: string; sessionConnected?: boolean }
-type DailyNote = { profileName: string; resin: number | null; resinMax: number | null; resinReadAt: string | null; commissionDone: number | null; commissionTotal: number | null; bonusClaimed: boolean; expeditionsDone: number | null; expeditionsTotal: number | null; readAt: string }
+type DailyNote = { profileName: string; resin: number | null; resinMax: number | null; resinReadAt?: string | null; commissionDone: number | null; commissionTotal: number | null; bonusClaimed: boolean; expeditionsDone: number | null; expeditionsTotal: number | null; readAt: string }
 type Tracker = { accounts: Account[]; genshinAccounts: GenshinAccount[]; daily: Record<string, boolean[]>; selectedGenshinId?: string | null; dailyNote?: DailyNote | null }
 type MonthTracker = { records: Record<string, Record<string, boolean[]>> }
 type EnkaProfile = { uid: string; playerInfo: { nickname?: string; level?: number; worldLevel?: number; finishAchievementNum?: number; signature?: string }; avatarInfoList: Array<{ avatarId?: number; level?: number; fetterInfo?: { expLevel?: number } }>; ttl: number; fetchedAt: number; cached: boolean }
