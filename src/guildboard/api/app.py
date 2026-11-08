@@ -1260,6 +1260,44 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         core.bus.publish("tuskfizzy_changed")
         return JSONResponse({"imported": counts})
 
+    @app.post("/api/tuskfizzy/genshin-accounts")
+    async def tuskfizzy_create_genshin_account(body: dict[str, Any] = Body(...)) -> Response:
+        name, uid, server = body.get("name"), body.get("uid"), body.get("server", "")
+        if not isinstance(name, str) or not name.strip() or len(name.strip()) > 80:
+            return _error(422, "Enter a Genshin profile name of up to 80 characters.")
+        if not isinstance(uid, str) or not re.fullmatch(r"[0-9]{9,10}", uid):
+            return _error(422, "A Genshin UID must contain 9 or 10 digits.")
+        if not isinstance(server, str) or len(server) > 32:
+            return _error(422, "Choose a valid Genshin server.")
+        ident = secrets.token_hex(12)
+        created = datetime.now().astimezone().isoformat(timespec="seconds")
+        core.store.tuskfizzy_put_genshin_account(ident, name.strip(), uid, server, created)
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"account": next(item for item in core.store.tuskfizzy_genshin_accounts_list() if item["id"] == ident)})
+
+    @app.put("/api/tuskfizzy/genshin-accounts/{account_id}")
+    async def tuskfizzy_update_genshin_account(account_id: str, body: dict[str, Any] = Body(...)) -> Response:
+        current = next((item for item in core.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+        if current is None:
+            return _error(404, "That Genshin profile no longer exists.")
+        name, uid, server = body.get("name"), body.get("uid"), body.get("server", current["server"])
+        if not isinstance(name, str) or not name.strip() or len(name.strip()) > 80:
+            return _error(422, "Enter a Genshin profile name of up to 80 characters.")
+        if not isinstance(uid, str) or not re.fullmatch(r"[0-9]{9,10}", uid):
+            return _error(422, "A Genshin UID must contain 9 or 10 digits.")
+        if not isinstance(server, str) or len(server) > 32:
+            return _error(422, "Choose a valid Genshin server.")
+        core.store.tuskfizzy_put_genshin_account(account_id, name.strip(), uid, server, current["createdAt"])
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"account": next(item for item in core.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id)})
+
+    @app.delete("/api/tuskfizzy/genshin-accounts/{account_id}")
+    async def tuskfizzy_remove_genshin_account(account_id: str) -> Response:
+        if not core.store.tuskfizzy_delete_genshin_account(account_id):
+            return _error(404, "That Genshin profile no longer exists.")
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"deleted": True})
+
     @app.get("/api/tuskfizzy/month")
     async def tuskfizzy_month(month: str = Query(...)) -> Response:
         if not re.fullmatch(r"20[0-9]{2}-(?:0[1-9]|1[0-2])", month):
