@@ -1,0 +1,26 @@
+.tf-tracker{display:grid;gap:14px;max-width:1100px;margin:0 auto;padding-bottom:28px}
+.tf-date{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.tf-date input{min-width:150px}
+.tf-caption{margin:0;text-align:center;color:var(--muted);font-size:12px}
+.tf-account-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.tf-account{padding:16px;min-width:0}
+.tf-account-head{display:flex;align-items:center;gap:11px;min-width:0}
+.tf-avatar{width:48px;height:48px;flex:0 0 48px;border-radius:13px;object-fit:cover;background:var(--panel-2);border:1px solid var(--line)}
+.tf-avatar-fallback{display:grid;place-items:center;font-size:19px;font-weight:800;color:var(--accent)}
+.tf-account-name{min-width:0;flex:1}
+.tf-account-name h2{font-size:16px;margin:0;overflow-wrap:anywhere}
+.tf-account-name span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.tf-account-actions{display:flex;gap:9px;flex-wrap:wrap}
+.tf-tasks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:15px}
+.tf-task{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;padding:11px 6px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font-size:12px;font-weight:650;cursor:pointer}
+.tf-task.checked{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,var(--panel))}
+.tf-task input{width:16px;height:16px;flex:0 0 16px;accent-color:var(--accent)}
+.tf-editor{padding:17px;display:grid;gap:12px}
+.tf-editor h2{margin:0;font-size:16px}
+.tf-editor label{display:grid;gap:6px;color:var(--muted);font-size:12px}
+.tf-editor input:not([type=file]),.tf-editor select{width:100%;min-width:0}
+.tf-editor input[type=file]{max-width:100%;font-size:12px}
+.tf-picture-preview{display:flex;align-items:center;gap:10px}
+.tf-picture-preview img{width:48px;height:48px;border-radius:12px;object-fit:cover}
+.tf-editor-actions{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:420px){.tf-tasks{grid-template-columns:1fr}.tf-task{justify-content:flex-start;padding:10px 12px}.tf-account-head{flex-wrap:wrap}.tf-account-actions{margin-left:auto}}
