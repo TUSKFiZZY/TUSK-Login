@@ -80,8 +80,8 @@
    * the gold of an act that earned one, with its number in the dark ink.
    */
   --mode-abyss: #4C6FAE;
-  --mode-theater: #C56A83;
-  --mode-stygian: #55A9A0;
+  --mode-theater: #A34B68;
+  --mode-stygian: #347F78;
   --medal-light: #F6D98A;
   --medal: #C8962F;
   --medal-ink: #3E2A08;
@@ -128,7 +128,7 @@
   --w-outline: #8D82A5;
   --w-btn: #7752C8;
   --w-btn-text: #FFFFFF;
-  --w-quiet: #514760;
+  --w-quiet: #39334C;
   --w-focus: #C7A8FF;
   /* A mark on a ring's track, such as where soft pity starts on a pity card's (the Pulls plan): 3.47:1 on the track. */
   --w-gold-ink: #D1B8FF;
@@ -164,7 +164,7 @@
   --w-outline: #8D82A5;
   --w-btn: #7752C8;
   --w-btn-text: #FFFFFF;
-  --w-quiet: #514760;
+  --w-quiet: #39334C;
   --w-focus: #C7A8FF;
   /* Light, as the overlay's --gold-ink is over the game. */
   --w-gold-ink: #D1B8FF;
