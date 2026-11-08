@@ -722,3 +722,26 @@ def test_tuskfizzy_tracker_profiles_and_checklist_can_be_managed(client):
     deleted = client.delete(f"/api/tuskfizzy/accounts/{ident}")
     assert deleted.status_code == 200
     assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"}).json()["accounts"] == []
+
+
+def test_tuskfizzy_genshin_profiles_can_be_managed_and_unlinked(client):
+    created = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    )
+    assert created.status_code == 200
+    profile = created.json()["account"]
+    ident = profile["id"]
+    assert profile["uid"] == "1234567890"
+
+    tracker_profile = client.post(
+        "/api/tuskfizzy/accounts",
+        json={"name": "Main", "portrait": "", "genshinId": ident},
+    ).json()["account"]
+    assert tracker_profile["genshinId"] == ident
+
+    removed = client.delete(f"/api/tuskfizzy/genshin-accounts/{ident}")
+    assert removed.status_code == 200
+    tracker = client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"}).json()
+    assert tracker["genshinAccounts"] == []
+    assert tracker["accounts"][0]["genshinId"] is None
