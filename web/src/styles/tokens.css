@@ -135,10 +135,10 @@
   /* The frame of a 4★'s face, as the progress gold frames a 5★'s (the Pulls plan): 3.78:1 on the card. */
   --w-four: #8A6BBE;
   /* The washes of a 5★'s and a 4★'s row in the Pulls page's history, in the gold and the purple, behind ink. */
-  --w-five-wash: rgba(232, 190, 100, .28);
-  --w-four-wash: rgba(160, 120, 210, .22);
+  --w-five-wash: rgba(181, 140, 255, .24);
+  --w-four-wash: rgba(141, 97, 232, .20);
   /* The shade under words laid over a picture, as a banner's name over its art: the card's colour, nearly whole. */
-  --w-shade: rgba(247, 242, 231, .85);
+  --w-shade: rgba(16, 14, 24, .88);
 }
 
 /*
