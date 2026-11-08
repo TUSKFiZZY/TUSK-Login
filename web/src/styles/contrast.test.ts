@@ -105,7 +105,7 @@ test('a colour that is not #RRGGBB is refused by name', () => {
 })
 
 test('over mixes a colour at an opacity into the one below it', () => {
-  expect(over('#69E39A', 0.18, '#F7F2E7')).toBe('#DCE1CC') // the ready seal's tint
+  expect(over('#69E39A', 0.18, '#F7F2E7')).toBe('#DDEFD9') // the ready seal's tint
   expect(over('#2B3142', 0.93, '#FFFFFF')).toBe('#3A3F4F')
   expect(over('#2B3142', 0.93, '#000000')).toBe('#282E3D')
   expect(over('#2B3142', 1, '#FFFFFF')).toBe('#2B3142')
