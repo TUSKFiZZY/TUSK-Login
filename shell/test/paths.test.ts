@@ -7,7 +7,7 @@ test('the data folder follows the core’s rule', () => {
   const env = { LOCALAPPDATA: 'C:\\L' }
   expect(dataFolder(parseArgs([]), env)).toBe('C:\\L\\TUSKFiZZY')
   expect(dataFolder(parseArgs(['--demo']), env)).toBe('C:\\L\\TUSKFiZZY-demo')
-  expect(dataFolder(parseArgs([]), { ...env, GUILDBOARD_DATA_DIR: 'D:\\g' })).toBe('D:\\g')
+  expect(dataFolder(parseArgs([]), { ...env, TUSKFIZZY_DATA_DIR: 'D:\\g' })).toBe('D:\\g')
   expect(dataFolder(parseArgs(['--data-dir', 'E:\\h']), env)).toBe('E:\\h')
 })
 
@@ -16,7 +16,7 @@ test('a relative data folder is made absolute, as one folder for the core and fo
   const absolute = (p: string): boolean => /^[A-Za-z]:\\/.test(p)
   expect(dataFolder(parseArgs(['--data-dir', 'rel\\x']), env)).toBe(win32.resolve('rel\\x'))
   expect(absolute(dataFolder(parseArgs(['--data-dir', 'rel\\x']), env))).toBe(true)
-  expect(dataFolder(parseArgs([]), { ...env, GUILDBOARD_DATA_DIR: 'rel\\y' })).toBe(win32.resolve('rel\\y'))
+  expect(dataFolder(parseArgs([]), { ...env, TUSKFIZZY_DATA_DIR: 'rel\\y' })).toBe(win32.resolve('rel\\y'))
   expect(dataFolder(parseArgs(['--data-dir', 'E:\\h\\..\\i']), env)).toBe('E:\\i')
 })
 
