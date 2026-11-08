@@ -13,7 +13,7 @@ test('the data folder follows the core’s rule', () => {
 
 test('a relative data folder is made absolute, as one folder for the core and for Electron', () => {
   const env = { LOCALAPPDATA: 'C:\\L' }
-  const absolute = (p: string): boolean => /^[A-Za-z]:\\/.test(p)
+  const absolute = (p: string): boolean => win32.isAbsolute(p)
   expect(dataFolder(parseArgs(['--data-dir', 'rel\\x']), env)).toBe(win32.resolve('rel\\x'))
   expect(absolute(dataFolder(parseArgs(['--data-dir', 'rel\\x']), env))).toBe(true)
   expect(dataFolder(parseArgs([]), { ...env, TUSKFIZZY_DATA_DIR: 'rel\\y' })).toBe(win32.resolve('rel\\y'))
