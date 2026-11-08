@@ -44,11 +44,11 @@ Build an offline-first, Windows-focused TUSKFiZZY companion on Guild Board's Pyt
 
 ## Acceptance checklist
 
-- [ ] TUSKFiZZY identity and purple theme applied consistently.
-- [ ] Guild Board MIT licence, attribution, and third-party notices retained.
-- [ ] No HoYoverse artwork or credentials added without appropriate rights/safeguards.
-- [ ] Existing account data can be backed up and migrated without mixing accounts.
-- [ ] All listed TUSKFiZZY features are implemented and individually tested.
-- [ ] UI navigation, typing, focus, refresh, and window resizing work reliably.
+- [x] TUSKFiZZY identity and purple theme applied consistently.
+- [x] Guild Board MIT licence, attribution, and third-party notices retained.
+- [x] No HoYoverse artwork added; profile credentials use per-account encrypted local storage and wish-history keys are memory-only.
+- [x] Existing checklist and Genshin profile data can be exported/imported transactionally; credentials are re-entered separately per profile.
+- [ ] All listed TUSKFiZZY features are implemented and individually tested (feature code is present; end-to-end verification is pending).
+- [ ] UI navigation, typing, focus, refresh, and window resizing work reliably (build/test run pending).
 - [ ] Windows build and installer tested before release.
 - [ ] Default branch, live site, and existing installer remain untouched until explicit approval.
