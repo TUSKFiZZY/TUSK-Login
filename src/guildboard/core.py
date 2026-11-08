@@ -276,7 +276,7 @@ class Core:
             except (OSError, sqlite3.Error, StoreError):
                 log.warning("The daily backup could not be made", exc_info=True)
         self.tokens = TokenStore(paths.token_path)
-        self._tuskfizzy_note_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
+        self._tuskfizzy_note_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}\n        self._tuskfizzy_chronicle_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
         self._source: Any = None
         self._make_source: Callable[[], Any] | None = None  # the live source's maker, until it is made
         self._source_lock = threading.Lock()
@@ -997,6 +997,52 @@ class Core:
         TokenStore(self._tuskfizzy_session_path(account_id)).delete()
         self._tuskfizzy_note_cache.pop(account_id, None)
         self.bus.publish("tuskfizzy_changed")
+
+    async def tuskfizzy_profile_chronicle(self, account_id: str) -> dict[str, Any] | None:
+        """Read Battle Chronicle overview and endgame using this profile's own encrypted HoYoLAB session."""
+        if self.demo:
+            return None
+        profile = next((item for item in self.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+        if profile is None:
+            return None
+        now = self.clock.now()
+        cached = self._tuskfizzy_chronicle_cache.get(account_id)
+        if cached is not None and 0 <= (now - cached[0]).total_seconds() < 900:
+            return dict(cached[1])
+        tokens = TokenStore(self._tuskfizzy_session_path(account_id))
+        token = tokens.load()
+        if token is None or str(token.uid) != profile["uid"] or token.server != profile["server"]:
+            return None
+        await self._source_ready()
+        from guildboard.sources.hoyolab import HoyolabSource
+        source = HoyolabSource(tokens)
+        overview_result = await source.fetch("overview", now=now)
+        overview = overview_result.record
+        if overview is None:
+            return None
+        endgame_result = await source.fetch("endgame", now=now)
+        endgame = endgame_result.record
+        value = {
+            "uid": profile["uid"],
+            "nickname": overview.nickname,
+            "server": overview.server,
+            "adventureRank": overview.adventure_rank,
+            "abyssProgress": overview.abyss_progress,
+            "counters": dict(overview.counters),
+            "regions": [
+                {"name": region.name, "progress": region.pct,
+                 "areas": [{"name": area.name, "progress": area.pct} for area in region.areas]}
+                for region in overview.regions
+            ],
+            "endgame": [
+                {"mode": mode.mode, "label": mode.label, "hasData": mode.has_data,
+                 "result": mode.result_text, "score": mode.score, "period": mode.period_label}
+                for mode in (endgame.modes if endgame is not None else ())
+            ],
+            "readAt": overview_result.fetched_at.isoformat(),
+        }
+        self._tuskfizzy_chronicle_cache[account_id] = (now, value)
+        return dict(value)
 
     def tuskfizzy_session_connected(self, account_id: str) -> bool:
         """Whether this Genshin profile has its own saved login, without exposing any cookie."""
