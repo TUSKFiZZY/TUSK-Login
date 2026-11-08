@@ -1403,11 +1403,16 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             for item in core.store.tuskfizzy_genshin_accounts_list()
         ]
         daily_note = None
+        battle_chronicle = None
         # Each Genshin profile reads from its own encrypted HoYoLAB session. Selecting a profile never
         # borrows the primary Guild Board login or another profile's cookies.
         if day == core.clock.now().astimezone().date().isoformat() and not core.demo:
             selected_genshin_id = core.store.tuskfizzy_selected_genshin_id()
             if selected_genshin_id is not None:
+                try:
+                    battle_chronicle = await core.tuskfizzy_profile_chronicle(selected_genshin_id)
+                except (OSError, RuntimeError, ValueError):
+                    battle_chronicle = None
                 try:
                     note = await core.tuskfizzy_profile_note(selected_genshin_id)
                 except (OSError, RuntimeError, ValueError):
@@ -1425,6 +1430,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             "selectedGenshinId": core.store.tuskfizzy_selected_genshin_id(),
             "daily": core.store.tuskfizzy_daily_for(day),
             "dailyNote": daily_note,
+            "battleChronicle": battle_chronicle,
         })
 
     @app.post("/api/tuskfizzy/accounts")
