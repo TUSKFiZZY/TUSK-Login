@@ -255,12 +255,13 @@ export function Tuskfizzy({ live }: { live: Live }) {
             </div>
             <section className="gb-panel tf-genshin">
               <h2>Genshin accounts</h2>
+              <p className="tf-muted">Choose which UID to use for Daily Note matching. It must match the HoYoLAB account currently signed in; separate saved HoYoLAB sessions for each profile are not available yet.</p>
               {data.genshinAccounts.length === 0 ? <p className="tf-muted">No Genshin profiles added yet.</p> : (
                 <div className="tf-genshin-list">
                   {data.genshinAccounts.map(profile => (
                     <div className="tf-genshin-row" key={profile.id}>
                       <div><b>{profile.name}</b><span>UID {profile.uid} · {profile.server || 'Server not set'}{data.selectedGenshinId === profile.id ? ' · Selected' : ''}</span></div>
-                      <button className="gb-link" type="button" disabled={saving !== null || data.selectedGenshinId === profile.id} onClick={() => void selectGenshin(profile)}>{data.selectedGenshinId === profile.id ? 'Selected' : 'Set active'}</button>
+                      <button className="gb-link" type="button" disabled={saving !== null || data.selectedGenshinId === profile.id} onClick={() => void selectGenshin(profile)}>{data.selectedGenshinId === profile.id ? 'Selected' : 'Use for Daily Note'}</button>
                       <button className="gb-link" type="button" onClick={() => editGenshin(profile)}>Edit</button>
                       <button className="gb-link" type="button" onClick={() => void removeGenshin(profile)}>Remove</button>
                     </div>
