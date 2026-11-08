@@ -232,6 +232,21 @@ def fetch_hoyoverse(
     return _read(request, timeout, max_bytes)
 
 
+def fetch_enka_profile(uid: str, *, timeout: float = 20.0, max_bytes: int = 2_000_000) -> bytes:
+    """Fetch one public Enka Network profile for a 9- or 10-digit Genshin UID.
+
+    The URL is constructed only from validated ASCII digits, uses the one exact HTTPS
+    host, sends no HoYoLAB cookies, and refuses redirects. The caller should cache
+    successful responses according to Enka's TTL and handle 404/429/424 separately.
+    """
+    if not isinstance(uid, str) or not re.fullmatch(r"[0-9]{9,10}", uid):
+        raise ValueError("Genshin UID must contain 9 or 10 digits")
+    url = f"https://enka.network/api/uid/{uid}/"
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+    request.follow_redirects = False
+    return _read(request, timeout, max_bytes)
+
+
 def fetch_authkey(
     cookies: Mapping[str, str], body: bytes, *, timeout: float = 20.0, max_bytes: int = 100_000
 ) -> bytes:
