@@ -6,7 +6,7 @@ import { type Live, useModel } from '../live.ts'
 
 type Account = { id: string; name: string; portrait: string; genshinId: string | null; createdAt: string }
 type GenshinAccount = { id: string; name: string; uid: string; server: string; createdAt?: string }
-type Tracker = { accounts: Account[]; genshinAccounts: GenshinAccount[]; daily: Record<string, boolean[]> }
+type DailyNote = { profileName: string; resin: number | null; resinMax: number | null; resinReadAt: string | null; commissionDone: number | null; commissionTotal: number | null; bonusClaimed: boolean; expeditionsDone: number | null; expeditionsTotal: number | null; readAt: string }\ntype Tracker = { accounts: Account[]; genshinAccounts: GenshinAccount[]; daily: Record<string, boolean[]>; dailyNote?: DailyNote | null }
 type MonthTracker = { records: Record<string, Record<string, boolean[]>> }
 const TASKS = [{ key: 'login', label: 'Login' }, { key: 'commission', label: 'Commission' }, { key: 'resin', label: 'Resin' }] as const
 
@@ -170,6 +170,17 @@ export function Tuskfizzy({ live }: { live: Live }) {
           <button className="gb-btn quiet" type="button" onClick={() => setDay(todayKey())}>Today</button>
         </div>
         <p className="tf-caption">Daily checklist · {day}</p>
+        {data?.dailyNote && (
+          <section className="gb-panel tf-daily-note">
+            <div className="tf-note-heading"><div><h2>Daily Note</h2><span>{data.dailyNote.profileName} · HoYoLAB</span></div><span className="tf-note-updated">Updated {new Date(data.dailyNote.readAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
+            <div className="tf-note-grid">
+              <div><span>Original Resin</span><b>{data.dailyNote.resin ?? '—'} / {data.dailyNote.resinMax ?? '—'}</b></div>
+              <div><span>Daily Commissions</span><b>{data.dailyNote.commissionDone ?? '—'} / {data.dailyNote.commissionTotal ?? '—'}</b></div>
+              <div><span>Expeditions</span><b>{data.dailyNote.expeditionsDone ?? '—'} / {data.dailyNote.expeditionsTotal ?? '—'}</b></div>
+              <div><span>Bonus Reward</span><b>{data.dailyNote.bonusClaimed ? 'Claimed' : 'Not claimed'}</b></div>
+            </div>
+          </section>
+        )}
         <div className="tf-month-actions">
           <button className="gb-btn quiet" type="button" onClick={() => setShowMonth(value => !value)}>{showMonth ? 'Day view' : 'Month overview'}</button>
         </div>
