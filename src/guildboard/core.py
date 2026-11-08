@@ -997,10 +997,18 @@ class Core:
         self.bus.publish("tuskfizzy_changed")
         return {"uid": str(chosen.uid), "nickname": chosen.nickname, "server": chosen.server}
 
-    def tuskfizzy_logout(self, account_id: str) -> None:
-        TokenStore(self._tuskfizzy_session_path(account_id)).delete()
+    def tuskfizzy_forget_session_id(self, account_id: str) -> None:
+        """Delete a profile's encrypted session even when an import has just removed its profile row."""
+        if not isinstance(account_id, str) or not account_id or len(account_id) > 128:
+            raise ValueError("Choose a valid Genshin profile.")
+        digest = hashlib.sha256(account_id.encode("utf-8")).hexdigest()
+        TokenStore(self.paths.data_dir / "tuskfizzy_sessions" / f"{digest}.bin").delete()
         self._tuskfizzy_note_cache.pop(account_id, None)
         self._tuskfizzy_chronicle_cache.pop(account_id, None)
+
+    def tuskfizzy_logout(self, account_id: str) -> None:
+        self._tuskfizzy_session_path(account_id)  # refuse unknown profile IDs
+        self.tuskfizzy_forget_session_id(account_id)
         self.bus.publish("tuskfizzy_changed")
 
     async def tuskfizzy_profile_chronicle(self, account_id: str) -> dict[str, Any] | None:
