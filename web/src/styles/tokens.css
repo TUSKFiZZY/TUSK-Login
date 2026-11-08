@@ -24,14 +24,14 @@
   --ink2: #D4CBE5;
   /* Small text: 5.14:1, and 4.79:1 on the tint. It was #7E7A6C, 3.85:1. */
   --muted: #AAA2BD;
-  /* The one gold of every progress mark, bars, rings and pips: 3.63:1. It was #C9A24B, 2.15:1, which stays as --r1. */
+  /* The lavender accent of progress marks, bars, rings and pips; --r1 remains the deeper interactive purple. */
   --fill: #B58CFF;
   --track: #39334B;
   /* The outline of an unticked box and of an empty pip: 3.50:1, and 3.25:1 on the tint. */
   --outline: #8D82A5;
   /* Edit's landing outline, the resize grips and the size tag's plate: 4.63:1, and 3.83:1 on the page. */
   --gold-ink: #D1B8FF;
-  /* Ready marks. Ready text is --good. */
+  /* Ready marks. Light green text is used on dark cards; the pale completion chips use a separate dark green ink. */
   --done: #69E39A;
   /* The undo note's brown for a refused change (top bar and undo design, section 6); the rail's text on it: 9.1:1. */
   --refused: #30213F;
@@ -70,9 +70,9 @@
   --wish-standard: #E58BA2;
   --wish-chronicled: #8D75D6;
   /* "Other" among the sources of the primogems earned per day (the ledger plan, Task 7), stacked above the commissions'
-     gold, the Welkin's blue and the events' and endgame's wish colours: a quiet tan for the rest, not a mark of its own. */
+     gold, the Welkin's blue and the events' and endgame's wish colours: a quiet muted plum for the rest, not a mark of its own. */
   --other: #6B607C;
-  /* The Ledger's spent amounts, a brown beside the earned ones' --good (the ledger design, section 6). */
+  /* The Ledger's spent amounts, a warm coral beside the earned ones' --good. */
   --spent: #D27C64;
   /*
    * The Endgame card's three modes (the Stats months and Wrapped design, section 3.1): accents only, for a header's bottom
