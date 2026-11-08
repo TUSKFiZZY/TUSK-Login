@@ -1399,6 +1399,8 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             return _error(503, str(error))
         except enka.EnkaError as error:
             return _error(502, str(error))
+        except Exception:
+            return _error(502, "Enka Network returned a profile that could not be read.")
         return JSONResponse(profile)
 
     @app.get("/api/tuskfizzy/tracker")
