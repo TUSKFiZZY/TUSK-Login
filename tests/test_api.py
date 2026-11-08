@@ -1020,3 +1020,37 @@ def test_tuskfizzy_profile_wish_import_passes_url_to_uid_scoped_importer(client,
 def test_tuskfizzy_profile_wish_import_requires_url(client):
     response = client.post("/api/tuskfizzy/genshin-accounts/profile-a/wish-import", json={})
     assert response.status_code == 422
+
+
+
+def test_core_converts_legacy_wish_url_to_profile_scoped_import(client, core, monkeypatch):
+    profile = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    seen = []
+    monkeypatch.setattr(core.wish_import, "start_with_link", lambda link, uid: seen.append((link, uid)))
+    url = "https://webstatic-sea.hoyoverse.com/genshin/event/gacha?authkey=sample-key&authkey_ver=1"
+    core.tuskfizzy_import_wish_link(profile["id"], url)
+    assert len(seen) == 1
+    link, uid = seen[0]
+    assert uid == 1234567890
+    assert link.query["authkey"] == "sample-key"
+    assert link.query["auth_appid"] == "webview_gacha"
+    assert link.query["sign_type"] == "2"
+    assert link.query["region"] == "os_asia"
+
+
+def test_core_refuses_legacy_wish_url_for_wrong_host_or_region(client, core, monkeypatch):
+    profile = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    monkeypatch.setattr(core.wish_import, "start_with_link", lambda link, uid: None)
+    with pytest.raises(ValueError):
+        core.tuskfizzy_import_wish_link(profile["id"], "https://evil.example/?authkey=x&authkey_ver=1")
+    with pytest.raises(ValueError):
+        core.tuskfizzy_import_wish_link(
+            profile["id"],
+            "https://webstatic-sea.hoyoverse.com/gacha?authkey=x&authkey_ver=1&region=os_euro",
+        )
