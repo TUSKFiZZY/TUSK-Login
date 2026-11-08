@@ -753,6 +753,30 @@ def test_tuskfizzy_genshin_profiles_can_be_managed_and_unlinked(client):
     assert tracker["accounts"][0]["genshinId"] is None
 
 
+def test_tuskfizzy_selected_genshin_profile_can_be_changed(client):
+    first = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    second = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Europe", "uid": "9876543210", "server": "os_eu"},
+    ).json()["account"]
+
+    selected = client.put("/api/tuskfizzy/selected-genshin", json={"id": first["id"]})
+    assert selected.status_code == 200
+    assert selected.json()["selectedGenshinId"] == first["id"]
+    assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"}).json()["selectedGenshinId"] == first["id"]
+
+    changed = client.put("/api/tuskfizzy/selected-genshin", json={"id": second["id"]})
+    assert changed.status_code == 200
+    assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"}).json()["selectedGenshinId"] == second["id"]
+
+    cleared = client.put("/api/tuskfizzy/selected-genshin", json={"id": None})
+    assert cleared.status_code == 200
+    assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"}).json()["selectedGenshinId"] is None
+
+
 def test_tuskfizzy_daily_note_endpoint_applies_threshold_rules(client):
     account = client.post("/api/tuskfizzy/accounts", json={"name": "Main"}).json()["account"]
     ident = account["id"]
