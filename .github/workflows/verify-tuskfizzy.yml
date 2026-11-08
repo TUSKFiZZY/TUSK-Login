@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   python:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 20
     steps:
       - name: Check out
@@ -30,6 +30,7 @@ jobs:
       - name: Install Python dependencies
         run: uv sync --frozen
       - name: Run Python tests
+        shell: powershell
         run: uv run --frozen python -m pytest -q -p no:cacheprovider
 
   web:
