@@ -4,6 +4,8 @@
 
 **Your Genshin day on one board.**
 
+*TUSKFiZZY is an independent integration based on Guild Board by QL1STY.*
+
 *An independent TUSKFiZZY integration based on Guild Board by QL1STY.*
 
 Resin, commissions, achievements, wishes, primogems and your characters' plans, in one Windows app that keeps it all on your PC and never touches the game.
