@@ -73,18 +73,18 @@ KEEP_ALIVE_SECONDS = 15.0
 MAX_LOG_ROWS = 500
 MAX_CLOCK_STEP_SECONDS = 400 * 86_400
 SLOW_DEMO_SECONDS = 0.5
-# The page may load and contact only Guild Board itself; the browser enforces it.
+# The page may load and contact only TUSKFiZZY itself; the browser enforces it.
 CONTENT_SECURITY_POLICY = (
     "default-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; "
     "form-action 'none'; frame-ancestors 'none'"
 )
 
 PLACEHOLDER_PAGE = (
-    "<!doctype html><meta charset='utf-8'><title>Guild Board</title>"
-    "<p>Guild Board's core is running. The interface has not been built yet.</p>"
+    "<!doctype html><meta charset='utf-8'><title>TUSKFiZZY</title>"
+    "<p>TUSKFiZZY's core is running. The interface has not been built yet.</p>"
 )
 SIGNED_IN_LINE = "Signed in. You can close this tab."
-NOT_FINISHED_LINE = "Signing in did not finish. You can close this tab and try again in Guild Board."
+NOT_FINISHED_LINE = "Signing in did not finish. You can close this tab and try again in TUSKFiZZY."
 # What a sign-in's code can be: URL-safe characters, 512 at most. Supabase's are far shorter.
 CALLBACK_CODE = re.compile(r"[A-Za-z0-9._~-]{1,512}")
 
@@ -157,7 +157,7 @@ def _callback_page(line: str, status: int) -> HTMLResponse:
     """The line a browser ends on after signing in. The address it came to holds the code, so neither a cache nor a page it
     goes to next may keep it."""
     return HTMLResponse(
-        f"<!doctype html><meta charset='utf-8'><title>Guild Board</title><p>{line}</p>",
+        f"<!doctype html><meta charset='utf-8'><title>TUSKFiZZY</title><p>{line}</p>",
         status_code=status, headers={"Cache-Control": "no-store", "Referrer-Policy": "no-referrer"},
     )
 
@@ -302,7 +302,7 @@ async def sse_stream(bus: EventBus, hello: Callable[[], dict[str, Any]]) -> Asyn
                 yield ": keep-alive\n\n"
                 continue
             if event["type"] == "shutdown":
-                return  # Guild Board is closing; ending the stream lets the server stop at once
+                return  # TUSKFiZZY is closing; ending the stream lets the server stop at once
             yield _sse(event["type"], event)
     finally:
         bus.unsubscribe(queue)
@@ -333,14 +333,14 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         if request.url.path.startswith("/api/"):
             # A page served by another program on this PC would send the session cookie too, because
             # cookies ignore the port. Browsers say where a request comes from, so anything that is
-            # not Guild Board's own page is refused. Programs that are not browsers send neither header.
+            # not TUSKFiZZY's own page is refused. Programs that are not browsers send neither header.
             origin = request.headers.get("origin")
             fetch_site = request.headers.get("sec-fetch-site")
             if (origin is not None and origin not in allowed_origins) or fetch_site not in (None, "same-origin", "none"):
-                return _error(403, "This request did not come from Guild Board.")
+                return _error(403, "This request did not come from TUSKFiZZY.")
             presented = request.cookies.get(SESSION_COOKIE, "")
             if not _same(presented, core.session_token):
-                return _error(401, "Open Guild Board from its own window or launch link.")
+                return _error(401, "Open TUSKFiZZY from its own window or launch link.")
             return await call_next(request)
         response = await call_next(request)
         response.headers["Content-Security-Policy"] = CONTENT_SECURITY_POLICY
@@ -529,7 +529,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
 
     @app.post("/api/update/install")
     async def install_update() -> Any:
-        """Download the newer release's installer and start it; the installer asks Guild Board to quit."""
+        """Download the newer release's installer and start it; the installer asks TUSKFiZZY to quit."""
         if not core.updater.install():
             return _error(409, "There is no update to install.")
         return core.status()
@@ -677,7 +677,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             return _error(422, str(error))
         if not core.request_window("save_picture"):
             core.drop_picture()
-            return _error(409, "Open Guild Board's window to save the picture.")
+            return _error(409, "Open TUSKFiZZY's window to save the picture.")
         return JSONResponse({"opened": True})
 
     @app.get("/api/synclog")
@@ -715,7 +715,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
 
     async def _ask_window(kind: str) -> Response:
         if not core.request_window(kind):
-            return _error(409, "This needs the Guild Board window.")
+            return _error(409, "This needs the TUSKFiZZY window.")
         return JSONResponse({"opened": True})
 
     async def _open_window(kind: str) -> Response:
@@ -761,7 +761,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         if core.demo:
             return _error(422, BACKUP_DEMO)
         if not core.request_window("export_backup"):
-            return _error(409, "Open Guild Board's window to export a backup.")
+            return _error(409, "Open TUSKFiZZY's window to export a backup.")
         return JSONResponse({"opened": True})
 
     @app.get("/api/backups")
@@ -1131,7 +1131,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
 
     @app.post("/api/notifications/test")
     async def notifications_test() -> dict[str, bool]:
-        """Send a test notification from the tray icon. False when Guild Board runs without one, as the core alone."""
+        """Send a test notification from the tray icon. False when TUSKFiZZY runs without one, as the core alone."""
         return {"sent": core.notify("test", TEST_TEXT)}
 
     @app.get("/api/achievements/list")
@@ -1269,7 +1269,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
 
     @app.post("/api/demo/update")
     async def demo_update(body: dict[str, Any] = Body(...)) -> Response:
-        """Demo mode only: show the notice of a newer Guild Board in one of its states."""
+        """Demo mode only: show the notice of a newer TUSKFiZZY in one of its states."""
         if not core.demo:
             return _error(404, "Not found.")
         state = body.get("state")
@@ -1447,8 +1447,8 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             minutes = max(1, math.ceil(until_count / 60)) if until_count else answer["wait_minutes"]
             again = f"Try again in {minutes} minute{'' if minutes == 1 else 's'}."
             if until_count:
-                return _error(409, f"Guild Board has read HoYoLAB {DAILY_CAP} times today, the most it reads in a day. {again}")
-            return _error(409, f"Guild Board read HoYoLAB a moment ago. {again}")
+                return _error(409, f"TUSKFiZZY has read HoYoLAB {DAILY_CAP} times today, the most it reads in a day. {again}")
+            return _error(409, f"TUSKFiZZY read HoYoLAB a moment ago. {again}")
         if answer.get("login") or answer.get("blocked") in ("login_needed", None):
             return _error(409, "Log in to HoYoLAB first.")
         if answer["blocked"] == "paused":
