@@ -97,6 +97,12 @@ jobs:
         working-directory: web
         run: npx vitest run
 
+      - name: Build the interface for desktop end-to-end tests
+        run: npm run build --prefix web
+
+      - name: Run desktop end-to-end tests on Windows
+        run: npm run e2e --prefix shell
+
       - name: Build the installer
         shell: powershell
         run: powershell -ExecutionPolicy Bypass -File build-installer.ps1
