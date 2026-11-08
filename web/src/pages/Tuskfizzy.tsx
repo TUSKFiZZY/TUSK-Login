@@ -101,7 +101,7 @@ export function Tuskfizzy({ live }: { live: Live }) {
         <div className="tf-date">
           <button className="gb-btn quiet" type="button" onClick={() => {
             const next = new Date(`${day}T12:00:00`); next.setDate(next.getDate() - 1)
-            setDay(todayKey.call(null) === day ? [next.getFullYear(), String(next.getMonth()+1).padStart(2,'0'), String(next.getDate()).padStart(2,'0')].join('-') : [next.getFullYear(), String(next.getMonth()+1).padStart(2,'0'), String(next.getDate()).padStart(2,'0')].join('-'))
+            setDay([next.getFullYear(), String(next.getMonth()+1).padStart(2,'0'), String(next.getDate()).padStart(2,'0')].join('-'))
           }}>Previous day</button>
           <label>
             <span className="sr-only">Selected date</span>
