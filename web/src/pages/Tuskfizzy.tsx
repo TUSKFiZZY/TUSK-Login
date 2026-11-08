@@ -7,7 +7,7 @@ import { type Live, useModel } from '../live.ts'
 type Account = { id: string; name: string; portrait: string; genshinId: string | null; createdAt: string }
 type GenshinAccount = { id: string; name: string; uid: string; server: string; createdAt?: string }
 type DailyNote = { profileName: string; resin: number | null; resinMax: number | null; resinReadAt: string | null; commissionDone: number | null; commissionTotal: number | null; bonusClaimed: boolean; expeditionsDone: number | null; expeditionsTotal: number | null; readAt: string }
-type Tracker = { accounts: Account[]; genshinAccounts: GenshinAccount[]; daily: Record<string, boolean[]>; dailyNote?: DailyNote | null }
+type Tracker = { accounts: Account[]; genshinAccounts: GenshinAccount[]; daily: Record<string, boolean[]>; selectedGenshinId?: string | null; dailyNote?: DailyNote | null }
 type MonthTracker = { records: Record<string, Record<string, boolean[]>> }
 const TASKS = [{ key: 'login', label: 'Login' }, { key: 'commission', label: 'Commission' }, { key: 'resin', label: 'Resin' }] as const
 
@@ -116,6 +116,19 @@ export function Tuskfizzy({ live }: { live: Live }) {
       if (editingGenshin) await api.put(`/api/tuskfizzy/genshin-accounts/${encodeURIComponent(editingGenshin)}`, body)
       else await api.post('/api/tuskfizzy/genshin-accounts', body)
       clearGenshin()
+      setRevision(value => value + 1)
+    } catch (failure) {
+      setProblem(messageOf(failure))
+    } finally {
+      setSaving(null)
+    }
+  }
+  const selectGenshin = async (account: GenshinAccount) => {
+    if (saving !== null) return
+    setSaving(account.id)
+    setProblem(null)
+    try {
+      await api.put('/api/tuskfizzy/selected-genshin', { id: account.id })
       setRevision(value => value + 1)
     } catch (failure) {
       setProblem(messageOf(failure))
@@ -246,7 +259,8 @@ export function Tuskfizzy({ live }: { live: Live }) {
                 <div className="tf-genshin-list">
                   {data.genshinAccounts.map(profile => (
                     <div className="tf-genshin-row" key={profile.id}>
-                      <div><b>{profile.name}</b><span>UID {profile.uid} · {profile.server || 'Server not set'}</span></div>
+                      <div><b>{profile.name}</b><span>UID {profile.uid} · {profile.server || 'Server not set'}{data.selectedGenshinId === profile.id ? ' · Selected' : ''}</span></div>
+                      <button className="gb-link" type="button" disabled={saving !== null || data.selectedGenshinId === profile.id} onClick={() => void selectGenshin(profile)}>{data.selectedGenshinId === profile.id ? 'Selected' : 'Set active'}</button>
                       <button className="gb-link" type="button" onClick={() => editGenshin(profile)}>Edit</button>
                       <button className="gb-link" type="button" onClick={() => void removeGenshin(profile)}>Remove</button>
                     </div>
