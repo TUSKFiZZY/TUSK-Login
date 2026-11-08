@@ -1259,6 +1259,78 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         core.bus.publish("tuskfizzy_imported", counts=counts)
         return JSONResponse({"imported": counts})
 
+    @app.get("/api/tuskfizzy/tracker")
+    async def tuskfizzy_tracker(day: str = Query(...)) -> Response:
+        if not re.fullmatch(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", day):
+            return _error(422, "Choose a valid calendar date.")
+        try:
+            datetime.strptime(day, "%Y-%m-%d")
+        except ValueError:
+            return _error(422, "Choose a valid calendar date.")
+        return JSONResponse({
+            "accounts": core.store.tuskfizzy_accounts_list(),
+            "genshinAccounts": core.store.tuskfizzy_genshin_accounts_list(),
+            "daily": core.store.tuskfizzy_daily_for(day),
+        })
+
+    @app.post("/api/tuskfizzy/accounts")
+    async def tuskfizzy_create_account(body: dict[str, Any] = Body(...)) -> Response:
+        name, portrait, genshin_id = body.get("name"), body.get("portrait", ""), body.get("genshinId")
+        if not isinstance(name, str) or not name.strip() or len(name.strip()) > 80:
+            return _error(422, "Enter a profile name of up to 80 characters.")
+        if (not isinstance(portrait, str) or len(portrait) > 1_000_000
+                or (portrait and re.fullmatch(r"data:image/(?:png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}", portrait) is None)):
+            return _error(422, "Choose a valid PNG, JPEG or WebP profile picture smaller than 1 MB.")
+        if genshin_id is not None and (not isinstance(genshin_id, str) or len(genshin_id) > 128):
+            return _error(422, "Choose a valid linked Genshin profile.")
+        if genshin_id and not any(item["id"] == genshin_id for item in core.store.tuskfizzy_genshin_accounts_list()):
+            return _error(422, "That Genshin profile is not available.")
+        ident = secrets.token_hex(12)
+        created = datetime.now().astimezone().isoformat(timespec="seconds")
+        core.store.tuskfizzy_put_account(ident, name.strip(), portrait, genshin_id, created)
+        return JSONResponse({"account": next(item for item in core.store.tuskfizzy_accounts_list() if item["id"] == ident)})
+
+    @app.put("/api/tuskfizzy/accounts/{account_id}")
+    async def tuskfizzy_update_account(account_id: str, body: dict[str, Any] = Body(...)) -> Response:
+        current = next((item for item in core.store.tuskfizzy_accounts_list() if item["id"] == account_id), None)
+        if current is None:
+            return _error(404, "That TUSKFiZZY profile no longer exists.")
+        name, portrait, genshin_id = body.get("name"), body.get("portrait", current["portrait"]), body.get("genshinId", current["genshinId"])
+        if not isinstance(name, str) or not name.strip() or len(name.strip()) > 80:
+            return _error(422, "Enter a profile name of up to 80 characters.")
+        if (not isinstance(portrait, str) or len(portrait) > 1_000_000
+                or (portrait and re.fullmatch(r"data:image/(?:png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}", portrait) is None)):
+            return _error(422, "Choose a valid PNG, JPEG or WebP profile picture smaller than 1 MB.")
+        if genshin_id is not None and (not isinstance(genshin_id, str) or len(genshin_id) > 128):
+            return _error(422, "Choose a valid linked Genshin profile.")
+        if genshin_id and not any(item["id"] == genshin_id for item in core.store.tuskfizzy_genshin_accounts_list()):
+            return _error(422, "That Genshin profile is not available.")
+        core.store.tuskfizzy_put_account(account_id, name.strip(), portrait, genshin_id, current["createdAt"])
+        return JSONResponse({"account": next(item for item in core.store.tuskfizzy_accounts_list() if item["id"] == account_id)})
+
+    @app.delete("/api/tuskfizzy/accounts/{account_id}")
+    async def tuskfizzy_remove_account(account_id: str) -> Response:
+        if not core.store.tuskfizzy_delete_account(account_id):
+            return _error(404, "That TUSKFiZZY profile no longer exists.")
+        return JSONResponse({"deleted": True})
+
+    @app.put("/api/tuskfizzy/daily")
+    async def tuskfizzy_update_daily(body: dict[str, Any] = Body(...)) -> Response:
+        day, account_id, task, checked = body.get("day"), body.get("accountId"), body.get("task"), body.get("checked")
+        if not isinstance(day, str) or not re.fullmatch(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", day):
+            return _error(422, "Choose a valid calendar date.")
+        try:
+            datetime.strptime(day, "%Y-%m-%d")
+        except ValueError:
+            return _error(422, "Choose a valid calendar date.")
+        if not isinstance(account_id, str) or not account_id or len(account_id) > 128:
+            return _error(422, "Choose a valid TUSKFiZZY profile.")
+        if task not in ("login", "commission", "resin") or type(checked) is not bool:
+            return _error(422, "Choose Login, Commission or Resin and a valid checkbox value.")
+        if not core.store.tuskfizzy_set_task(day, account_id, task, checked):
+            return _error(404, "That TUSKFiZZY profile no longer exists.")
+        return JSONResponse({"saved": True, "daily": core.store.tuskfizzy_daily_for(day)})
+
     @app.post("/api/import/preview")
     async def import_preview(body: dict[str, Any] = Body(...)) -> Response:
         named = _import_file(body)
