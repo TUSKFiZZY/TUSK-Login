@@ -1,8 +1,10 @@
 <div align="center">
 
-# ✦ Guild Board
+# ✦ TUSKFiZZY
 
 **Your Genshin day on one board.**
+
+*An independent TUSKFiZZY integration based on Guild Board by QL1STY.*
 
 Resin, commissions, achievements, wishes, primogems and your characters' plans, in one Windows app that keeps it all on your PC and never touches the game.
 
@@ -29,7 +31,7 @@ Unofficial and fan-made. Not affiliated with or endorsed by HoYoverse or COGNOSP
 
 ## What it does
 
-Guild Board reads your HoYoLAB account, with the login you give it, and keeps what it finds on your own PC. Unless you sign in to its optional online features, nothing about you reaches its developer.
+TUSKFiZZY is being built on Guild Board's local-first foundation. The upstream Guild Board project is by QL1STY and is used under its MIT licence. This integration is a work in progress; the existing Guild Board feature set is not yet fully adapted to TUSKFiZZY. Guild Board reads your HoYoLAB account, with the login you give it, and keeps what it finds on your own PC. Unless you sign in to its optional online features, nothing about you reaches its developer.
 
 ### 🧭 The Board: your day at a glance
 
