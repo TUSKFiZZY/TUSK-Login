@@ -50,3 +50,10 @@ The export must be generated locally by the old app. Do not ask the user to past
 - [ ] Account-to-Genshin associations remain isolated.
 - [ ] Resin and Commission automatic completion rules match the legacy app.
 - [ ] Failed import leaves the destination database unchanged.
+
+
+## Implementation status on the TUSKFiZZY migration branch
+
+The migration branch now includes SQLite tables for TUSKFiZZY checklist profiles, Genshin profile references, and dated Login/Commission/Resin records. The authenticated local API route `POST /api/tuskfizzy/import` validates the versioned export shape before writing it in one transaction; repeated imports update matching IDs rather than duplicating them. The database migration backs up an existing database before upgrading, following the normal Store migration path.
+
+This is the storage/API foundation only. The old app's export button, the new Settings import screen and preview/confirmation flow, the visible multi-account checklist, and the live HoYoLAB/Enka feature integration are not implemented yet. No cookies or HoYoLAB credentials are accepted by this import route.
