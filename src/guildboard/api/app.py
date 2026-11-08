@@ -1389,7 +1389,10 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         except ValueError:
             return _error(422, "Choose a valid calendar date.")
         accounts = core.store.tuskfizzy_accounts_list()
-        genshin_accounts = core.store.tuskfizzy_genshin_accounts_list()
+        genshin_accounts = [
+            {**item, "sessionConnected": core.tuskfizzy_session_connected(item["id"])}
+            for item in core.store.tuskfizzy_genshin_accounts_list()
+        ]
         daily_note = None
         # Each Genshin profile reads from its own encrypted HoYoLAB session. Selecting a profile never
         # borrows the primary Guild Board login or another profile's cookies.
