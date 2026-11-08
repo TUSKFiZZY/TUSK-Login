@@ -113,7 +113,7 @@ export function Tuskfizzy({ live }: { live: Live }) {
           }}>Previous day</button>
           <label>
             <span className="sr-only">Selected date</span>
-            <input type="date" value={day} max={todayKey()} onChange={event => setDay(event.target.value)} />
+            <input type="date" value={day} max={todayKey()} onChange={event => { if (event.target.value) { setDay(event.target.value); setMonthOffset(0) } }} />
           </label>
           <button className="gb-btn quiet" type="button" disabled={day >= todayKey()} onClick={() => {
             const next = new Date(`${day}T12:00:00`); next.setDate(next.getDate() + 1)
@@ -139,7 +139,6 @@ export function Tuskfizzy({ live }: { live: Live }) {
                 const number = index + 1
                 const dateKey = `${monthKey}-${String(number).padStart(2, '0')}`
                 const past = dateKey < todayKey()
-                const future = dateKey >= todayKey()
                 const saved = monthData?.records[dateKey] ?? {}
                 const complete = Boolean(data?.accounts.length) && data!.accounts.every(account => saved[account.id]?.length === 3 && saved[account.id].every(Boolean))
                 return <button type="button" key={dateKey} disabled={!past} className={`tf-day ${past ? complete ? 'complete' : 'incomplete' : 'future'}`} onClick={() => { setDay(dateKey); setMonthOffset(0); setShowMonth(false) }}>
