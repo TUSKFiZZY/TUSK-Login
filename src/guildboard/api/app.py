@@ -1247,7 +1247,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             counts = core.store.import_tuskfizzy_data(clean_accounts, clean_daily, clean_genshin, selected)
         except (ValueError, TypeError) as error:
             return _error(422, f"The export could not be imported: {error}")
-        core.bus.publish("tuskfizzy_imported", counts)
+        core.bus.publish("tuskfizzy_imported", counts=counts)
         return JSONResponse({"imported": counts})
 
     @app.post("/api/import/preview")
