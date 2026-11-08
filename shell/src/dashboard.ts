@@ -324,7 +324,7 @@ export class Dashboard {
     const { bounds, maximized } = restoredBounds(readPlacement(this.deps.placementFile), workAreas, primary)
     const win = this.deps.createWindow({
       ...bounds,
-      title: this.deps.demo ? 'Guild Board - demo data' : 'Guild Board',
+      title: this.deps.demo ? 'TUSKFiZZY - demo data' : 'TUSKFiZZY',
       icon: this.deps.icon,
       backgroundColor: BACKGROUND,
       show: false,
