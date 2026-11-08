@@ -1,6 +1,6 @@
 # TUSKFiZZY installer
 #
-# Builds "TUSKFiZZY Setup <version>.exe" in dist-installer\: one file to give to someone else. It installs Guild
+# Builds "TUSKFiZZY Setup <version>.exe" in dist-installer\: one file to give to someone else. It installs TUSKFiZZY
 # Board for them with no administrator rights and no Python, Node.js or uv of their own, and adds it to their Start
 # menu and desktop with its icon.
 #
