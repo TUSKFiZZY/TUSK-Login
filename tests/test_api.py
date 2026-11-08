@@ -762,3 +762,28 @@ def test_tuskfizzy_daily_note_endpoint_applies_threshold_rules(client):
 
     claimed = client.post("/api/tuskfizzy/observe-note", json={**base, "resin": 120, "extraRewardClaimed": True})
     assert claimed.json()["daily"][ident] == [False, True, True]
+
+
+def test_tracker_applies_fresh_notes_only_to_the_linked_genshin_profile(client, core):
+    genshin = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    profile = client.post(
+        "/api/tuskfizzy/accounts",
+        json={"name": "Main", "genshinId": genshin["id"]},
+    ).json()["account"]
+    core.store.set_meta("account_uid", "1234567890")
+    day = core.clock.now().astimezone().date().isoformat()
+
+    core.store.set_latest_doc("notes", core.clock.now(), {"resin": 55, "extra_reward_claimed": False})
+    client.get("/api/tuskfizzy/tracker", params={"day": day})
+    assert core.store.tuskfizzy_daily_for(day)[profile["id"]] == [False, False, False]
+
+    core.store.set_latest_doc("notes", core.clock.now(), {"resin": 49, "extra_reward_claimed": False})
+    client.get("/api/tuskfizzy/tracker", params={"day": day})
+    assert core.store.tuskfizzy_daily_for(day)[profile["id"]] == [False, False, True]
+
+    core.store.set_latest_doc("notes", core.clock.now(), {"resin": 49, "extra_reward_claimed": True})
+    client.get("/api/tuskfizzy/tracker", params={"day": day})
+    assert core.store.tuskfizzy_daily_for(day)[profile["id"]] == [False, True, True]
