@@ -9,6 +9,7 @@ type GenshinAccount = { id: string; name: string; uid: string; server: string; c
 type DailyNote = { profileName: string; resin: number | null; resinMax: number | null; resinReadAt: string | null; commissionDone: number | null; commissionTotal: number | null; bonusClaimed: boolean; expeditionsDone: number | null; expeditionsTotal: number | null; readAt: string }
 type Tracker = { accounts: Account[]; genshinAccounts: GenshinAccount[]; daily: Record<string, boolean[]>; selectedGenshinId?: string | null; dailyNote?: DailyNote | null }
 type MonthTracker = { records: Record<string, Record<string, boolean[]>> }
+type EnkaProfile = { uid: string; playerInfo: { nickname?: string; level?: number; worldLevel?: number; finishAchievementNum?: number; signature?: string }; avatarInfoList: Array<{ avatarId?: number; level?: number; fetterInfo?: { expLevel?: number } }>; ttl: number; fetchedAt: number; cached: boolean }
 const TASKS = [{ key: 'login', label: 'Login' }, { key: 'commission', label: 'Commission' }, { key: 'resin', label: 'Resin' }] as const
 
 function todayKey(): string {
@@ -48,6 +49,8 @@ export function Tuskfizzy({ live }: { live: Live }) {
   const [genshinName, setGenshinName] = useState('')
   const [genshinUid, setGenshinUid] = useState('')
   const [genshinServer, setGenshinServer] = useState('os_asia')
+  const [enkaProfile, setEnkaProfile] = useState<EnkaProfile | null>(null)
+  const [enkaLoading, setEnkaLoading] = useState(false)
   const [editingGenshin, setEditingGenshin] = useState<string | null>(null)
 
   const edit = (account: Account) => {
@@ -136,6 +139,20 @@ export function Tuskfizzy({ live }: { live: Live }) {
       setSaving(null)
     }
   }
+  const loadEnka = async (account: GenshinAccount) => {
+    if (enkaLoading) return
+    setEnkaLoading(true)
+    setProblem(null)
+    try {
+      const profile = await api.get<EnkaProfile>('/api/tuskfizzy/enka/' + encodeURIComponent(account.uid))
+      setEnkaProfile(profile)
+    } catch (failure) {
+      setProblem(messageOf(failure))
+      setEnkaProfile(null)
+    } finally {
+      setEnkaLoading(false)
+    }
+  }
   const removeGenshin = async (account: GenshinAccount) => {
     if (saving !== null || !window.confirm(`Remove Genshin profile ${account.name}? Checklist profiles linked to it will be unlinked.`)) return
     setSaving(account.id)
@@ -193,6 +210,26 @@ export function Tuskfizzy({ live }: { live: Live }) {
               <div><span>Expeditions</span><b>{data.dailyNote.expeditionsDone ?? '—'} / {data.dailyNote.expeditionsTotal ?? '—'}</b></div>
               <div><span>Bonus Reward</span><b>{data.dailyNote.bonusClaimed ? 'Claimed' : 'Not claimed'}</b></div>
             </div>
+          </section>
+        )}
+        {data?.genshinAccounts.find(account => account.id === data.selectedGenshinId) && (
+          <section className="gb-panel tf-daily-note">
+            <div className="tf-note-heading">
+              <div><h2>Enka Profile</h2><span>{data.genshinAccounts.find(account => account.id === data.selectedGenshinId)!.name}</span></div>
+              <button className="gb-btn" type="button" disabled={enkaLoading} onClick={() => void loadEnka(data.genshinAccounts.find(account => account.id === data.selectedGenshinId)!)}>{enkaLoading ? 'Loading…' : 'Refresh profile'}</button>
+            </div>
+            {enkaProfile?.uid === data.genshinAccounts.find(account => account.id === data.selectedGenshinId)!.uid && (
+              <>
+                <div className="tf-note-grid">
+                  <div><span>In-game name</span><b>{enkaProfile.playerInfo.nickname ?? '—'}</b></div>
+                  <div><span>Adventure Rank</span><b>{enkaProfile.playerInfo.level ?? '—'}</b></div>
+                  <div><span>World Level</span><b>{enkaProfile.playerInfo.worldLevel ?? '—'}</b></div>
+                  <div><span>Achievements</span><b>{enkaProfile.playerInfo.finishAchievementNum ?? '—'}</b></div>
+                </div>
+                {enkaProfile.playerInfo.signature && <p>{enkaProfile.playerInfo.signature}</p>}
+                <p className="tf-month-legend">Public character showcase: {enkaProfile.avatarInfoList.length} character{enkaProfile.avatarInfoList.length === 1 ? '' : 's'}. Data is cached by Enka Network for {Math.round(enkaProfile.ttl / 60)} minutes.</p>
+              </>
+            )}
           </section>
         )}
         <div className="tf-month-actions">
