@@ -667,7 +667,7 @@ def test_tuskfizzy_legacy_import_is_validated_and_repeatable(client, core):
         "version": 1,
         "accounts": [{"id": "profile-a", "name": "Main", "portrait": "", "genshinId": "genshin-a"}],
         "genshinAccounts": [{"id": "genshin-a", "name": "Asia", "uid": "1234567890", "server": "asia"}],
-        "dailyRecords": {"2026-11-08": {"profile-a": [True, False, True], "_resinLast": {"profile-a": True}}},
+        "dailyRecords": {"2026-11-08": {"profile-a": [True, False, True], "_resinLast": {"profile-a": 55}}},
         "selectedGenshinId": "genshin-a",
     }
     first = client.post("/api/tuskfizzy/import", json=payload)
@@ -681,6 +681,11 @@ def test_tuskfizzy_legacy_import_is_validated_and_repeatable(client, core):
         ("2026-11-08", "profile-a"),
     ).fetchone()
     assert row == (1, 0, 1)
+    previous_resin = core.store._conn.execute(
+        "SELECT resin_last FROM tuskfizzy_daily WHERE day = ? AND account_id = ?",
+        ("2026-11-08", "profile-a"),
+    ).fetchone()
+    assert previous_resin[0] == 55
     assert core.store.meta("tuskfizzy_selected_genshin_id") == "genshin-a"
 
 
