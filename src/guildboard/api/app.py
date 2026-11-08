@@ -1183,6 +1183,8 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         """Import the legacy tracker's portable, non-secret export. Validation finishes before the one DB transaction."""
         if body.get("format") != "tuskfizzy-local-data" or body.get("version") != 1:
             return _error(422, "This is not a supported TUSKFiZZY data export.")
+        if len(json.dumps(body, ensure_ascii=False).encode("utf-8")) > 10_000_000:
+            return _error(413, "The TUSKFiZZY export is larger than 10 MB.")
         accounts = body.get("accounts")
         daily = body.get("dailyRecords")
         genshin = body.get("genshinAccounts")
@@ -1205,6 +1207,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             if (not isinstance(ident, str) or not ident or len(ident) > 128 or ident in account_ids
                     or not isinstance(name, str) or not name.strip() or len(name) > 80
                     or not isinstance(portrait, str) or len(portrait) > 1_000_000
+                    or (portrait != "" and re.fullmatch(r"data:image/(?:png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}", portrait) is None)
                     or (genshin_id is not None and (not isinstance(genshin_id, str) or len(genshin_id) > 128))):
                 return _error(422, "A checklist profile has invalid or duplicate fields.")
             account_ids.add(ident)
@@ -1239,6 +1242,8 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             resin_meta = profiles.get("_resinLast", {})
             if resin_meta and not isinstance(resin_meta, dict):
                 return _error(422, "The resin history metadata is malformed.")
+            if any(ident not in account_ids or type(value) is not bool for ident, value in resin_meta.items()):
+                return _error(422, "The resin history metadata refers to an unknown profile or invalid value.")
             for ident, flags in profiles.items():
                 if ident == "_resinLast":
                     continue
