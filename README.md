@@ -8,14 +8,10 @@
 
 Resin, commissions, achievements, wishes, primogems and your characters' plans, in one Windows app that keeps it all on your PC and never touches the game.
 
-[![Latest release](https://img.shields.io/github/v/release/QL1STY/guild-board?style=for-the-badge&color=a6751f&labelColor=3b4255&label=latest)](https://github.com/QL1STY/guild-board/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/QL1STY/guild-board/total?style=for-the-badge&color=a6751f&labelColor=3b4255)](https://github.com/QL1STY/guild-board/releases)
 [![MIT licence](https://img.shields.io/badge/licence-MIT-a6751f?style=for-the-badge&labelColor=3b4255)](LICENSE)
 ![Windows 10 and 11](https://img.shields.io/badge/Windows-10%20%7C%2011-a6751f?style=for-the-badge&labelColor=3b4255)
 
-### [⬇ Download for Windows](https://github.com/QL1STY/guild-board/releases/latest) · [▶ Try it in your browser](https://ql1sty.github.io/guild-board/demo/) · [Website](https://ql1sty.github.io/guild-board/)
-
-<sub>Free and open source · no ads, no account needed · about 130 MB · no administrator rights · updates itself</sub>
+<sub>Migration in progress · not yet ready to download or install</sub>
 
 <br>
 
@@ -31,7 +27,7 @@ Unofficial and fan-made. Not affiliated with or endorsed by HoYoverse or COGNOSP
 
 ## What it does
 
-TUSKFiZZY is being built on Guild Board's local-first foundation. The upstream Guild Board project is by QL1STY and is used under its MIT licence. This integration is a work in progress; the existing Guild Board feature set is not yet fully adapted to TUSKFiZZY. Guild Board reads your HoYoLAB account, with the login you give it, and keeps what it finds on your own PC. Unless you sign in to its optional online features, nothing about you reaches its developer.
+TUSKFiZZY is being built on Guild Board's local-first foundation. The upstream Guild Board project is by QL1STY and is used under its MIT licence. This integration is a work in progress; some Guild Board features are already present, while TUSKFiZZY-specific multi-account sessions, Enka and Battle Chronicle integration, and Windows release verification remain unfinished. Guild Board reads your HoYoLAB account, with the login you give it, and keeps what it finds on your own PC. Unless you sign in to its optional online features, nothing about you reaches its developer.
 
 ### 🧭 The Board: your day at a glance
 
