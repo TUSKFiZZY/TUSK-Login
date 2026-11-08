@@ -43,7 +43,7 @@ export const ANSWER_WITHIN_MS = 15_000
  */
 export const SLOW_ANSWER_WITHIN_MS = 120_000
 
-const SLOW_PATHS = /^\/api\/(online|profile|friends|achievements\/list\/check|checkin\/claim|backup\/restore)(?=[/?]|$)/
+const SLOW_PATHS = /^\/api\/(online|profile|friends|achievements\/list\/check|checkin\/claim|backup\/restore|tuskfizzy\/enka)(?=[/?]|$)/
 
 /** How long the page waits for the answer to a request to `path`. */
 export function answerWithin(path: string): number {
