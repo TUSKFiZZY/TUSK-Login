@@ -3,13 +3,13 @@
 //     node build/package.mjs --core <the core's folder> --version <version>
 //
 // Run from shell/ by build-installer.ps1 after `npm run build` (dist/ must exist) and after PyInstaller has made the core's
-// folder. The core's folder is copied into the resources, so it lands at resources\<its name>\guildboard-core.exe; the
+// folder. The core's folder is copied into the resources, so it lands at resources\<its name>\tuskfizzy-core.exe; the
 // folder is named `core` (packaging/guildboard.spec), which is the path shell/src/paths.ts expects.
 //
 // The app is packed into resources\app.asar with package.json and dist/ alone. The app's icon, the tray's and the
 // windows', is a plain file, resources\icon.ico (an extraResource): Electron copies an .ico out of an asar into a temporary
 // file to load it, which is a write outside the data folder. Then the program's fuses are set; they are a guard, not a
-// formality: with RunAsNode, NODE_OPTIONS and --inspect off, an installed Guild Board cannot be started as a plain Node,
+// formality: with RunAsNode, NODE_OPTIONS and --inspect off, an installed TUSKFiZZY cannot be started as a plain Node,
 // or with a debugging door, by another program.
 import { basename, dirname, join, resolve } from 'node:path'
 import { existsSync } from 'node:fs'
@@ -26,13 +26,13 @@ if (!values.core || !values.version) {
   process.exit(2)
 }
 const core = resolve(values.core)
-// The folder is copied by its own name into resources, and shell/src/paths.ts looks for resources\core\guildboard-core.exe.
+// The folder is copied by its own name into resources, and shell/src/paths.ts looks for resources\core\tuskfizzy-core.exe.
 if (basename(core) !== 'core') {
   console.error(`The core's folder must be named core, and it is named ${basename(core)}.`)
   process.exit(2)
 }
-if (!existsSync(join(core, 'guildboard-core.exe'))) {
-  console.error(`${core} holds no guildboard-core.exe.`)
+if (!existsSync(join(core, 'tuskfizzy-core.exe'))) {
+  console.error(`${core} holds no tuskfizzy-core.exe.`)
   process.exit(2)
 }
 if (!existsSync(join(shellRoot, 'dist', 'main.js'))) {
@@ -49,7 +49,7 @@ function keeps(name) {
 const [app] = await packager({
   dir: shellRoot,
   name: 'TUSKFiZZY',
-  executableName: 'guildboard-app',
+  executableName: 'tuskfizzy-app',
   platform: 'win32',
   arch: 'x64',
   asar: true,
@@ -86,7 +86,7 @@ for (const [option, on] of Object.entries(wanted)) {
 if (
   !existsSync(join(app, 'resources', 'app.asar')) ||
   !existsSync(join(app, 'resources', 'icon.ico')) ||
-  !existsSync(join(app, 'resources', basename(core), 'guildboard-core.exe'))
+  !existsSync(join(app, 'resources', basename(core), 'tuskfizzy-core.exe'))
 ) {
   console.error('The packed folder lacks resources\\app.asar, resources\\icon.ico or the core.')
   process.exit(1)
