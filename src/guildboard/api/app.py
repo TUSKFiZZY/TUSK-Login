@@ -1343,12 +1343,21 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             return _error(422, "A Genshin UID must contain 9 or 10 digits.")
         if not isinstance(server, str) or len(server) > 32:
             return _error(422, "Choose a valid Genshin server.")
+        if uid != current["uid"] or server != current["server"]:
+            try:
+                core.tuskfizzy_logout(account_id)
+            except ValueError:
+                pass
         core.store.tuskfizzy_put_genshin_account(account_id, name.strip(), uid, server, current["createdAt"])
         core.bus.publish("tuskfizzy_changed")
         return JSONResponse({"account": next(item for item in core.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id)})
 
     @app.delete("/api/tuskfizzy/genshin-accounts/{account_id}")
     async def tuskfizzy_remove_genshin_account(account_id: str) -> Response:
+        try:
+            core.tuskfizzy_logout(account_id)
+        except ValueError:
+            return _error(404, "That Genshin profile no longer exists.")
         if not core.store.tuskfizzy_delete_genshin_account(account_id):
             return _error(404, "That Genshin profile no longer exists.")
         core.bus.publish("tuskfizzy_changed")
