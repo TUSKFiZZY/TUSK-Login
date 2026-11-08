@@ -1295,6 +1295,18 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         core.bus.publish("tuskfizzy_changed")
         return JSONResponse({"selectedGenshinId": ident})
 
+    @app.post("/api/tuskfizzy/genshin-accounts/{account_id}/wish-import")
+    async def tuskfizzy_profile_wish_import(account_id: str, body: dict[str, Any] = Body(...)) -> Response:
+        url = body.get("url")
+        if not isinstance(url, str):
+            return _error(422, "Paste the complete wish-history URL.")
+        try:
+            core.tuskfizzy_import_wish_link(account_id, url)
+        except (ValueError, ImportBusy, ImportNotReady) as error:
+            return _error(409 if isinstance(error, (ImportBusy, ImportNotReady)) else 422, str(error))
+        core.bus.publish("pulls_changed")
+        return JSONResponse({"started": True})
+
     @app.post("/api/tuskfizzy/genshin-accounts/{account_id}/login")
     async def tuskfizzy_genshin_login(account_id: str, body: dict[str, Any] = Body(...)) -> Response:
         cookie_text = body.get("cookieText")
