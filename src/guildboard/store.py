@@ -947,6 +947,17 @@ class Store:
             for row in rows
         ]
 
+    def tuskfizzy_month_for(self, month: str) -> dict[str, dict[str, list[bool]]]:
+        rows = self._conn.execute(
+            "SELECT day, account_id, login, commission, resin FROM tuskfizzy_daily "
+            "WHERE day >= ? AND day < ? ORDER BY day, account_id",
+            (month + "-01", month + "-32"),
+        ).fetchall()
+        result: dict[str, dict[str, list[bool]]] = {}
+        for row in rows:
+            result.setdefault(row[0], {})[row[1]] = [bool(row[2]), bool(row[3]), bool(row[4])]
+        return result
+
     def tuskfizzy_daily_for(self, day: str) -> dict[str, list[bool]]:
         rows = self._conn.execute(
             "SELECT account_id, login, commission, resin FROM tuskfizzy_daily WHERE day = ?", (day,)
