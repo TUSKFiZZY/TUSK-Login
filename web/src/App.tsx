@@ -65,7 +65,7 @@ export default function App() {
     // Nothing to show yet: either the first answer is on its way, or the core is not there.
     return (
       <div className="gb-wait" role="status">
-        {live.problem ?? 'Opening Guild Board…'}
+        {live.problem ?? 'Opening TUSKFiZZY…'}
       </div>
     )
   }
