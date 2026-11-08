@@ -64,3 +64,8 @@
 .tf-note-grid span{font-size:10px;color:var(--muted)}
 .tf-note-grid b{font-size:14px;font-weight:800}
 @media(max-width:420px){.tf-note-heading{align-items:flex-start;flex-direction:column}.tf-note-heading .tf-note-updated{text-align:left}}
+
+.tf-session-editor{display:grid;gap:10px;padding:13px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.tf-session-editor h3{margin:0;font-size:14px}
+.tf-session-editor label{display:grid;gap:6px;color:var(--muted);font-size:12px}
+.tf-session-editor textarea{width:100%;min-width:0;resize:vertical;font:12px/1.5 ui-monospace,Consolas,monospace}
