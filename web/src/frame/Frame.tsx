@@ -15,6 +15,7 @@ import { UpdateNotice, useInstall } from './UpdateNotice.tsx'
 /** Each page with its sign (look pass spec 14.1), in the rail's order. */
 const NAV: { page: Page; label: string; sign: SignName }[] = [
   { page: 'board', label: 'Board', sign: 'cells' },
+  { page: 'tuskfizzy', label: 'Daily Tracker', sign: 'calendar' },
   { page: 'achievements', label: 'Achievements', sign: 'cup' },
   { page: 'characters', label: 'Characters', sign: 'bust' },
   { page: 'week', label: 'Your week', sign: 'book' },
