@@ -26,7 +26,7 @@ from guildboard.achievements.notes import load_notes
 from guildboard.achievements.progress import Progress
 from guildboard.achievements.updates import ListUpdates, demo_fetch, github_fetch
 from guildboard.api.icons import IconCache
-from guildboard.auth import Auth
+from guildboard.auth import Auth, has_required, parse_cookie_text
 from guildboard.backups import (
     DEMO as BACKUP_DEMO, SUFFIX as BACKUP_SUFFIX, RESTORE_UNFINISHED, BackupRefused, apply_pending, database_copy,
     export_target, stage_database, stage_restore, write_backup,
@@ -276,6 +276,7 @@ class Core:
             except (OSError, sqlite3.Error, StoreError):
                 log.warning("The daily backup could not be made", exc_info=True)
         self.tokens = TokenStore(paths.token_path)
+        self._tuskfizzy_note_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
         self._source: Any = None
         self._make_source: Callable[[], Any] | None = None  # the live source's maker, until it is made
         self._source_lock = threading.Lock()
@@ -953,6 +954,82 @@ class Core:
         notified = self.settings.notifications and self.notify(kind, text)
         log.info("A %s reminder: line %s, notification %s.", kind, "yes" if line else "no", "yes" if notified else "no")
         return line or notified
+
+    def _tuskfizzy_session_path(self, account_id: str) -> Path:
+        """A profile's own DPAPI-protected HoYoLAB login, separate from the Board's primary session."""
+        if not isinstance(account_id, str) or not account_id or len(account_id) > 128:
+            raise ValueError("Choose a valid Genshin profile.")
+        profile = next((item for item in self.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+        if profile is None:
+            raise ValueError("That Genshin profile no longer exists.")
+        # IDs from legacy imports are arbitrary text; only a digest becomes a filename.
+        digest = hashlib.sha256(account_id.encode("utf-8")).hexdigest()
+        return self.paths.data_dir / "tuskfizzy_sessions" / f"{digest}.bin"
+
+    async def tuskfizzy_login(self, account_id: str, cookie_text: str) -> dict[str, Any]:
+        """Validate and save a dedicated HoYoLAB login for exactly one TUSKFiZZY Genshin profile."""
+        if self.demo:
+            raise ValueError("Demo mode cannot save HoYoLAB sessions.")
+        if not isinstance(cookie_text, str) or len(cookie_text) > 32_000:
+            raise ValueError("Paste the complete HoYoLAB Cookie header.")
+        profile = next((item for item in self.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+        if profile is None:
+            raise ValueError("That Genshin profile no longer exists.")
+        cookies = parse_cookie_text(cookie_text)
+        if not has_required(cookies):
+            raise ValueError("The pasted text does not contain a complete HoYoLAB login.")
+        for value in cookies.values():
+            register_secret(value)
+        await self._source_ready()
+        accounts = await self.source.list_accounts(cookies)
+        chosen = next((item for item in accounts if str(item.uid) == profile["uid"]), None)
+        if chosen is None:
+            raise ValueError("This HoYoLAB login does not contain the Genshin UID saved in this profile.")
+        if chosen.server != profile["server"]:
+            raise ValueError("The HoYoLAB login's server does not match this Genshin profile.")
+        path = self._tuskfizzy_session_path(account_id)
+        TokenStore(path).save(StoredToken(dict(cookies), chosen.uid, chosen.server, chosen.nickname))
+        self._tuskfizzy_note_cache.pop(account_id, None)
+        self.bus.publish("tuskfizzy_changed")
+        return {"uid": str(chosen.uid), "nickname": chosen.nickname, "server": chosen.server}
+
+    def tuskfizzy_logout(self, account_id: str) -> None:
+        TokenStore(self._tuskfizzy_session_path(account_id)).delete()
+        self._tuskfizzy_note_cache.pop(account_id, None)
+        self.bus.publish("tuskfizzy_changed")
+
+    async def tuskfizzy_profile_note(self, account_id: str) -> dict[str, Any] | None:
+        """Fetch a profile's own Daily Note using its own encrypted cookies, never the primary account's session."""
+        if self.demo:
+            return None
+        profile = next((item for item in self.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+        if profile is None:
+            return None
+        now = self.clock.now()
+        cached = self._tuskfizzy_note_cache.get(account_id)
+        if cached is not None and 0 <= (now - cached[0]).total_seconds() < 300:
+            return dict(cached[1])
+        tokens = TokenStore(self._tuskfizzy_session_path(account_id))
+        token = tokens.load()
+        if token is None or str(token.uid) != profile["uid"] or token.server != profile["server"]:
+            return None
+        await self._source_ready()
+        from guildboard.sources.hoyolab import HoyolabSource
+        source = HoyolabSource(tokens)
+        result = await source.fetch("notes", now=now)
+        record = result.record
+        if record is None:
+            return None
+        note = {
+            "profileName": profile["name"], "uid": profile["uid"],
+            "resin": record.resin, "resinMax": record.resin_max,
+            "commissionDone": record.commissions_done, "commissionTotal": record.commissions_max,
+            "bonusClaimed": record.extra_reward_claimed,
+            "expeditionsDone": record.expeditions_done, "expeditionsTotal": record.expeditions_total,
+            "readAt": result.fetched_at.isoformat(),
+        }
+        self._tuskfizzy_note_cache[account_id] = (now, note)
+        return dict(note)
 
     def logout(self) -> None:
         if self.auth is not None:
