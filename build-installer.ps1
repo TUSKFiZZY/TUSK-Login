@@ -99,6 +99,7 @@ if (-not $iscc) {
 
 # Exactly the packages uv.lock names: a pyproject.toml that asks for others stops the build until uv lock is run.
 Step 'Install the Python packages for the build' { uv sync --locked --no-dev --group package }
+Step 'Generate the TUSKFiZZY app icon' { uv run --locked --no-dev --group package python tools/make-icon.py }
 Step 'Install the packages of the interface' { npm ci --prefix web }
 Step 'Build the interface' { npm run build --prefix web }
 # The notices of the software inside the installer are a file of the repository, written by a script. A package that was added
