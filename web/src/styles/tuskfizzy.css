@@ -53,3 +53,14 @@
 .tf-genshin-row span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
 .tf-genshin label{display:grid;gap:6px;color:var(--muted);font-size:12px}
 .tf-genshin input,.tf-genshin select{width:100%;min-width:0}
+
+.tf-daily-note{padding:16px}
+.tf-note-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.tf-note-heading h2{margin:0;font-size:16px}
+.tf-note-heading span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.tf-note-heading .tf-note-updated{white-space:nowrap;text-align:right}
+.tf-note-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px}
+.tf-note-grid>div{display:grid;gap:5px;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+.tf-note-grid span{font-size:10px;color:var(--muted)}
+.tf-note-grid b{font-size:14px;font-weight:800}
+@media(max-width:420px){.tf-note-heading{align-items:flex-start;flex-direction:column}.tf-note-heading .tf-note-updated{text-align:left}}
