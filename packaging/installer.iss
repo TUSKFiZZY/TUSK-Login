@@ -12,7 +12,7 @@
 #define Built Root + "\shell\out\TUSKFiZZY-win32-x64"
 
 [Setup]
-AppId={{6E0D3B2A-8C1F-4F5E-9B7A-3D2C1E0F9A84}
+AppId={{B71D2F4A-8C63-4D91-9A12-5F7E3C8B6D20}
 AppName=TUSKFiZZY
 AppVersion={#AppVersion}
 AppVerName=TUSKFiZZY {#AppVersion}
