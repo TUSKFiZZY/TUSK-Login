@@ -1,6 +1,6 @@
 # TUSKFiZZY legacy data migration format
 
-This note records the exact browser-storage keys used by the legacy TUSKFiZZY Daily Tracker. It is a design contract for the import/export bridge; it does not claim that the importer UI or database write path is implemented yet.
+This note records the legacy browser-storage keys and the portable export/import bridge. The old app's export button is on branch `migration/legacy-export` of `TUSK_Check-in`; the new app's importer is on branch `migration/tuskfizzy-integration` of `TUSK-Login`. Neither change is on either repository's `main` branch.
 
 ## Legacy localStorage keys
 
@@ -56,4 +56,4 @@ The export must be generated locally by the old app. Do not ask the user to past
 
 The migration branch now includes SQLite tables for TUSKFiZZY checklist profiles, Genshin profile references, and dated Login/Commission/Resin records. The authenticated local API route `POST /api/tuskfizzy/import` validates the versioned export shape before writing it in one transaction; repeated imports update matching IDs rather than duplicating them. The database migration backs up an existing database before upgrading, following the normal Store migration path.
 
-This is the storage/API foundation only. The old app's export button, the new Settings import screen and preview/confirmation flow, the visible multi-account checklist, and the live HoYoLAB/Enka feature integration are not implemented yet. No cookies or HoYoLAB credentials are accepted by this import route.
+Implemented on the migration branches: a legacy-app JSON export button; a Settings importer with file selection, local preview, and explicit confirmation; a validated local API route; SQLite profile/history tables; idempotent transactional import; and store/API tests. The imported records are currently stored in dedicated TUSKFiZZY tables and are not yet wired into the visible daily checklist. Live HoYoLAB/Enka feature integration is also still outstanding. No cookies or HoYoLAB credentials are exported or accepted.
