@@ -149,7 +149,7 @@ def _valid_tuskfizzy_portrait(value: Any) -> bool:
         return True
     if not isinstance(value, str) or len(value) > 1_000_000:
         return False
-    match = re.fullmatch(r"data:image/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})", value)
+    match = re.fullmatch(r"data:image/(png|jpeg|webp|gif);base64,([A-Za-z0-9+/]+={0,2})", value)
     if match is None:
         return False
     try:
@@ -163,6 +163,7 @@ def _valid_tuskfizzy_portrait(value: Any) -> bool:
         kind == "png" and raw.startswith(b"\x89PNG\r\n\x1a\n")
         or kind == "jpeg" and raw.startswith(b"\xff\xd8\xff")
         or kind == "webp" and len(raw) >= 12 and raw[:4] == b"RIFF" and raw[8:12] == b"WEBP"
+        or kind == "gif" and raw[:6] in (b"GIF87a", b"GIF89a")
     )
 
 
