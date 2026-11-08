@@ -934,6 +934,7 @@ def test_tuskfizzy_profile_logout_is_scoped_to_profile(client, core, monkeypatch
 
 
 def test_tuskfizzy_tracker_reads_the_selected_profile_session_not_primary_login(client, core, monkeypatch):
+    core.demo = False
     profile = client.post(
         "/api/tuskfizzy/genshin-accounts",
         json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
@@ -961,6 +962,7 @@ def test_tuskfizzy_tracker_reads_the_selected_profile_session_not_primary_login(
 
 
 def test_tuskfizzy_tracker_does_not_use_primary_login_for_unconnected_profile(client, core, monkeypatch):
+    core.demo = False
     profile = client.post(
         "/api/tuskfizzy/genshin-accounts",
         json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
@@ -975,6 +977,7 @@ def test_tuskfizzy_tracker_does_not_use_primary_login_for_unconnected_profile(cl
 
 
 def test_tuskfizzy_tracker_includes_selected_profile_battle_chronicle(client, core, monkeypatch):
+    core.demo = False
     profile = client.post(
         "/api/tuskfizzy/genshin-accounts",
         json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
@@ -1024,6 +1027,7 @@ def test_tuskfizzy_profile_wish_import_requires_url(client):
 
 
 def test_core_converts_legacy_wish_url_to_profile_scoped_import(client, core, monkeypatch):
+    core.demo = False
     profile = client.post(
         "/api/tuskfizzy/genshin-accounts",
         json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
@@ -1042,6 +1046,7 @@ def test_core_converts_legacy_wish_url_to_profile_scoped_import(client, core, mo
 
 
 def test_core_refuses_legacy_wish_url_for_wrong_host_or_region(client, core, monkeypatch):
+    core.demo = False
     profile = client.post(
         "/api/tuskfizzy/genshin-accounts",
         json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
