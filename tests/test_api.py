@@ -899,3 +899,79 @@ def test_tuskfizzy_enka_endpoint_maps_missing_profile(client, monkeypatch):
     response = client.get("/api/tuskfizzy/enka/123456789")
     assert response.status_code == 404
     assert response.json() == {"error": "No public profile."}
+
+
+
+def test_tuskfizzy_profile_login_is_scoped_to_selected_profile(client, monkeypatch):
+    from guildboard.api import app as api_app
+
+    seen = []
+    async def login(profile_id, cookie_text):
+        seen.append((profile_id, cookie_text))
+        return {"uid": "1234567890", "nickname": "Traveler", "server": "os_asia"}
+    monkeypatch.setattr(api_app.core, "tuskfizzy_login", login, raising=False)
+    response = client.post(
+        "/api/tuskfizzy/genshin-accounts/profile-a/login",
+        json={"cookieText": "ltoken_v2=secret; ltuid_v2=1234567890"},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"connected": True, "account": {
+        "uid": "1234567890", "nickname": "Traveler", "server": "os_asia",
+    }}
+    assert seen == [("profile-a", "ltoken_v2=secret; ltuid_v2=1234567890")]
+
+
+def test_tuskfizzy_profile_login_requires_cookie_text(client):
+    response = client.post("/api/tuskfizzy/genshin-accounts/profile-a/login", json={"uid": "1234567890"})
+    assert response.status_code == 422
+
+
+def test_tuskfizzy_profile_logout_is_scoped_to_profile(client, monkeypatch):
+    from guildboard.api import app as api_app
+
+    seen = []
+    monkeypatch.setattr(api_app.core, "tuskfizzy_logout", lambda profile_id: seen.append(profile_id), raising=False)
+    response = client.delete("/api/tuskfizzy/genshin-accounts/profile-a/login")
+    assert response.status_code == 200
+    assert response.json() == {"connected": False}
+    assert seen == ["profile-a"]
+
+
+def test_tuskfizzy_tracker_reads_the_selected_profile_session_not_primary_login(client, core, monkeypatch):
+    profile = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    checklist = client.post(
+        "/api/tuskfizzy/accounts",
+        json={"name": "Main", "genshinId": profile["id"]},
+    ).json()["account"]
+    client.put("/api/tuskfizzy/selected-genshin", json={"id": profile["id"]})
+    day = core.clock.now().astimezone().date().isoformat()
+    calls = []
+    async def note(profile_id):
+        calls.append(profile_id)
+        return {
+            "profileName": "Asia", "uid": "1234567890", "resin": 49, "resinMax": 200,
+            "commissionDone": 4, "commissionTotal": 4, "bonusClaimed": True,
+            "expeditionsDone": 5, "expeditionsTotal": 5, "readAt": core.clock.now().isoformat(),
+        }
+    monkeypatch.setattr(core, "tuskfizzy_profile_note", note)
+    response = client.get("/api/tuskfizzy/tracker", params={"day": day})
+    assert response.status_code == 200
+    assert response.json()["dailyNote"]["profileName"] == "Asia"
+    assert response.json()["daily"][checklist["id"]] == [False, True, True]
+    assert calls == [profile["id"]]
+
+
+def test_tuskfizzy_tracker_does_not_use_primary_login_for_unconnected_profile(client, core, monkeypatch):
+    profile = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    client.put("/api/tuskfizzy/selected-genshin", json={"id": profile["id"]})
+    day = core.clock.now().astimezone().date().isoformat()
+    monkeypatch.setattr(core, "tuskfizzy_profile_note", lambda profile_id: None)
+    response = client.get("/api/tuskfizzy/tracker", params={"day": day})
+    assert response.status_code == 200
+    assert response.json()["dailyNote"] is None
