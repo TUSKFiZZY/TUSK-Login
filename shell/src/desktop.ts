@@ -1,6 +1,6 @@
 /**
- * What Guild Board asks of Windows itself (app.py: Desktop): the Save dialogs, an alert, the data folder in Explorer, and
- * Guild Board started again, on demo data or after a restore. Nothing here touches Electron: `main.ts` hands the dialogs,
+ * What TUSKFiZZY asks of Windows itself (app.py: Desktop): the Save dialogs, an alert, the data folder in Explorer, and
+ * TUSKFiZZY started again, on demo data or after a restore. Nothing here touches Electron: `main.ts` hands the dialogs,
  * the spawn and `app.relaunch` in through `DesktopDeps`.
  */
 import { win32 as path } from 'node:path'
@@ -47,7 +47,7 @@ export class Desktop {
     return this.save({
       title: 'Export backup',
       defaultPath: path.join(this.deps.documents, name),
-      filters: [{ name: 'Guild Board backup', extensions: ['gbbackup'] }],
+      filters: [{ name: 'TUSKFiZZY backup', extensions: ['gbbackup'] }],
     })
   }
 
@@ -61,7 +61,7 @@ export class Desktop {
   }
 
   async alert(text: string): Promise<void> {
-    await this.deps.showMessageBox({ type: 'error', title: 'Guild Board', message: text, buttons: ['OK'] })
+    await this.deps.showMessageBox({ type: 'error', title: 'TUSKFiZZY', message: text, buttons: ['OK'] })
   }
 
   async openFolder(folder: string): Promise<void> {
@@ -74,7 +74,7 @@ export class Desktop {
     if (failure !== '') this.deps.warn?.('The data folder could not be opened.')
   }
 
-  /** Guild Board on demo data, in a process of its own, with the statement the player has just read. */
+  /** TUSKFiZZY on demo data, in a process of its own, with the statement the player has just read. */
   startDemo(): void {
     this.deps.spawnDetached(this.deps.execPath, shellArguments(this.deps.appFolder, ['--demo', '--acknowledged']), () =>
       this.deps.warn?.('The demo could not be started.'),
@@ -82,7 +82,7 @@ export class Desktop {
   }
 
   /**
-   * Guild Board again, once this one has exited, with its window open. Only the data folder is kept: never `--hidden` (a
+   * TUSKFiZZY again, once this one has exited, with its window open. Only the data folder is kept: never `--hidden` (a
    * start with Windows is hidden, and a restart that came back hidden would look like a crash), nor `--demo`.
    */
   startAgain(dataDirArg: string | null): void {
