@@ -6,7 +6,8 @@ import { type Live, useModel } from '../live.ts'
 
 type Account = { id: string; name: string; portrait: string; genshinId: string | null; createdAt: string }
 type GenshinAccount = { id: string; name: string; uid: string; server: string; createdAt?: string }
-type DailyNote = { profileName: string; resin: number | null; resinMax: number | null; resinReadAt: string | null; commissionDone: number | null; commissionTotal: number | null; bonusClaimed: boolean; expeditionsDone: number | null; expeditionsTotal: number | null; readAt: string }\ntype Tracker = { accounts: Account[]; genshinAccounts: GenshinAccount[]; daily: Record<string, boolean[]>; dailyNote?: DailyNote | null }
+type DailyNote = { profileName: string; resin: number | null; resinMax: number | null; resinReadAt: string | null; commissionDone: number | null; commissionTotal: number | null; bonusClaimed: boolean; expeditionsDone: number | null; expeditionsTotal: number | null; readAt: string }
+type Tracker = { accounts: Account[]; genshinAccounts: GenshinAccount[]; daily: Record<string, boolean[]>; dailyNote?: DailyNote | null }
 type MonthTracker = { records: Record<string, Record<string, boolean[]>> }
 const TASKS = [{ key: 'login', label: 'Login' }, { key: 'commission', label: 'Commission' }, { key: 'resin', label: 'Resin' }] as const
 
