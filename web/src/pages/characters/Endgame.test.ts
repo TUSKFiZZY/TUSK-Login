@@ -117,8 +117,8 @@ test('the columns end level: the left one shares its height between its sheets, 
 test('the text of endgame.css reaches 4.5:1 on its grounds', () => {
   const t = tokenValues(tokens)
   expect(contrast('#7A5418', '#F1E3C2')).toBeGreaterThanOrEqual(4.5) // the step numbers, the buttons and "this month"
-  expect(contrast('#7A5418', t['--ledger-light'])).toBeGreaterThanOrEqual(4.5)
-  expect(contrast(t['--good'], '#DDEBD3')).toBeGreaterThanOrEqual(4.5) // "does well"
+  expect(contrast(t['--gold-ink'], t['--ledger-light'])).toBeGreaterThanOrEqual(4.5)
+  expect(contrast('#2E6B1F', '#DDEBD3')).toBeGreaterThanOrEqual(4.5) // "does well"
   expect(contrast('#8A2E21', '#F3D9D5')).toBeGreaterThanOrEqual(4.5) // "does badly"
   expect(contrast(t['--muted'], t['--ledger-light'])).toBeGreaterThanOrEqual(4.5)
   expect(contrast(t['--gold-ink'], t['--surface'])).toBeGreaterThanOrEqual(4.5) // the sheets' small headings
