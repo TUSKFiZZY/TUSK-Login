@@ -1231,6 +1231,10 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         for day, profiles in daily.items():
             if not isinstance(day, str) or not re.fullmatch(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", day) or not isinstance(profiles, dict):
                 return _error(422, "A daily record has an invalid date or shape.")
+            try:
+                datetime.strptime(day, "%Y-%m-%d")
+            except ValueError:
+                return _error(422, "A daily record has an invalid calendar date.")
             clean_profiles: dict[str, list[Any]] = {}
             resin_meta = profiles.get("_resinLast", {})
             if resin_meta and not isinstance(resin_meta, dict):
