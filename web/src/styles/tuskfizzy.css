@@ -41,3 +41,15 @@
 .tf-day.blank{border:0;background:transparent;min-height:0}
 .tf-month-legend{margin:12px 0 0;color:var(--muted);font-size:11px;line-height:1.5}
 @media(max-width:440px){.tf-month-grid{gap:4px}.tf-day{min-height:46px}}
+
+.tf-genshin{padding:17px;display:grid;gap:11px}
+.tf-genshin h2,.tf-genshin h3{margin:0;font-size:16px}
+.tf-genshin h3{font-size:13px;margin-top:6px}
+.tf-muted{margin:0;color:var(--muted);font-size:12px}
+.tf-genshin-list{display:grid;gap:7px}
+.tf-genshin-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid var(--border)}
+.tf-genshin-row>div{flex:1;min-width:140px}
+.tf-genshin-row b{display:block;font-size:13px}
+.tf-genshin-row span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.tf-genshin label{display:grid;gap:6px;color:var(--muted);font-size:12px}
+.tf-genshin input,.tf-genshin select{width:100%;min-width:0}
