@@ -14,6 +14,7 @@ import sys
 import tempfile
 import threading
 import webbrowser
+from urllib.parse import parse_qsl, urlsplit
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Coroutine, Mapping
@@ -62,6 +63,7 @@ from guildboard.characters.art import ArtCache, live_download
 from guildboard.characters.service import Characters
 from guildboard.characters.wiki import TUTORIAL, CharacterWiki
 from guildboard.pulls import gamecache, nextversion, wishapi
+from guildboard.pulls.gamecache import WishLink
 from guildboard.pulls.banners import Banners
 from guildboard.pulls.importer import (
     AUTO_EVERY, ImportBusy, ImportNotReady, WishImporter, demo_links, demo_pages, demo_pause,
@@ -1046,6 +1048,46 @@ class Core:
         }
         self._tuskfizzy_chronicle_cache[account_id] = (now, value)
         return dict(value)
+
+    def tuskfizzy_import_wish_link(self, account_id: str, url: str) -> None:
+        """Start a TUSKFiZZY profile-scoped import from the legacy PowerShell wish-history URL."""
+        profile = next((item for item in self.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+        if profile is None:
+            raise ValueError("That Genshin profile no longer exists.")
+        if not isinstance(url, str) or not url or len(url) > 16_000:
+            raise ValueError("Paste the complete wish-history URL.")
+        parts = urlsplit(url.strip())
+        host = (parts.hostname or "").lower()
+        if (parts.scheme != "https" or not (host.endswith(".hoyoverse.com") or host.endswith(".mihoyo.com"))
+                or parts.username is not None or parts.password is not None or parts.port is not None):
+            raise ValueError("Use the HTTPS wish-history URL copied from the official Genshin wish-history method.")
+        pairs = parse_qsl(parts.query, keep_blank_values=True, strict_parsing=False, max_num_fields=64)
+        query: dict[str, str] = {}
+        for key, value in pairs:
+            if key in query:
+                raise ValueError("The wish-history URL contains duplicate parameters.")
+            query[key] = value
+        authkey = query.get("authkey", "")
+        if not authkey or len(authkey) > 8_000:
+            raise ValueError("The wish-history URL is missing its authkey.")
+        if query.get("authkey_ver", "1") not in ("1", "2"):
+            raise ValueError("The wish-history URL has an unsupported key version.")
+        if query.get("auth_appid", "webview_gacha") != "webview_gacha":
+            raise ValueError("This URL is not a Genshin wish-history link.")
+        if query.get("game_biz", "hk4e_global") != "hk4e_global":
+            raise ValueError("This URL is not for Genshin Impact.")
+        region = query.get("region", profile["server"])
+        if region != profile["server"]:
+            raise ValueError("The wish-history URL's server does not match this Genshin profile.")
+        query.update({
+            "authkey_ver": query.get("authkey_ver", "1"),
+            "auth_appid": "webview_gacha",
+            "game_biz": "hk4e_global",
+            "region": region,
+            "lang": query.get("lang", "en"),
+        })
+        link = WishLink(url.strip(), query, Path())
+        self.wish_import.start_with_link(link, int(profile["uid"]))
 
     def tuskfizzy_session_connected(self, account_id: str) -> bool:
         """Whether this Genshin profile has its own saved login, without exposing any cookie."""
