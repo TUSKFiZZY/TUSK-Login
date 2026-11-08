@@ -1384,7 +1384,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         if not isinstance(name, str) or not name.strip() or len(name.strip()) > 80:
             return _error(422, "Enter a profile name of up to 80 characters.")
         if (not _valid_tuskfizzy_portrait(portrait)):
-            return _error(422, "Choose a valid PNG, JPEG or WebP profile picture smaller than 1 MB.")
+            return _error(422, "Choose a valid PNG, JPEG, WebP or GIF profile picture smaller than 1 MB.")
         if genshin_id is not None and (not isinstance(genshin_id, str) or len(genshin_id) > 128):
             return _error(422, "Choose a valid linked Genshin profile.")
         if genshin_id and not any(item["id"] == genshin_id for item in core.store.tuskfizzy_genshin_accounts_list()):
@@ -1404,7 +1404,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         if not isinstance(name, str) or not name.strip() or len(name.strip()) > 80:
             return _error(422, "Enter a profile name of up to 80 characters.")
         if not _valid_tuskfizzy_portrait(portrait):
-            return _error(422, "Choose a valid PNG, JPEG or WebP profile picture smaller than 1 MB.")
+            return _error(422, "Choose a valid PNG, JPEG, WebP or GIF profile picture smaller than 1 MB.")
         if genshin_id is not None and (not isinstance(genshin_id, str) or len(genshin_id) > 128):
             return _error(422, "Choose a valid linked Genshin profile.")
         if genshin_id and not any(item["id"] == genshin_id for item in core.store.tuskfizzy_genshin_accounts_list()):
