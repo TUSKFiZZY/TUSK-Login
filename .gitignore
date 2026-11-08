@@ -40,3 +40,21 @@ web/memory-results/
 
 # setup.ps1's copy of Electron's program named for Guild Board (shell/scripts/make-app-dev.mjs)
 /shell/app-dev/
+
+# TUSKFiZZY local secrets and private account data
+.env
+.env.*
+!.env.example
+*.cookie
+*cookie*
+*token*
+*secret*
+*.sqlite
+*.sqlite3
+*.log
+*.bak
+*.backup
+/local-data/
+/user-data/
+/private-data/
+/backups/
