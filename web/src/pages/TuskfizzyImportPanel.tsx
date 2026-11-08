@@ -91,7 +91,7 @@ export function TuskfizzyImportPanel() {
       {file && (
         <div className="set-more" role="group" aria-label="TUSKFiZZY import preview">
           <b>{fileName}</b>
-          <p>{file.accounts.length} checklist profiles · {file.genshinAccounts.length} Genshin profiles · {Object.values(file.dailyRecords).reduce((sum, day) => sum + Object.keys(day).filter(key => key !== '_resinLast').length, 0)} daily records</p>
+          <p>{file.accounts.length} checklist profiles · {file.genshinAccounts.length} Genshin profiles · {Object.values(file.dailyRecords).reduce((sum, day) => sum + (day && typeof day === 'object' && !Array.isArray(day) ? Object.keys(day).filter(key => key !== '_resinLast').length : 0), 0)} daily records</p>
           <p>Import these records into this TUSKFiZZY database? Existing records with matching IDs and dates will be updated.</p>
           <div className="set-actions">
             <button type="button" className="gb-btn" onClick={() => void importNow()} disabled={busy}>{busy ? 'Importing…' : 'Import data'}</button>
