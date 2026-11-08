@@ -1,6 +1,6 @@
 /*
- * Parchment. The values are those of the stage 1 spec's section 10.5, with the look pass's changes (its section 6).
- * Contrast figures are against the card (--surface) unless said.
+ * TUSKFiZZY theme: dark plum surfaces, lavender accents and high-contrast text.
+ * Theme adapted from TUSKFiZZY's original dark purple tracker palette.
  */
 :root {
   --page-light: #33224E;
