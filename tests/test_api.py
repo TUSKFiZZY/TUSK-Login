@@ -975,3 +975,29 @@ def test_tuskfizzy_tracker_does_not_use_primary_login_for_unconnected_profile(cl
     response = client.get("/api/tuskfizzy/tracker", params={"day": day})
     assert response.status_code == 200
     assert response.json()["dailyNote"] is None
+
+
+
+def test_tuskfizzy_tracker_includes_selected_profile_battle_chronicle(client, core, monkeypatch):
+    profile = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    client.put("/api/tuskfizzy/selected-genshin", json={"id": profile["id"]})
+    day = core.clock.now().astimezone().date().isoformat()
+    calls = []
+    async def chronicle(profile_id):
+        calls.append(profile_id)
+        return {
+            "uid": "1234567890", "nickname": "Traveler", "server": "os_asia",
+            "adventureRank": 60, "abyssProgress": "12-3", "counters": {"spiral_abyss": 36},
+            "regions": [], "endgame": [], "readAt": core.clock.now().isoformat(),
+        }
+    async def note(profile_id):
+        return None
+    monkeypatch.setattr(core, "tuskfizzy_profile_chronicle", chronicle)
+    monkeypatch.setattr(core, "tuskfizzy_profile_note", note)
+    response = client.get("/api/tuskfizzy/tracker", params={"day": day})
+    assert response.status_code == 200
+    assert response.json()["battleChronicle"]["abyssProgress"] == "12-3"
+    assert calls == [profile["id"]]
