@@ -141,7 +141,7 @@ powershell -ExecutionPolicy Bypass -File setup.ps1
 
 `setup.ps1` installs the Python packages and the packages of the interface and of the shell, builds both and puts a shortcut on your desktop. The window is an Electron shell in `shell/`, written in TypeScript; it starts the Python core and shows the interface. Then:
 
-- `npm start --prefix shell -- --demo` runs Guild Board with its window on made-up data. The shell starts the core from `.venv`. `uv run guildboard --demo --no-shell` runs the core alone and prints a link for your browser.
+- `npm start --prefix shell -- --demo` runs Guild Board with its window on made-up data. The shell starts the core from `.venv`. `uv run tuskfizzy --demo --no-shell` runs the core alone and prints a link for your browser.
 - `uv run pytest -n auto` runs the Python tests on every core. In `web/`, `npm test` runs the interface's unit tests and `npm run e2e` its browser tests. In `shell/`, `npm test` runs the shell's unit tests and `npm run e2e` its browser tests.
 - `powershell -ExecutionPolicy Bypass -File build-installer.ps1` makes the installer. It refuses to build until a release key is pinned in `src/guildboard/selfupdate.py`; `-WithoutReleaseKey` builds an installer that never updates.
 
