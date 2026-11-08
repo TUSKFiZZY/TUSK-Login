@@ -6,8 +6,6 @@
 
 *TUSKFiZZY is an independent integration based on Guild Board by QL1STY.*
 
-*An independent TUSKFiZZY integration based on Guild Board by QL1STY.*
-
 Resin, commissions, achievements, wishes, primogems and your characters' plans, in one Windows app that keeps it all on your PC and never touches the game.
 
 [![Latest release](https://img.shields.io/github/v/release/QL1STY/guild-board?style=for-the-badge&color=a6751f&labelColor=3b4255&label=latest)](https://github.com/QL1STY/guild-board/releases/latest)
