@@ -46,7 +46,7 @@
   --resin: #83A9F0;
   --warn-soft: #3A2B45;
   --warn-line: #805A9A;
-  --button: #8D61E8;
+  --button: #7752C8;
   --button-text: #FFFFFF;
   --series: #9C7AE8;
   --series-light: #C8B5F5;
@@ -79,7 +79,7 @@
    * line, the cleared acts and the badge. Each reaches 3:1 on the card, and the white of a mark on it 4.5:1. The medal is
    * the gold of an act that earned one, with its number in the dark ink.
    */
-  --mode-abyss: #668BE0;
+  --mode-abyss: #4C6FAE;
   --mode-theater: #C56A83;
   --mode-stygian: #55A9A0;
   --medal-light: #F6D98A;
@@ -126,7 +126,7 @@
   --w-done: #69E39A;
   --w-good: #8FE7A5;
   --w-outline: #8D82A5;
-  --w-btn: #8D61E8;
+  --w-btn: #7752C8;
   --w-btn-text: #FFFFFF;
   --w-quiet: #514760;
   --w-focus: #C7A8FF;
@@ -162,7 +162,7 @@
   --w-done: #69E39A;
   --w-good: #8FE7A5;
   --w-outline: #8D82A5;
-  --w-btn: #8D61E8;
+  --w-btn: #7752C8;
   --w-btn-text: #FFFFFF;
   --w-quiet: #514760;
   --w-focus: #C7A8FF;
