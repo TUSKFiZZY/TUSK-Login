@@ -1284,6 +1284,16 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         core.bus.publish("tuskfizzy_changed")
         return JSONResponse({"imported": counts})
 
+    @app.put("/api/tuskfizzy/selected-genshin")
+    async def tuskfizzy_select_genshin(body: dict[str, Any] = Body(...)) -> Response:
+        ident = body.get("id")
+        if ident is not None and (not isinstance(ident, str) or not ident or len(ident) > 128):
+            return _error(422, "Choose a valid Genshin profile.")
+        if not core.store.tuskfizzy_select_genshin_account(ident):
+            return _error(404, "That Genshin profile no longer exists.")
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"selectedGenshinId": ident})
+
     @app.post("/api/tuskfizzy/genshin-accounts")
     async def tuskfizzy_create_genshin_account(body: dict[str, Any] = Body(...)) -> Response:
         name, uid, server = body.get("name"), body.get("uid"), body.get("server", "")
@@ -1374,6 +1384,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         return JSONResponse({
             "accounts": accounts,
             "genshinAccounts": genshin_accounts,
+            "selectedGenshinId": core.store.tuskfizzy_selected_genshin_id(),
             "daily": core.store.tuskfizzy_daily_for(day),
             "dailyNote": daily_note,
         })
