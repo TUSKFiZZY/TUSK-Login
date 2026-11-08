@@ -958,6 +958,22 @@ class Store:
             result.setdefault(row[0], {})[row[1]] = [bool(row[2]), bool(row[3]), bool(row[4])]
         return result
 
+    def tuskfizzy_put_genshin_account(self, ident: str, name: str, uid: str, server: str, created_at: str) -> None:
+        with self._commit():
+            self._conn.execute(
+                "INSERT INTO tuskfizzy_genshin_accounts(id,name,uid,server,created_at) VALUES(?,?,?,?,?) "
+                "ON CONFLICT(id) DO UPDATE SET name=excluded.name, uid=excluded.uid, server=excluded.server",
+                (ident, name, uid, server, created_at),
+            )
+
+    def tuskfizzy_delete_genshin_account(self, ident: str) -> bool:
+        with self._commit():
+            self._conn.execute("UPDATE tuskfizzy_accounts SET genshin_id = NULL WHERE genshin_id = ?", (ident,))
+            cursor = self._conn.execute("DELETE FROM tuskfizzy_genshin_accounts WHERE id = ?", (ident,))
+            if cursor.rowcount:
+                self.drop_meta("tuskfizzy_selected_genshin_id") if self.meta("tuskfizzy_selected_genshin_id") == ident else None
+            return cursor.rowcount > 0
+
     def tuskfizzy_daily_for(self, day: str) -> dict[str, list[bool]]:
         rows = self._conn.execute(
             "SELECT account_id, login, commission, resin FROM tuskfizzy_daily WHERE day = ?", (day,)
