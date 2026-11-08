@@ -55,6 +55,8 @@ export function Tuskfizzy({ live }: { live: Live }) {
   const [editingGenshin, setEditingGenshin] = useState<string | null>(null)
   const [sessionTarget, setSessionTarget] = useState<string | null>(null)
   const [cookieText, setCookieText] = useState('')
+  const [wishTarget, setWishTarget] = useState<string | null>(null)
+  const [wishUrl, setWishUrl] = useState('')
 
   const edit = (account: Account) => {
     setEditing(account.id)
@@ -137,6 +139,21 @@ export function Tuskfizzy({ live }: { live: Live }) {
       await api.post('/api/tuskfizzy/genshin-accounts/' + encodeURIComponent(account.id) + '/login', { cookieText })
       setCookieText('')
       setSessionTarget(null)
+      setRevision(value => value + 1)
+    } catch (failure) {
+      setProblem(messageOf(failure))
+    } finally {
+      setSaving(null)
+    }
+  }
+  const importGenshinWishes = async (account: GenshinAccount) => {
+    if (!wishUrl.trim() || saving !== null) return
+    setSaving('wishes')
+    setProblem(null)
+    try {
+      await api.post('/api/tuskfizzy/genshin-accounts/' + encodeURIComponent(account.id) + '/wish-import', { url: wishUrl.trim() })
+      setWishUrl('')
+      setWishTarget(null)
       setRevision(value => value + 1)
     } catch (failure) {
       setProblem(messageOf(failure))
@@ -346,11 +363,23 @@ export function Tuskfizzy({ live }: { live: Live }) {
                       <div><b>{profile.name}</b><span>UID {profile.uid} · {profile.server || 'Server not set'} · {profile.sessionConnected ? 'HoYoLAB connected' : 'HoYoLAB not connected'}{data.selectedGenshinId === profile.id ? ' · Selected' : ''}</span></div>
                       <button className="gb-link" type="button" disabled={saving !== null || data.selectedGenshinId === profile.id} onClick={() => void selectGenshin(profile)}>{data.selectedGenshinId === profile.id ? 'Selected' : 'Use for Daily Note'}</button>
                       <button className="gb-link" type="button" onClick={() => { setSessionTarget(sessionTarget === profile.id ? null : profile.id); setCookieText('') }}>{profile.sessionConnected ? 'Replace login' : 'Connect HoYoLAB'}</button>
+                      <button className="gb-link" type="button" onClick={() => { setWishTarget(wishTarget === profile.id ? null : profile.id); setWishUrl('') }}>Import wish history</button>
                       {profile.sessionConnected && <button className="gb-link" type="button" disabled={saving !== null} onClick={() => void disconnectGenshinSession(profile)}>Disconnect</button>}
                       <button className="gb-link" type="button" onClick={() => editGenshin(profile)}>Edit</button>
                       <button className="gb-link" type="button" onClick={() => void removeGenshin(profile)}>Remove</button>
                     </div>
                   ))}
+                </div>
+              )}
+              {wishTarget && data.genshinAccounts.find(profile => profile.id === wishTarget) && (
+                <div className="tf-session-editor">
+                  <h3>Import wish history for {data.genshinAccounts.find(profile => profile.id === wishTarget)!.name}</h3>
+                  <p className="tf-muted">Paste the complete HTTPS wish-history URL produced by your existing PowerShell wish-history method. The key is used only in memory for the import, is masked in logs, and is not saved or shown back. The returned UID is checked against this profile.</p>
+                  <label>Wish-history URL<textarea value={wishUrl} rows={3} autoComplete="off" spellCheck={false} onChange={event => setWishUrl(event.target.value)} placeholder="https://…?authkey=…" /></label>
+                  <div className="tf-editor-actions">
+                    <button className="gb-btn" type="button" disabled={!wishUrl.trim() || saving !== null} onClick={() => { const profile = data.genshinAccounts.find(item => item.id === wishTarget); if (profile) void importGenshinWishes(profile) }}>{saving === 'wishes' ? 'Starting import…' : 'Import wishes'}</button>
+                    <button className="gb-btn quiet" type="button" disabled={saving !== null} onClick={() => { setWishTarget(null); setWishUrl('') }}>Cancel</button>
+                  </div>
                 </div>
               )}
               {sessionTarget && data.genshinAccounts.find(profile => profile.id === sessionTarget) && (
