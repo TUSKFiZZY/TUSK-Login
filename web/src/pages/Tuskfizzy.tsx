@@ -16,8 +16,8 @@ function todayKey(): string {
 }
 
 async function pictureData(file: File): Promise<string> {
-  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 700_000) {
-    throw new Error('Choose a PNG, JPEG or WebP picture smaller than 700 KB.')
+  if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type) || file.size > 700_000) {
+    throw new Error('Choose a PNG, JPEG, WebP or GIF picture smaller than 700 KB.')
   }
   return await new Promise((resolve, reject) => {
     const reader = new FileReader()
