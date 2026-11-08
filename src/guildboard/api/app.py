@@ -160,8 +160,8 @@ def _valid_tuskfizzy_portrait(value: Any) -> bool:
         return False
     kind = match.group(1)
     return (
-        kind == "png" and raw.startswith(b"\\x89PNG\\r\\n\\x1a\\n")
-        or kind == "jpeg" and raw.startswith(b"\\xff\\xd8\\xff")
+        kind == "png" and raw.startswith(b"\x89PNG\r\n\x1a\n")
+        or kind == "jpeg" and raw.startswith(b"\xff\xd8\xff")
         or kind == "webp" and len(raw) >= 12 and raw[:4] == b"RIFF" and raw[8:12] == b"WEBP"
     )
 
