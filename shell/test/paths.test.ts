@@ -5,8 +5,8 @@ import { appIconPath, coreCommand, dataFolder } from '../src/paths.js'
 
 test('the data folder follows the core’s rule', () => {
   const env = { LOCALAPPDATA: 'C:\\L' }
-  expect(dataFolder(parseArgs([]), env)).toBe('C:\\L\\GuildBoard')
-  expect(dataFolder(parseArgs(['--demo']), env)).toBe('C:\\L\\GuildBoard-demo')
+  expect(dataFolder(parseArgs([]), env)).toBe('C:\\L\\TUSKFiZZY')
+  expect(dataFolder(parseArgs(['--demo']), env)).toBe('C:\\L\\TUSKFiZZY-demo')
   expect(dataFolder(parseArgs([]), { ...env, GUILDBOARD_DATA_DIR: 'D:\\g' })).toBe('D:\\g')
   expect(dataFolder(parseArgs(['--data-dir', 'E:\\h']), env)).toBe('E:\\h')
 })
@@ -22,7 +22,7 @@ test('a relative data folder is made absolute, as one folder for the core and fo
 
 test('the core’s command, packaged and in development', () => {
   expect(coreCommand(parseArgs(['--demo']), 'D', true, 'R', 'X'))
-    .toEqual({ program: 'R\\core\\guildboard-core.exe', args: ['--shell', '--data-dir', 'D', '--demo'], cwd: 'R\\core' })
+    .toEqual({ program: 'R\\core\\tuskfizzy-core.exe', args: ['--shell', '--data-dir', 'D', '--demo'], cwd: 'R\\core' })
   expect(coreCommand(parseArgs([]), 'D', false, 'R', 'X').args.slice(0, 3)).toEqual(['-m', 'guildboard', '--shell'])
 })
 
