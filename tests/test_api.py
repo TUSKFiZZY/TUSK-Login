@@ -815,3 +815,20 @@ def test_tuskfizzy_daily_note_only_marks_resin_on_observed_crossing_and_keeps_it
 
 def test_tuskfizzy_daily_note_does_not_update_unknown_profile(core):
     assert not core.store.tuskfizzy_observe_daily_note("2026-11-09", "missing", 20, True)
+
+
+def test_tuskfizzy_selected_genshin_profile_can_be_changed_and_removed(client):
+    created = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    )
+    assert created.status_code == 200
+    ident = created.json()["account"]["id"]
+
+    selected = client.put("/api/tuskfizzy/selected-genshin", json={"id": ident})
+    assert selected.status_code == 200
+    assert selected.json() == {"selectedGenshinId": ident}
+    assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-09"}).json()["selectedGenshinId"] == ident
+
+    assert client.delete(f"/api/tuskfizzy/genshin-accounts/{ident}").status_code == 200
+    assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-09"}).json()["selectedGenshinId"] is None
