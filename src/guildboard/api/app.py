@@ -29,6 +29,7 @@ from guildboard.achievements.updates import UpdateError
 from guildboard.backups import DEMO as BACKUP_DEMO, MAX_BACKUP_BYTES, TOO_LARGE as BACKUP_TOO_LARGE, BackupRefused
 from guildboard.board.layouts import LayoutChanged, LayoutError, UnknownPlace, UnknownWidget
 from guildboard import characters, notices
+from guildboard import enka
 from guildboard.cloud import SHARE_KEYS
 from guildboard.cloud.demo import STATES as DEMO_ONLINE_STATES
 from guildboard.cloud.models import NOT_A_FRIEND, OnlineRefused
@@ -1340,6 +1341,23 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             "accounts": core.store.tuskfizzy_accounts_list(),
             "records": core.store.tuskfizzy_month_for(month),
         })
+
+    @app.get("/api/tuskfizzy/enka/{uid}")
+    async def tuskfizzy_enka(uid: str) -> Response:
+        """Read a public Enka showcase for one validated Genshin UID; no HoYoLAB session is sent."""
+        if not re.fullmatch(r"[0-9]{9,10}", uid):
+            return _error(422, "Genshin UID must contain 9 or 10 digits.")
+        try:
+            profile = await asyncio.to_thread(enka.get_profile, uid)
+        except ValueError:
+            return _error(422, "Genshin UID must contain 9 or 10 digits.")
+        except enka.EnkaNotFound as error:
+            return _error(404, str(error))
+        except enka.EnkaUnavailable as error:
+            return _error(503, str(error))
+        except enka.EnkaError as error:
+            return _error(502, str(error))
+        return JSONResponse(profile)
 
     @app.get("/api/tuskfizzy/tracker")
     async def tuskfizzy_tracker(day: str = Query(...)) -> Response:
