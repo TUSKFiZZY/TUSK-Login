@@ -1178,6 +1178,78 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         except ImportFileError as error:
             return _error(422, str(error))
 
+    @app.post("/api/tuskfizzy/import")
+    async def tuskfizzy_import(body: dict[str, Any] = Body(...)) -> Response:
+        """Import the legacy tracker's portable, non-secret export. Validation finishes before the one DB transaction."""
+        if body.get("format") != "tuskfizzy-local-data" or body.get("version") != 1:
+            return _error(422, "This is not a supported TUSKFiZZY data export.")
+        accounts = body.get("accounts")
+        daily = body.get("dailyRecords")
+        genshin = body.get("genshinAccounts")
+        selected = body.get("selectedGenshinId", "")
+        if not isinstance(accounts, list) or not isinstance(daily, dict) or not isinstance(genshin, list):
+            return _error(422, "The export is missing its profiles or daily history.")
+        if len(accounts) > 100 or len(genshin) > 100 or len(daily) > 5000:
+            return _error(422, "The export contains more profiles or days than TUSKFiZZY can import.")
+        if not isinstance(selected, str) or len(selected) > 128:
+            return _error(422, "The selected Genshin account is invalid.")
+        account_ids: set[str] = set()
+        genshin_ids: set[str] = set()
+        clean_accounts: list[dict[str, Any]] = []
+        clean_genshin: list[dict[str, Any]] = []
+        for item in accounts:
+            if not isinstance(item, dict):
+                return _error(422, "A checklist profile is malformed.")
+            ident, name = item.get("id"), item.get("name")
+            portrait, genshin_id = item.get("portrait", ""), item.get("genshinId")
+            if (not isinstance(ident, str) or not ident or len(ident) > 128 or ident in account_ids
+                    or not isinstance(name, str) or not name.strip() or len(name) > 80
+                    or not isinstance(portrait, str) or len(portrait) > 1_000_000
+                    or (genshin_id is not None and (not isinstance(genshin_id, str) or len(genshin_id) > 128))):
+                return _error(422, "A checklist profile has invalid or duplicate fields.")
+            account_ids.add(ident)
+            clean_accounts.append({"id": ident, "name": name.strip(), "portrait": portrait,
+                                   "genshinId": genshin_id, "createdAt": str(item.get("createdAt", ""))[:40]})
+        for item in genshin:
+            if not isinstance(item, dict):
+                return _error(422, "A Genshin profile is malformed.")
+            ident, name, uid = item.get("id"), item.get("name"), item.get("uid")
+            server = item.get("server", "")
+            if (not isinstance(ident, str) or not ident or len(ident) > 128 or ident in genshin_ids
+                    or not isinstance(name, str) or not name.strip() or len(name) > 80
+                    or not isinstance(uid, str) or not re.fullmatch(r"[0-9]{9,10}", uid)
+                    or not isinstance(server, str) or len(server) > 32):
+                return _error(422, "A Genshin profile has invalid or duplicate fields. UIDs must contain 9 or 10 digits.")
+            genshin_ids.add(ident)
+            clean_genshin.append({"id": ident, "name": name.strip(), "uid": uid, "server": server,
+                                  "createdAt": str(item.get("createdAt", ""))[:40]})
+        if selected and selected not in genshin_ids:
+            return _error(422, "The selected Genshin profile is not in this export.")
+        if any(item.get("genshinId") and item["genshinId"] not in genshin_ids for item in clean_accounts):
+            return _error(422, "A checklist profile refers to a Genshin account that is not in this export.")
+        clean_daily: dict[str, dict[str, list[Any]]] = {}
+        for day, profiles in daily.items():
+            if not isinstance(day, str) or not re.fullmatch(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", day) or not isinstance(profiles, dict):
+                return _error(422, "A daily record has an invalid date or shape.")
+            clean_profiles: dict[str, list[Any]] = {}
+            resin_meta = profiles.get("_resinLast", {})
+            if resin_meta and not isinstance(resin_meta, dict):
+                return _error(422, "The resin history metadata is malformed.")
+            for ident, flags in profiles.items():
+                if ident == "_resinLast":
+                    continue
+                if ident not in account_ids or not isinstance(flags, list) or len(flags) != 3 or any(type(v) is not bool for v in flags):
+                    return _error(422, "A daily record refers to an unknown profile or has invalid checklist values.")
+                clean_profiles[ident] = flags
+            clean_profiles["_resinLast"] = resin_meta
+            clean_daily[day] = clean_profiles
+        try:
+            counts = core.store.import_tuskfizzy_data(clean_accounts, clean_daily, clean_genshin, selected)
+        except (ValueError, TypeError) as error:
+            return _error(422, f"The export could not be imported: {error}")
+        core.bus.publish("tuskfizzy_imported", counts)
+        return JSONResponse({"imported": counts})
+
     @app.post("/api/import/preview")
     async def import_preview(body: dict[str, Any] = Body(...)) -> Response:
         named = _import_file(body)
