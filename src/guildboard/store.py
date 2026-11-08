@@ -385,6 +385,26 @@ MIGRATIONS: tuple[str, ...] = (
         SELECT entry_page_id, kind, name, data, version, read_at FROM wiki_entries;
     DROP TABLE wiki_entries;
     ALTER TABLE wiki_entries_new RENAME TO wiki_entries;
+    """,,
+    # TUSKFiZZY's own checklist profiles and imported legacy history. Authentication is deliberately not stored here.
+    """
+    CREATE TABLE tuskfizzy_accounts (
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, portrait TEXT NOT NULL DEFAULT '',
+        genshin_id TEXT, created_at TEXT NOT NULL
+    );
+    CREATE TABLE tuskfizzy_genshin_accounts (
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, uid TEXT NOT NULL,
+        server TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL
+    );
+    CREATE TABLE tuskfizzy_daily (
+        day TEXT NOT NULL, account_id TEXT NOT NULL REFERENCES tuskfizzy_accounts(id) ON DELETE CASCADE,
+        login INTEGER NOT NULL CHECK (login IN (0,1)),
+        commission INTEGER NOT NULL CHECK (commission IN (0,1)),
+        resin INTEGER NOT NULL CHECK (resin IN (0,1)),
+        resin_last INTEGER,
+        PRIMARY KEY (day, account_id)
+    ) WITHOUT ROWID;
+    CREATE INDEX tuskfizzy_daily_by_account ON tuskfizzy_daily(account_id, day);
     """,
 )
 
@@ -868,6 +888,43 @@ class Store:
     def drop_meta(self, key: str) -> None:
         with self._commit():
             self._conn.execute("DELETE FROM meta WHERE key = ?", (key,))
+
+    # ------------------------------------------------------------------ TUSKFiZZY legacy checklist data
+    def tuskfizzy_import_counts(self) -> dict[str, int]:
+        return {
+            "accounts": int(self._conn.execute("SELECT COUNT(*) FROM tuskfizzy_accounts").fetchone()[0]),
+            "genshinAccounts": int(self._conn.execute("SELECT COUNT(*) FROM tuskfizzy_genshin_accounts").fetchone()[0]),
+            "dailyRecords": int(self._conn.execute("SELECT COUNT(*) FROM tuskfizzy_daily").fetchone()[0]),
+        }
+
+    def import_tuskfizzy_data(self, accounts: list[dict[str, Any]], daily: dict[str, dict[str, list[Any]]],
+                              genshin_accounts: list[dict[str, Any]], selected_genshin_id: str) -> dict[str, int]:
+        """Idempotently import validated, non-secret legacy profiles and checklist history in one transaction."""
+        with self.transaction():
+            for item in genshin_accounts:
+                self._conn.execute(
+                    "INSERT INTO tuskfizzy_genshin_accounts(id,name,uid,server,created_at) VALUES(?,?,?,?,?) "
+                    "ON CONFLICT(id) DO UPDATE SET name=excluded.name, uid=excluded.uid, server=excluded.server",
+                    (item["id"], item["name"], item["uid"], item.get("server", ""), item.get("createdAt", "")),
+                )
+            for item in accounts:
+                self._conn.execute(
+                    "INSERT INTO tuskfizzy_accounts(id,name,portrait,genshin_id,created_at) VALUES(?,?,?,?,?) "
+                    "ON CONFLICT(id) DO UPDATE SET name=excluded.name, portrait=excluded.portrait, genshin_id=excluded.genshin_id",
+                    (item["id"], item["name"], item.get("portrait", ""), item.get("genshinId"), item.get("createdAt", "")),
+                )
+            for day, profiles in daily.items():
+                for account_id, flags in profiles.items():
+                    self._conn.execute(
+                        "INSERT INTO tuskfizzy_daily(day,account_id,login,commission,resin,resin_last) VALUES(?,?,?,?,?,?) "
+                        "ON CONFLICT(day,account_id) DO UPDATE SET login=excluded.login, commission=excluded.commission, "
+                        "resin=resin.excluded, resin_last=excluded.resin_last".replace("resin=resin.excluded", "resin=excluded.resin"),
+                        (day, account_id, int(flags[0]), int(flags[1]), int(flags[2]),
+                         int(profiles.get("_resinLast", {}).get(account_id, 0)) if isinstance(profiles.get("_resinLast"), dict) else None),
+                    )
+            if selected_genshin_id:
+                self.set_meta("tuskfizzy_selected_genshin_id", selected_genshin_id)
+            return self.tuskfizzy_import_counts()
 
     def claim(self, kind: str) -> None:
         """Mark the folder for the demo or for the real account, and refuse the other kind."""
