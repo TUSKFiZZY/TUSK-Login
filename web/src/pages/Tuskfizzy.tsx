@@ -5,7 +5,7 @@ import { Frame } from '../frame/Frame.tsx'
 import { type Live, useModel } from '../live.ts'
 
 type Account = { id: string; name: string; portrait: string; genshinId: string | null; createdAt: string }
-type GenshinAccount = { id: string; name: string; uid: string; server: string; createdAt?: string }
+type GenshinAccount = { id: string; name: string; uid: string; server: string; createdAt?: string; sessionConnected?: boolean }
 type DailyNote = { profileName: string; resin: number | null; resinMax: number | null; resinReadAt: string | null; commissionDone: number | null; commissionTotal: number | null; bonusClaimed: boolean; expeditionsDone: number | null; expeditionsTotal: number | null; readAt: string }
 type Tracker = { accounts: Account[]; genshinAccounts: GenshinAccount[]; daily: Record<string, boolean[]>; selectedGenshinId?: string | null; dailyNote?: DailyNote | null }
 type MonthTracker = { records: Record<string, Record<string, boolean[]>> }
@@ -52,6 +52,8 @@ export function Tuskfizzy({ live }: { live: Live }) {
   const [enkaProfile, setEnkaProfile] = useState<EnkaProfile | null>(null)
   const [enkaLoading, setEnkaLoading] = useState(false)
   const [editingGenshin, setEditingGenshin] = useState<string | null>(null)
+  const [sessionTarget, setSessionTarget] = useState<string | null>(null)
+  const [cookieText, setCookieText] = useState('')
 
   const edit = (account: Account) => {
     setEditing(account.id)
@@ -119,6 +121,34 @@ export function Tuskfizzy({ live }: { live: Live }) {
       if (editingGenshin) await api.put(`/api/tuskfizzy/genshin-accounts/${encodeURIComponent(editingGenshin)}`, body)
       else await api.post('/api/tuskfizzy/genshin-accounts', body)
       clearGenshin()
+      setRevision(value => value + 1)
+    } catch (failure) {
+      setProblem(messageOf(failure))
+    } finally {
+      setSaving(null)
+    }
+  }
+  const connectGenshinSession = async (account: GenshinAccount) => {
+    if (!cookieText.trim() || saving !== null) return
+    setSaving('session')
+    setProblem(null)
+    try {
+      await api.post('/api/tuskfizzy/genshin-accounts/' + encodeURIComponent(account.id) + '/login', { cookieText })
+      setCookieText('')
+      setSessionTarget(null)
+      setRevision(value => value + 1)
+    } catch (failure) {
+      setProblem(messageOf(failure))
+    } finally {
+      setSaving(null)
+    }
+  }
+  const disconnectGenshinSession = async (account: GenshinAccount) => {
+    if (saving !== null || !window.confirm('Disconnect the saved HoYoLAB login for ' + account.name + '?')) return
+    setSaving('session')
+    setProblem(null)
+    try {
+      await api.delete('/api/tuskfizzy/genshin-accounts/' + encodeURIComponent(account.id) + '/login')
       setRevision(value => value + 1)
     } catch (failure) {
       setProblem(messageOf(failure))
@@ -294,17 +324,30 @@ export function Tuskfizzy({ live }: { live: Live }) {
             </div>
             <section className="gb-panel tf-genshin">
               <h2>Genshin accounts</h2>
-              <p className="tf-muted">Choose which UID to use for Daily Note matching. It must match the HoYoLAB account currently signed in; separate saved HoYoLAB sessions for each profile are not available yet.</p>
+              <p className="tf-muted">Each Genshin profile can have its own HoYoLAB login. Cookies are encrypted on this PC and never shared between profiles.</p>
               {data.genshinAccounts.length === 0 ? <p className="tf-muted">No Genshin profiles added yet.</p> : (
                 <div className="tf-genshin-list">
                   {data.genshinAccounts.map(profile => (
                     <div className="tf-genshin-row" key={profile.id}>
-                      <div><b>{profile.name}</b><span>UID {profile.uid} · {profile.server || 'Server not set'}{data.selectedGenshinId === profile.id ? ' · Selected' : ''}</span></div>
+                      <div><b>{profile.name}</b><span>UID {profile.uid} · {profile.server || 'Server not set'} · {profile.sessionConnected ? 'HoYoLAB connected' : 'HoYoLAB not connected'}{data.selectedGenshinId === profile.id ? ' · Selected' : ''}</span></div>
                       <button className="gb-link" type="button" disabled={saving !== null || data.selectedGenshinId === profile.id} onClick={() => void selectGenshin(profile)}>{data.selectedGenshinId === profile.id ? 'Selected' : 'Use for Daily Note'}</button>
+                      <button className="gb-link" type="button" onClick={() => { setSessionTarget(sessionTarget === profile.id ? null : profile.id); setCookieText('') }}>{profile.sessionConnected ? 'Replace login' : 'Connect HoYoLAB'}</button>
+                      {profile.sessionConnected && <button className="gb-link" type="button" disabled={saving !== null} onClick={() => void disconnectGenshinSession(profile)}>Disconnect</button>}
                       <button className="gb-link" type="button" onClick={() => editGenshin(profile)}>Edit</button>
                       <button className="gb-link" type="button" onClick={() => void removeGenshin(profile)}>Remove</button>
                     </div>
                   ))}
+                </div>
+              )}
+              {sessionTarget && data.genshinAccounts.find(profile => profile.id === sessionTarget) && (
+                <div className="tf-session-editor">
+                  <h3>Connect {data.genshinAccounts.find(profile => profile.id === sessionTarget)!.name} to HoYoLAB</h3>
+                  <p className="tf-muted">Paste the Cookie header from your own HoYoLAB browser session. Use a login whose Genshin UID matches this profile. The cookies are checked and saved encrypted on this PC; they are not shown again.</p>
+                  <label>HoYoLAB Cookie header<textarea value={cookieText} rows={4} autoComplete="off" spellCheck={false} onChange={event => setCookieText(event.target.value)} placeholder="ltoken_v2=…; ltuid_v2=…" /></label>
+                  <div className="tf-editor-actions">
+                    <button className="gb-btn" type="button" disabled={!cookieText.trim() || saving !== null} onClick={() => { const profile = data.genshinAccounts.find(item => item.id === sessionTarget); if (profile) void connectGenshinSession(profile) }}>{saving === 'session' ? 'Checking login…' : 'Verify and save login'}</button>
+                    <button className="gb-btn quiet" type="button" disabled={saving !== null} onClick={() => { setSessionTarget(null); setCookieText('') }}>Cancel</button>
+                  </div>
                 </div>
               )}
               <h3>{editingGenshin ? 'Edit Genshin profile' : 'Add Genshin profile'}</h3>
