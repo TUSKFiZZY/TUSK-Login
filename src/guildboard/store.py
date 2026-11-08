@@ -970,8 +970,8 @@ class Store:
         with self._commit():
             self._conn.execute("UPDATE tuskfizzy_accounts SET genshin_id = NULL WHERE genshin_id = ?", (ident,))
             cursor = self._conn.execute("DELETE FROM tuskfizzy_genshin_accounts WHERE id = ?", (ident,))
-            if cursor.rowcount:
-                self.drop_meta("tuskfizzy_selected_genshin_id") if self.meta("tuskfizzy_selected_genshin_id") == ident else None
+            if cursor.rowcount and self.meta("tuskfizzy_selected_genshin_id") == ident:
+                self.drop_meta("tuskfizzy_selected_genshin_id")
             return cursor.rowcount > 0
 
     def tuskfizzy_daily_for(self, day: str) -> dict[str, list[bool]]:
