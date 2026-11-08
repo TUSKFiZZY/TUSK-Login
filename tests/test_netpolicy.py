@@ -433,3 +433,34 @@ def test_every_request_of_netpolicy_verifies_as_the_entry_chose(monkeypatch):
         truststore.extract_from_ssl()
     netpolicy.take_the_tls_in_use()
     assert context_of_the_opener() is ssl.SSLContext
+
+
+
+def test_enka_uid_validation_happens_before_network(monkeypatch):
+    def must_not_open(*args, **kwargs):
+        raise AssertionError("invalid UID reached the network")
+
+    monkeypatch.setattr(netpolicy, "_open", must_not_open)
+    for uid in ("", "12345678", "12345678901", "12345678x", "１２３４５６７８９"):
+        with pytest.raises(ValueError):
+            netpolicy.fetch_enka_profile(uid)
+
+
+def test_enka_fetch_uses_only_the_validated_public_uid(monkeypatch):
+    seen = []
+
+    def fake_open(request, timeout):
+        seen.append((request.full_url, timeout, request.get_header("Cookie"), request.follow_redirects))
+        return _Response(b'{"playerInfo":{"nickname":"Test"}}')
+
+    monkeypatch.setattr(netpolicy, "_open", fake_open)
+    assert netpolicy.fetch_enka_profile("1234567890", timeout=4.0) == b'{"playerInfo":{"nickname":"Test"}}'
+    assert seen == [("https://enka.network/api/uid/1234567890/", 4.0, None, False)]
+
+
+def test_enka_redirects_are_refused():
+    handler = netpolicy._CheckedRedirects()
+    request = urllib.request.Request("https://enka.network/api/uid/123456789/")
+    request.follow_redirects = False
+    with pytest.raises(netpolicy.RedirectRefused):
+        handler.redirect_request(request, None, 302, "Found", {}, "https://evil.example/profile")
