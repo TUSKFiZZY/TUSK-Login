@@ -1,25 +1,25 @@
-; Inno Setup recipe for Guild Board's installer. Run by build-installer.ps1 with /DAppVersion=<version>, after
-; shell\build\package.mjs has packed the Electron shell, and the core in its resources, into shell\out\Guild Board-win32-x64.
+; Inno Setup recipe for TUSKFiZZY's installer. Run by build-installer.ps1 with /DAppVersion=<version>, after
+; shell\build\package.mjs has packed the Electron shell, and the core in its resources, into shell\out\TUSKFiZZY-win32-x64.
 ;
 ; It installs for the one Windows user who runs it, with no administrator rights, into
-; %LOCALAPPDATA%\Programs\Guild Board, and adds Guild Board to the Start menu and, if wanted, the desktop.
-; The player's own data, %LOCALAPPDATA%\GuildBoard, is never touched: an update and an uninstall both leave it.
+; %LOCALAPPDATA%\Programs\TUSKFiZZY, and adds TUSKFiZZY to the Start menu and, if wanted, the desktop.
+; The player's own data, %LOCALAPPDATA%\TUSKFiZZY, is never touched: an update and an uninstall both leave it.
 
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
 #define Root ".."
-#define Built Root + "\shell\out\Guild Board-win32-x64"
+#define Built Root + "\shell\out\TUSKFiZZY-win32-x64"
 
 [Setup]
 AppId={{6E0D3B2A-8C1F-4F5E-9B7A-3D2C1E0F9A84}
-AppName=Guild Board
+AppName=TUSKFiZZY
 AppVersion={#AppVersion}
-AppVerName=Guild Board {#AppVersion}
-AppPublisher=Guild Board
+AppVerName=TUSKFiZZY {#AppVersion}
+AppPublisher=TUSKFiZZY
 LicenseFile={#Root}\LICENSE
-DefaultDirName={localappdata}\Programs\Guild Board
-DefaultGroupName=Guild Board
+DefaultDirName={localappdata}\Programs\TUSKFiZZY
+DefaultGroupName=TUSKFiZZY
 DisableProgramGroupPage=yes
 DisableDirPage=yes
 DisableReadyPage=yes
@@ -28,24 +28,24 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
 SetupIconFile={#Root}\shell\assets\icon.ico
-UninstallDisplayIcon={app}\guildboard-app.exe
-UninstallDisplayName=Guild Board
+UninstallDisplayIcon={app}\tuskfizzy-app.exe
+UninstallDisplayName=TUSKFiZZY
 OutputDir={#Root}\dist-installer
-OutputBaseFilename=Guild Board Setup {#AppVersion}
+OutputBaseFilename=TUSKFiZZY Setup {#AppVersion}
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 CloseApplications=no
 
 [Tasks]
-Name: "desktop"; Description: "Put a Guild Board shortcut on the desktop"
+Name: "desktop"; Description: "Put a TUSKFiZZY shortcut on the desktop"
 
 [Files]
 Source: "{#Built}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; The packed folder already carries Electron's own LICENSE and LICENSES.chromium.html beside the program, and they stay (the
-; notices say so). Guild Board's licence therefore goes beside them under another name, with the notices of the software inside
+; notices say so). TUSKFiZZY's licence therefore goes beside them under another name, with the notices of the software inside
 ; it and the privacy notice, where the player can find them.
-Source: "{#Root}\LICENSE"; DestDir: "{app}"; DestName: "LICENSE-GuildBoard.txt"; Flags: ignoreversion
+Source: "{#Root}\LICENSE"; DestDir: "{app}"; DestName: "LICENSE-TUSKFiZZY.txt"; Flags: ignoreversion
 Source: "{#Root}\THIRD-PARTY-NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Root}\PRIVACY.md"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -58,29 +58,29 @@ Type: files; Name: "{app}\guildboard-tray.exe"
 Type: filesandordirs; Name: "{app}\resources\core"
 
 [Icons]
-Name: "{userprograms}\Guild Board"; Filename: "{app}\guildboard-app.exe"
-Name: "{userdesktop}\Guild Board"; Filename: "{app}\guildboard-app.exe"; Tasks: desktop
+Name: "{userprograms}\TUSKFiZZY"; Filename: "{app}\tuskfizzy-app.exe"
+Name: "{userdesktop}\TUSKFiZZY"; Filename: "{app}\tuskfizzy-app.exe"; Tasks: desktop
 
 [Registry]
-; guildboard:// opens Guild Board, for an invite link. The current user's own classes, removed on uninstall. This is Guild
+; tuskfizzy:// opens TUSKFiZZY, for an invite link. The current user's own classes, removed on uninstall. This is Guild
 ; Board's own key; nothing in the program itself touches the registry. The -- keeps whatever a link holds from being an option.
-Root: HKCU; Subkey: "Software\Classes\guildboard"; ValueType: string; ValueName: ""; ValueData: "URL:Guild Board"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\guildboard"; ValueType: string; ValueName: ""; ValueData: "URL:TUSKFiZZY"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\guildboard"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
-Root: HKCU; Subkey: "Software\Classes\guildboard\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\guildboard-app.exe,0"
-Root: HKCU; Subkey: "Software\Classes\guildboard\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\guildboard-app.exe"" -- ""%1"""
+Root: HKCU; Subkey: "Software\Classes\guildboard\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\tuskfizzy-app.exe,0"
+Root: HKCU; Subkey: "Software\Classes\guildboard\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\tuskfizzy-app.exe"" -- ""%1"""
 
 [Run]
-Filename: "{app}\guildboard-app.exe"; Description: "Open Guild Board"; Flags: postinstall nowait
+Filename: "{app}\tuskfizzy-app.exe"; Description: "Open TUSKFiZZY"; Flags: postinstall nowait
 
 [Code]
-// Start with Windows, if it was turned on in Guild Board's settings, goes with the program; a shortcut of the same
-// name that starts another copy of Guild Board stays.
+// Start with Windows, if it was turned on in TUSKFiZZY's settings, goes with the program; a shortcut of the same
+// name that starts another copy of TUSKFiZZY stays.
 procedure RemoveStartupShortcut();
 var
   Shell, Link: Variant;
   Path: String;
 begin
-  Path := ExpandConstant('{userstartup}\Guild Board.lnk');
+  Path := ExpandConstant('{userstartup}\TUSKFiZZY.lnk');
   if not FileExists(Path) then
     exit;
   try
@@ -98,8 +98,8 @@ begin
     RemoveStartupShortcut();
 end;
 
-// A running Guild Board is asked to quit before its files are replaced or removed; it waits until it has.
-function QuitGuildBoard(Exe: String): Boolean;
+// A running TUSKFiZZY is asked to quit before its files are replaced or removed; it waits until it has.
+function QuitTUSKFiZZY(Exe: String): Boolean;
 var
   Code: Integer;
 begin
@@ -111,12 +111,12 @@ end;
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   Result := '';
-  if not QuitGuildBoard(ExpandConstant('{app}\guildboard-app.exe')) then
-    Result := 'Guild Board could not be closed. Quit it from its tray icon and run the setup again.';
+  if not QuitTUSKFiZZY(ExpandConstant('{app}\tuskfizzy-app.exe')) then
+    Result := 'TUSKFiZZY could not be closed. Quit it from its tray icon and run the setup again.';
 end;
 
 function InitializeUninstall(): Boolean;
 begin
-  QuitGuildBoard(ExpandConstant('{app}\guildboard-app.exe'));
-  Result := True;  // the uninstall goes ahead: a Guild Board still running keeps only the files it holds
+  QuitTUSKFiZZY(ExpandConstant('{app}\tuskfizzy-app.exe'));
+  Result := True;  // the uninstall goes ahead: a TUSKFiZZY still running keeps only the files it holds
 end;
