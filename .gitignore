@@ -46,9 +46,12 @@ web/memory-results/
 .env.*
 !.env.example
 *.cookie
-*cookie*
-*token*
-*secret*
+*.cookies
+cookies.txt
+cookies.json
+token.bin
+auth.json
+secrets.json
 *.sqlite
 *.sqlite3
 *.log
