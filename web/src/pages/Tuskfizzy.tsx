@@ -6,6 +6,7 @@ import { type Live, useModel } from '../live.ts'
 
 type Account = { id: string; name: string; portrait: string; genshinId: string | null; createdAt: string }
 type Tracker = { accounts: Account[]; genshinAccounts: { id: string; name: string; uid: string; server: string }[]; daily: Record<string, boolean[]> }
+type MonthTracker = { records: Record<string, Record<string, boolean[]>> }
 const TASKS = [{ key: 'login', label: 'Login' }, { key: 'commission', label: 'Commission' }, { key: 'resin', label: 'Resin' }] as const
 
 function todayKey(): string {
@@ -28,7 +29,14 @@ async function pictureData(file: File): Promise<string> {
 export function Tuskfizzy({ live }: { live: Live }) {
   const [day, setDay] = useState(todayKey)
   const [revision, setRevision] = useState(0)
+  const [showMonth, setShowMonth] = useState(false)
+  const [monthOffset, setMonthOffset] = useState(0)
   const { data, error } = useModel<Tracker>(`/api/tuskfizzy/tracker?day=${day}`, live.version + revision)
+  const monthDate = new Date(`${day}T12:00:00`)
+  monthDate.setDate(1)
+  monthDate.setMonth(monthDate.getMonth() + monthOffset)
+  const monthKey = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`
+  const { data: monthData } = useModel<MonthTracker>(`/api/tuskfizzy/month?month=${monthKey}`, live.version + revision)
   const [name, setName] = useState('')
   const [portrait, setPortrait] = useState('')
   const [genshinId, setGenshinId] = useState('')
@@ -114,6 +122,34 @@ export function Tuskfizzy({ live }: { live: Live }) {
           <button className="gb-btn quiet" type="button" onClick={() => setDay(todayKey())}>Today</button>
         </div>
         <p className="tf-caption">Daily checklist · {day}</p>
+        <div className="tf-month-actions">
+          <button className="gb-btn quiet" type="button" onClick={() => setShowMonth(value => !value)}>{showMonth ? 'Day view' : 'Month overview'}</button>
+        </div>
+        {showMonth && (
+          <section className="gb-panel tf-month">
+            <div className="tf-month-head">
+              <button className="gb-btn quiet" type="button" aria-label="Previous month" onClick={() => setMonthOffset(value => value - 1)}>←</button>
+              <h2>{monthDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2>
+              <button className="gb-btn quiet" type="button" aria-label="Next month" disabled={monthKey >= todayKey().slice(0, 7)} onClick={() => setMonthOffset(value => value + 1)}>→</button>
+            </div>
+            <div className="tf-month-grid">
+              {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(label => <span className="tf-weekday" key={label}>{label}</span>)}
+              {Array.from({ length: new Date(monthDate.getFullYear(), monthDate.getMonth(), 1).getDay() }, (_, index) => <span className="tf-day blank" key={`blank-${index}`} />)}
+              {Array.from({ length: new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate() }, (_, index) => {
+                const number = index + 1
+                const dateKey = `${monthKey}-${String(number).padStart(2, '0')}`
+                const past = dateKey < todayKey()
+                const future = dateKey >= todayKey()
+                const saved = monthData?.records[dateKey] ?? {}
+                const complete = Boolean(data?.accounts.length) && data!.accounts.every(account => saved[account.id]?.length === 3 && saved[account.id].every(Boolean))
+                return <button type="button" key={dateKey} disabled={!past} className={`tf-day ${past ? complete ? 'complete' : 'incomplete' : 'future'}`} onClick={() => { setDay(dateKey); setMonthOffset(0); setShowMonth(false) }}>
+                  <b>{number}</b>{past && <span aria-label={complete ? 'Completed' : 'Incomplete'}>{complete ? '✓' : '×'}</span>}
+                </button>
+              })}
+            </div>
+            <p className="tf-month-legend">Past days: green for all tasks completed, red for incomplete. Today and future days are not selectable here.</p>
+          </section>
+        )}
         {error && <p className="gb-banner" role="alert">{error}</p>}
         {problem && <p className="gb-banner" role="alert">{problem}</p>}
         {data === null ? <div className="gb-panel gb-empty">Loading your TUSKFiZZY profiles…</div> : (
