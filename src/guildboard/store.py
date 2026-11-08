@@ -929,6 +929,62 @@ class Store:
                 self.set_meta("tuskfizzy_selected_genshin_id", selected_genshin_id)
             return self.tuskfizzy_import_counts()
 
+    def tuskfizzy_accounts_list(self) -> list[dict[str, Any]]:
+        rows = self._conn.execute(
+            "SELECT id, name, portrait, genshin_id, created_at FROM tuskfizzy_accounts ORDER BY created_at, name, id"
+        ).fetchall()
+        return [
+            {"id": row[0], "name": row[1], "portrait": row[2], "genshinId": row[3], "createdAt": row[4]}
+            for row in rows
+        ]
+
+    def tuskfizzy_genshin_accounts_list(self) -> list[dict[str, Any]]:
+        rows = self._conn.execute(
+            "SELECT id, name, uid, server, created_at FROM tuskfizzy_genshin_accounts ORDER BY name, id"
+        ).fetchall()
+        return [
+            {"id": row[0], "name": row[1], "uid": row[2], "server": row[3], "createdAt": row[4]}
+            for row in rows
+        ]
+
+    def tuskfizzy_daily_for(self, day: str) -> dict[str, list[bool]]:
+        rows = self._conn.execute(
+            "SELECT account_id, login, commission, resin FROM tuskfizzy_daily WHERE day = ?", (day,)
+        ).fetchall()
+        return {row[0]: [bool(row[1]), bool(row[2]), bool(row[3])] for row in rows}
+
+    def tuskfizzy_put_account(self, ident: str, name: str, portrait: str, genshin_id: str | None, created_at: str) -> None:
+        with self._commit():
+            self._conn.execute(
+                "INSERT INTO tuskfizzy_accounts(id,name,portrait,genshin_id,created_at) VALUES(?,?,?,?,?) "
+                "ON CONFLICT(id) DO UPDATE SET name=excluded.name, portrait=excluded.portrait, genshin_id=excluded.genshin_id",
+                (ident, name, portrait, genshin_id, created_at),
+            )
+
+    def tuskfizzy_delete_account(self, ident: str) -> bool:
+        with self._commit():
+            cursor = self._conn.execute("DELETE FROM tuskfizzy_accounts WHERE id = ?", (ident,))
+            return cursor.rowcount > 0
+
+    def tuskfizzy_set_task(self, day: str, account_id: str, task: str, checked: bool) -> bool:
+        columns = {"login": "login", "commission": "commission", "resin": "resin"}
+        column = columns.get(task)
+        if column is None:
+            raise ValueError("Unknown TUSKFiZZY checklist task.")
+        if self._conn.execute("SELECT 1 FROM tuskfizzy_accounts WHERE id = ?", (account_id,)).fetchone() is None:
+            return False
+        with self._commit():
+            self._conn.execute(
+                "INSERT INTO tuskfizzy_daily(day,account_id,login,commission,resin) VALUES(?,?,0,0,0) "
+                "ON CONFLICT(day,account_id) DO NOTHING",
+                (day, account_id),
+            )
+            self._conn.execute(
+                f"UPDATE tuskfizzy_daily SET {column} = ? WHERE day = ? AND account_id = ?",
+                (int(checked), day, account_id),
+            )
+        return True
+
     def claim(self, kind: str) -> None:
         """Mark the folder for the demo or for the real account, and refuse the other kind."""
         held = self.meta("kind")
