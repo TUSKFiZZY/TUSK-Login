@@ -375,7 +375,7 @@ export function Tuskfizzy({ live }: { live: Live }) {
                 <div className="tf-session-editor">
                   <h3>Import wish history for {data.genshinAccounts.find(profile => profile.id === wishTarget)!.name}</h3>
                   <p className="tf-muted">Paste the complete HTTPS wish-history URL produced by your existing PowerShell wish-history method. The key is used only in memory for the import, is masked in logs, and is not saved or shown back. The returned UID is checked against this profile.</p>
-                  <label>Wish-history URL<textarea value={wishUrl} rows={3} autoComplete="off" spellCheck={false} onChange={event => setWishUrl(event.target.value)} placeholder="https://…?authkey=…" /></label>
+                  <label>Wish-history URL<input type="password" value={wishUrl} autoComplete="off" spellCheck={false} onChange={event => setWishUrl(event.target.value)} placeholder="https://…?authkey=…" /></label>
                   <div className="tf-editor-actions">
                     <button className="gb-btn" type="button" disabled={!wishUrl.trim() || saving !== null} onClick={() => { const profile = data.genshinAccounts.find(item => item.id === wishTarget); if (profile) void importGenshinWishes(profile) }}>{saving === 'wishes' ? 'Starting import…' : 'Import wishes'}</button>
                     <button className="gb-btn quiet" type="button" disabled={saving !== null} onClick={() => { setWishTarget(null); setWishUrl('') }}>Cancel</button>
@@ -386,7 +386,7 @@ export function Tuskfizzy({ live }: { live: Live }) {
                 <div className="tf-session-editor">
                   <h3>Connect {data.genshinAccounts.find(profile => profile.id === sessionTarget)!.name} to HoYoLAB</h3>
                   <p className="tf-muted">Paste the Cookie header from your own HoYoLAB browser session. Use a login whose Genshin UID matches this profile. The cookies are checked and saved encrypted on this PC; they are not shown again.</p>
-                  <label>HoYoLAB Cookie header<textarea value={cookieText} rows={4} autoComplete="off" spellCheck={false} onChange={event => setCookieText(event.target.value)} placeholder="ltoken_v2=…; ltuid_v2=…" /></label>
+                  <label>HoYoLAB Cookie header<input type="password" value={cookieText} autoComplete="off" spellCheck={false} onChange={event => setCookieText(event.target.value)} placeholder="ltoken_v2=…; ltuid_v2=…" /></label>
                   <div className="tf-editor-actions">
                     <button className="gb-btn" type="button" disabled={!cookieText.trim() || saving !== null} onClick={() => { const profile = data.genshinAccounts.find(item => item.id === sessionTarget); if (profile) void connectGenshinSession(profile) }}>{saving === 'session' ? 'Checking login…' : 'Verify and save login'}</button>
                     <button className="gb-btn quiet" type="button" disabled={saving !== null} onClick={() => { setSessionTarget(null); setCookieText('') }}>Cancel</button>
