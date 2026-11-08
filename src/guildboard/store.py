@@ -927,6 +927,8 @@ class Store:
                     )
             if selected_genshin_id:
                 self.set_meta("tuskfizzy_selected_genshin_id", selected_genshin_id)
+            else:
+                self._conn.execute("DELETE FROM meta WHERE key = ?", ("tuskfizzy_selected_genshin_id",))
             return self.tuskfizzy_import_counts()
 
     def tuskfizzy_accounts_list(self) -> list[dict[str, Any]]:
