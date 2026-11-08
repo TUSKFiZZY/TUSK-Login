@@ -276,7 +276,8 @@ class Core:
             except (OSError, sqlite3.Error, StoreError):
                 log.warning("The daily backup could not be made", exc_info=True)
         self.tokens = TokenStore(paths.token_path)
-        self._tuskfizzy_note_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}\n        self._tuskfizzy_chronicle_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
+        self._tuskfizzy_note_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
+        self._tuskfizzy_chronicle_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
         self._source: Any = None
         self._make_source: Callable[[], Any] | None = None  # the live source's maker, until it is made
         self._source_lock = threading.Lock()
