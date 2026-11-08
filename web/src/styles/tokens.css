@@ -3,92 +3,92 @@
  * Contrast figures are against the card (--surface) unless said.
  */
 :root {
-  --page-light: #F3ECDD;
-  --page-dark: #E6DDCA;
+  --page-light: #33224E;
+  --page-dark: #100E18;
   /* The page's background, and that of anything that must not stand out from it, such as a bar that stays in view. */
   --page: radial-gradient(1200px 500px at 70% -10%, var(--page-light) 0%, var(--page-dark) 70%) fixed var(--page-dark);
   /* A tint a shade darker than a card, for badges, banners and strips inside a card. Not in section 10.5's table. */
-  --tint: #F1EAD9;
+  --tint: #211D30;
   /* The light of the Pulls page's Savings ledger (the second pass): its card's lit top, its inner frame, and its switch's knob. */
-  --ledger-light: #FBF7EE;
+  --ledger-light: #2A243B;
   /* The rail's width, which the grid of the frame and the undo note (centred on the page area beside it) share. */
   --rail-w: 150px;
-  --rail: #3B4255;
-  --rail-text: #F1EADB;
-  --rail-muted: #A9B0C0;
-  --gold: #D3BC8E;
-  --surface: #F7F2E7;
-  --border: #D9CDB0;
-  --hairline: #E6DBC2;
-  --ink: #3B4255;
-  --ink2: #5E6272;
+  --rail: #171322;
+  --rail-text: #F5F1FF;
+  --rail-muted: #AAA2BD;
+  --gold: #B58CFF;
+  --surface: #1B1826;
+  --border: #39334C;
+  --hairline: #302A40;
+  --ink: #F5F1FF;
+  --ink2: #D4CBE5;
   /* Small text: 5.14:1, and 4.79:1 on the tint. It was #7E7A6C, 3.85:1. */
-  --muted: #6A6659;
+  --muted: #AAA2BD;
   /* The one gold of every progress mark, bars, rings and pips: 3.63:1. It was #C9A24B, 2.15:1, which stays as --r1. */
-  --fill: #A6751F;
-  --track: #DDD3BB;
+  --fill: #B58CFF;
+  --track: #39334B;
   /* The outline of an unticked box and of an empty pip: 3.50:1, and 3.25:1 on the tint. */
-  --outline: #8A806B;
+  --outline: #8D82A5;
   /* Edit's landing outline, the resize grips and the size tag's plate: 4.63:1, and 3.83:1 on the page. */
-  --gold-ink: #8E661B;
+  --gold-ink: #D1B8FF;
   /* Ready marks. Ready text is --good. */
-  --done: #5F9550;
+  --done: #69E39A;
   /* The undo note's brown for a refused change (top bar and undo design, section 6); the rail's text on it: 9.1:1. */
-  --refused: #4B3A26;
+  --refused: #30213F;
   /* The undo note's marks on its dark ground: the tick's green and the warning's amber, and the pale gold of its Undo
      pill with the dark text on it (8.2:1). */
-  --note-tick: #A9D49A;
-  --note-warn: #F2B868;
-  --note-pill: #E7CF96;
-  --note-pill-text: #2E3344;
+  --note-tick: #8FE7B0;
+  --note-warn: #FFC477;
+  --note-pill: #DCC7FF;
+  --note-pill-text: #21152F;
   /* The top bar's plate (top bar and undo design, sections 4 and 5): Resin's blue for its fallback sign, and the amber
      look of the sync part when it asks the player to act, a pale amber with a warmer outline. */
-  --resin: #4F78B8;
-  --warn-soft: #F6E3C4;
-  --warn-line: #E0BE8A;
-  --button: #4A5366;
-  --button-text: #F1EADB;
-  --series: #4470B4;
-  --series-light: #A9BFE0;
-  --series-track: #CFDAEC;
-  --accent: #A6751F;
-  --deemph: #B5AD9B;
-  --grid: #E6DBC2;
-  --axis: #CFC2A3;
-  --r0: #E9E0CB;
-  --r1: #C9A24B;
-  --r2: #B0862F;
-  --r3: #8E661B;
-  --r4: #6B4A10;
+  --resin: #83A9F0;
+  --warn-soft: #3A2B45;
+  --warn-line: #805A9A;
+  --button: #8D61E8;
+  --button-text: #FFFFFF;
+  --series: #9C7AE8;
+  --series-light: #C8B5F5;
+  --series-track: #403456;
+  --accent: #B58CFF;
+  --deemph: #5B526B;
+  --grid: #302A40;
+  --axis: #55496A;
+  --r0: #3A304B;
+  --r1: #8D61E8;
+  --r2: #A77CF0;
+  --r3: #C5A8FF;
+  --r4: #E2D4FF;
   /*
    * The four wishes of the Pulls history's monthly graph (the second pass), in the order the columns stack them: the
    * character event, the weapon event, the standard wish, and the chronicled wish, which has its colour only when its
    * wishes are kept. Validated on the card, #F7F2E7, by the dataviz validator: every check passes.
    */
-  --wish-character: #A6751F;
-  --wish-weapon: #4470B4;
-  --wish-standard: #B5546A;
-  --wish-chronicled: #6A4FB8;
+  --wish-character: #B58CFF;
+  --wish-weapon: #83A9F0;
+  --wish-standard: #E58BA2;
+  --wish-chronicled: #8D75D6;
   /* "Other" among the sources of the primogems earned per day (the ledger plan, Task 7), stacked above the commissions'
      gold, the Welkin's blue and the events' and endgame's wish colours: a quiet tan for the rest, not a mark of its own. */
-  --other: #B9AD92;
+  --other: #6B607C;
   /* The Ledger's spent amounts, a brown beside the earned ones' --good (the ledger design, section 6). */
-  --spent: #9A4A2A;
+  --spent: #D27C64;
   /*
    * The Endgame card's three modes (the Stats months and Wrapped design, section 3.1): accents only, for a header's bottom
    * line, the cleared acts and the badge. Each reaches 3:1 on the card, and the white of a mark on it 4.5:1. The medal is
    * the gold of an act that earned one, with its number in the dark ink.
    */
-  --mode-abyss: #3E5A9E;
-  --mode-theater: #9C3B52;
-  --mode-stygian: #2D6E6A;
+  --mode-abyss: #668BE0;
+  --mode-theater: #C56A83;
+  --mode-stygian: #55A9A0;
   --medal-light: #F6D98A;
   --medal: #C8962F;
   --medal-ink: #3E2A08;
   /* Ready text: 5.81:1, and 4.84:1 on the ready seal's tint. */
-  --good: #2E6B1F;
+  --good: #8FE7A5;
   /* The focus ring: 4.45:1, and 3.69:1 on the page. The dark panel sets it again. */
-  --focus: #4470B4;
+  --focus: #C7A8FF;
 
   /* Motion (spec 6.3). With prefers-reduced-motion, motion.css makes every duration 0. */
   --t-press: 90ms;
@@ -108,30 +108,30 @@
    * What a widget draws with (spec 6.2); its CSS names these and no colour of its own. On parchment each one is the
    * colour of the token it stands for (--w-icon, the signs' gold, has none); the dark panel below sets them all again.
    */
-  --w-bg: #F7F2E7;
+  --w-bg: #1B1826;
   /*
    * The background's colour, opaque even on the dark panel: what is drawn in it over a mark of the widget's own, ring
    * gaps, notches and knock-outs such as a tick on its badge, which let none of the mark through.
    */
-  --w-gap: #F7F2E7;
-  --w-plate: #F1EAD9;
-  --w-border: #D9CDB0;
-  --w-line: #E6DBC2;
-  --w-ink: #3B4255;
-  --w-ink2: #5E6272;
-  --w-muted: #6A6659;
-  --w-fill: #A6751F;
-  --w-track: #DDD3BB;
-  --w-icon: #B8923F;
-  --w-done: #5F9550;
-  --w-good: #2E6B1F;
-  --w-outline: #8A806B;
-  --w-btn: #4A5366;
-  --w-btn-text: #F1EADB;
-  --w-quiet: #D9CDB0;
-  --w-focus: #4470B4;
+  --w-gap: #1B1826;
+  --w-plate: #211D30;
+  --w-border: #39334C;
+  --w-line: #302A40;
+  --w-ink: #F5F1FF;
+  --w-ink2: #D4CBE5;
+  --w-muted: #AAA2BD;
+  --w-fill: #B58CFF;
+  --w-track: #39334B;
+  --w-icon: #C4A6FF;
+  --w-done: #69E39A;
+  --w-good: #8FE7A5;
+  --w-outline: #8D82A5;
+  --w-btn: #8D61E8;
+  --w-btn-text: #FFFFFF;
+  --w-quiet: #514760;
+  --w-focus: #C7A8FF;
   /* A mark on a ring's track, such as where soft pity starts on a pity card's (the Pulls plan): 3.47:1 on the track. */
-  --w-gold-ink: #8E661B;
+  --w-gold-ink: #D1B8FF;
   /* The frame of a 4★'s face, as the progress gold frames a 5★'s (the Pulls plan): 3.78:1 on the card. */
   --w-four: #8A6BBE;
   /* The washes of a 5★'s and a 4★'s row in the Pulls page's history, in the gold and the purple, behind ink. */
@@ -148,30 +148,30 @@
  * 4.5:1 below about 91%; 2A-4 keeps at least 92%.
  */
 .on-dark {
-  --w-bg: rgba(43, 49, 66, .93);
-  --w-gap: #2B3142;
-  --w-plate: rgba(241, 234, 219, .07);
-  --w-border: rgba(211, 188, 142, .42);
-  --w-line: rgba(241, 234, 219, .13);
-  --w-ink: #F1EADB;
-  --w-ink2: #D9D2C3;
-  --w-muted: #A9B0C0;
-  --w-fill: #E2C98F;
-  --w-track: rgba(241, 234, 219, .17);
-  --w-icon: #D3BC8E;
-  --w-done: #9DC48C;
-  --w-good: #9DC48C;
-  --w-outline: rgba(241, 234, 219, .45);
-  --w-btn: #E2C98F;
-  --w-btn-text: #2B3142;
-  --w-quiet: rgba(241, 234, 219, .3);
-  --w-focus: #F1EADB;
+  --w-bg: #1B1826;
+  --w-gap: #1B1826;
+  --w-plate: #211D30;
+  --w-border: #39334C;
+  --w-line: #302A40;
+  --w-ink: #F5F1FF;
+  --w-ink2: #D4CBE5;
+  --w-muted: #AAA2BD;
+  --w-fill: #B58CFF;
+  --w-track: #39334B;
+  --w-icon: #C4A6FF;
+  --w-done: #69E39A;
+  --w-good: #8FE7A5;
+  --w-outline: #8D82A5;
+  --w-btn: #8D61E8;
+  --w-btn-text: #FFFFFF;
+  --w-quiet: #514760;
+  --w-focus: #C7A8FF;
   /* Light, as the overlay's --gold-ink is over the game. */
-  --w-gold-ink: #E2C98F;
+  --w-gold-ink: #D1B8FF;
   --w-four: #B9A2E0;
   /* The washes in the dark panel's gold and purple; the shade the night strip's deepest blue. */
   --w-five-wash: rgba(226, 201, 143, .2);
   --w-four-wash: rgba(185, 162, 224, .18);
   --w-shade: rgba(18, 22, 40, .85);
-  --focus: #F1EADB;
+  --focus: #C7A8FF;
 }
