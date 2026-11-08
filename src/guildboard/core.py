@@ -998,6 +998,17 @@ class Core:
         self._tuskfizzy_note_cache.pop(account_id, None)
         self.bus.publish("tuskfizzy_changed")
 
+    def tuskfizzy_session_connected(self, account_id: str) -> bool:
+        """Whether this Genshin profile has its own saved login, without exposing any cookie."""
+        try:
+            profile = next((item for item in self.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+            if profile is None:
+                return False
+            token = TokenStore(self._tuskfizzy_session_path(account_id)).load()
+            return token is not None and str(token.uid) == profile["uid"] and token.server == profile["server"]
+        except (OSError, ValueError):
+            return False
+
     async def tuskfizzy_profile_note(self, account_id: str) -> dict[str, Any] | None:
         """Fetch a profile's own Daily Note using its own encrypted cookies, never the primary account's session."""
         if self.demo:
