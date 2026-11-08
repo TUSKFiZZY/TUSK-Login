@@ -1,4 +1,4 @@
-# PyInstaller recipe for the core of the installed copy of Guild Board. Run by build-installer.ps1, which first builds the
+# PyInstaller recipe for the core of the installed copy of TUSKFiZZY. Run by build-installer.ps1, which first builds the
 # interface (web/dist) and writes build/package/version.txt.
 #
 # One folder, named core, with one program in it: tuskfizzy-core.exe. The Electron shell starts it hidden, with the channel
