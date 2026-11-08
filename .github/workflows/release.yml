@@ -102,7 +102,7 @@ jobs:
       - name: Write the installer's SHA-256
         shell: pwsh
         run: |
-          $setup = @(Get-ChildItem -LiteralPath dist-installer -Filter 'Guild Board Setup *.exe')
+          $setup = @(Get-ChildItem -LiteralPath dist-installer -Filter 'TUSKFiZZY Setup *.exe')
           if ($setup.Count -ne 1) {
             Write-Output "::error::dist-installer holds $($setup.Count) installers, and one was expected."
             exit 1
@@ -114,10 +114,10 @@ jobs:
       - name: Keep the installer and its SHA-256
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: guild-board-installer
+          name: tuskfizzy-installer
           path: |
-            dist-installer/Guild Board Setup *.exe
-            dist-installer/Guild Board Setup *.exe.sha256
+            dist-installer/TUSKFiZZY Setup *.exe
+            dist-installer/TUSKFiZZY Setup *.exe.sha256
           if-no-files-found: error
           retention-days: 30
 
@@ -137,7 +137,7 @@ jobs:
       - name: Fetch the installer
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
-          name: guild-board-installer
+          name: tuskfizzy-installer
           path: setup
 
       - name: Attest the installer
