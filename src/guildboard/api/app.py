@@ -1259,6 +1259,15 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         core.bus.publish("tuskfizzy_imported", counts=counts)
         return JSONResponse({"imported": counts})
 
+    @app.get("/api/tuskfizzy/month")
+    async def tuskfizzy_month(month: str = Query(...)) -> Response:
+        if not re.fullmatch(r"20[0-9]{2}-(?:0[1-9]|1[0-2])", month):
+            return _error(422, "Choose a valid month.")
+        return JSONResponse({
+            "accounts": core.store.tuskfizzy_accounts_list(),
+            "records": core.store.tuskfizzy_month_for(month),
+        })
+
     @app.get("/api/tuskfizzy/tracker")
     async def tuskfizzy_tracker(day: str = Query(...)) -> Response:
         if not re.fullmatch(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", day):
