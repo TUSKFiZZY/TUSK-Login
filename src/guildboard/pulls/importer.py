@@ -102,6 +102,12 @@ class ImportBusy(Exception):
         super().__init__(BUSY)
 
 
+class ProfileMismatch(WishApiError):
+    """The supplied wish-history key returned wishes for a different UID than the selected profile."""
+
+    sentence = "This wish-history link belongs to a different Genshin account."
+
+
 class ImportNotReady(Exception):
     """Import was pressed before the player gave the first run's consent (ruling R21)."""
 
@@ -655,7 +661,7 @@ class WishImporter:
         try:
             first = await self._page(kept.link, gacha_type, "0", POOL_OF[gacha_type])
             if kept.uid is not None and first.rows and first.rows[0].uid != kept.uid:
-                raise WishApiError("The wish-history link belongs to a different Genshin account.")
+                raise ProfileMismatch()
             await self._fetch_types(run, kept.link, first)
         except (KeyExpired, KeyInvalid) as error:
             self.drop_wish_link()
