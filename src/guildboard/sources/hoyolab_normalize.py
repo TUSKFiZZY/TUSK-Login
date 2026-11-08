@@ -228,6 +228,7 @@ def normalize_notes(raw: Mapping[str, Any], now: datetime) -> NotesRecord:
         transformer_obtained=bool(transformer.get("obtained")),
         transformer_ready_at=_transformer_ready_at(transformer, now),
         realm_currency_full_at=_later(now, home_coin_seconds),
+        extra_reward_claimed=raw.get("is_extra_task_reward_received") is True,
     )
 
 
