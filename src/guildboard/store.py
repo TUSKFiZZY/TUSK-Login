@@ -402,6 +402,7 @@ MIGRATIONS: tuple[str, ...] = (
         commission INTEGER NOT NULL CHECK (commission IN (0,1)),
         resin INTEGER NOT NULL CHECK (resin IN (0,1)),
         resin_last INTEGER,
+        resin_transition INTEGER CHECK (resin_transition IN (0,1)),
         PRIMARY KEY (day, account_id)
     ) WITHOUT ROWID;
     CREATE INDEX tuskfizzy_daily_by_account ON tuskfizzy_daily(account_id, day);
@@ -917,13 +918,13 @@ class Store:
                 for account_id, flags in profiles.items():
                     if account_id == "_resinLast":
                         continue
-                    resin_last = profiles.get("_resinLast", {}).get(account_id) if isinstance(profiles.get("_resinLast"), dict) else None
+                    resin_transition = profiles.get("_resinLast", {}).get(account_id) if isinstance(profiles.get("_resinLast"), dict) else None
                     self._conn.execute(
-                        "INSERT INTO tuskfizzy_daily(day,account_id,login,commission,resin,resin_last) VALUES(?,?,?,?,?,?) "
+                        "INSERT INTO tuskfizzy_daily(day,account_id,login,commission,resin,resin_transition) VALUES(?,?,?,?,?,?) "
                         "ON CONFLICT(day,account_id) DO UPDATE SET login=excluded.login, commission=excluded.commission, "
-                        "resin=excluded.resin, resin_last=excluded.resin_last",
+                        "resin=excluded.resin, resin_transition=excluded.resin_transition",
                         (day, account_id, int(flags[0]), int(flags[1]), int(flags[2]),
-                         int(resin_last) if isinstance(resin_last, bool) else None),
+                         int(resin_transition) if isinstance(resin_transition, bool) else None),
                     )
             if selected_genshin_id:
                 self.set_meta("tuskfizzy_selected_genshin_id", selected_genshin_id)
@@ -992,6 +993,28 @@ class Store:
         with self._commit():
             cursor = self._conn.execute("DELETE FROM tuskfizzy_accounts WHERE id = ?", (ident,))
             return cursor.rowcount > 0
+
+    def tuskfizzy_observe_daily_note(self, day: str, account_id: str, resin: int, extra_reward_claimed: bool) -> bool:
+        if self._conn.execute("SELECT 1 FROM tuskfizzy_accounts WHERE id = ?", (account_id,)).fetchone() is None:
+            return False
+        with self.transaction():
+            self._conn.execute(
+                "INSERT INTO tuskfizzy_daily(day,account_id,login,commission,resin) VALUES(?,?,0,0,0) "
+                "ON CONFLICT(day,account_id) DO NOTHING",
+                (day, account_id),
+            )
+            row = self._conn.execute(
+                "SELECT commission, resin, resin_last FROM tuskfizzy_daily WHERE day = ? AND account_id = ?",
+                (day, account_id),
+            ).fetchone()
+            # A first observation below 50 is not a threshold crossing. Once checked, Resin stays checked all day.
+            crossed_below_50 = row[2] is not None and row[2] >= 50 and resin < 50
+            self._conn.execute(
+                "UPDATE tuskfizzy_daily SET commission = ?, resin = ?, resin_last = ? WHERE day = ? AND account_id = ?",
+                (int(bool(row[0]) or extra_reward_claimed), int(bool(row[1]) or crossed_below_50),
+                 resin, day, account_id),
+            )
+        return True
 
     def tuskfizzy_set_task(self, day: str, account_id: str, task: str, checked: bool) -> bool:
         columns = {"login": "login", "commission": "commission", "resin": "resin"}
