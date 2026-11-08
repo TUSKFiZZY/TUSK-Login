@@ -1277,10 +1277,16 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
                 clean_profiles[ident] = flags
             clean_profiles["_resinLast"] = resin_meta
             clean_daily[day] = clean_profiles
+        previous_genshin = core.store.tuskfizzy_genshin_accounts_list()
         try:
             counts = core.store.import_tuskfizzy_data(clean_accounts, clean_daily, clean_genshin, selected)
         except (ValueError, TypeError) as error:
             return _error(422, f"The export could not be imported: {error}")
+        imported_by_id = {item["id"]: item for item in clean_genshin}
+        for previous in previous_genshin:
+            replacement = imported_by_id.get(previous["id"])
+            if replacement is None or replacement["uid"] != previous["uid"] or replacement["server"] != previous["server"]:
+                core.tuskfizzy_forget_session_id(previous["id"])
         core.bus.publish("tuskfizzy_imported", counts=counts)
         core.bus.publish("tuskfizzy_changed")
         return JSONResponse({"imported": counts})
