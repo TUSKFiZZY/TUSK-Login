@@ -182,6 +182,8 @@ export function Tuskfizzy({ live }: { live: Live }) {
     }
   }
 
+  const selectedGenshin = data?.genshinAccounts.find(account => account.id === data.selectedGenshinId) ?? null
+
   return (
     <Frame page="tuskfizzy" live={live} wide>
       <section className="tf-tracker">
@@ -212,13 +214,13 @@ export function Tuskfizzy({ live }: { live: Live }) {
             </div>
           </section>
         )}
-        {data?.genshinAccounts.find(account => account.id === data.selectedGenshinId) && (
+        {selectedGenshin && (
           <section className="gb-panel tf-daily-note">
             <div className="tf-note-heading">
-              <div><h2>Enka Profile</h2><span>{data.genshinAccounts.find(account => account.id === data.selectedGenshinId)!.name}</span></div>
-              <button className="gb-btn" type="button" disabled={enkaLoading} onClick={() => void loadEnka(data.genshinAccounts.find(account => account.id === data.selectedGenshinId)!)}>{enkaLoading ? 'Loading…' : 'Refresh profile'}</button>
+              <div><h2>Enka Profile</h2><span>{selectedGenshin.name}</span></div>
+              <button className="gb-btn" type="button" disabled={enkaLoading} onClick={() => void loadEnka(selectedGenshin)}>{enkaLoading ? 'Loading…' : 'Refresh profile'}</button>
             </div>
-            {enkaProfile?.uid === data.genshinAccounts.find(account => account.id === data.selectedGenshinId)!.uid && (
+            {enkaProfile?.uid === selectedGenshin.uid && (
               <>
                 <div className="tf-note-grid">
                   <div><span>In-game name</span><b>{enkaProfile.playerInfo.nickname ?? '—'}</b></div>
