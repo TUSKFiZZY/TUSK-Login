@@ -1,5 +1,5 @@
 /**
- * Guild Board's Electron shell (app.py: ShellApp, run_shell). It starts the Python core as a child, hears its events, and
+ * TUSKFiZZY's Electron shell (app.py: ShellApp, run_shell). It starts the Python core as a child, hears its events, and
  * wires every module of this folder to Electron: the dashboard, the overlay and its hotkey, the map's views, the login and
  * verification windows, the tray with its balloons, Start with Windows and the desktop's dialogs. The decisions are in those
  * modules and tested there; this file only connects them.
@@ -47,7 +47,7 @@ import { TrayMenu, type TrayItem } from './tray.js'
 import { type VerifyDeps, VerifyWindow, type VerifyWindowLike } from './verify.js'
 
 // Texts of the Qt shell (app.py).
-const STOPPED = 'Guild Board stopped unexpectedly. The log file says why.'
+const STOPPED = 'TUSKFiZZY stopped unexpectedly. The log file says why.'
 const FRIENDS_PLACE = 'friends' // where an opened invite link is answered
 // The one line a refused start writes. Never the argument itself: it can hold 32,000 characters, newlines included.
 const REFUSED = 'A debugging switch was refused outside the demo.'
@@ -74,7 +74,7 @@ if (!args.demo && (args.refused.length > 0 || DEBUGGING_SWITCHES.some((name) => 
   app.exit(1)
 } else {
   void main().catch((error: unknown) => {
-    log.error(`Guild Board could not start (${errorName(error)}).`)
+    log.error(`TUSKFiZZY could not start (${errorName(error)}).`)
     app.exit(1)
   })
 }
@@ -100,7 +100,7 @@ async function main(): Promise<void> {
     process.pid,
   )
   if (started !== 'run') {
-    // Another Guild Board holds the folder (and has been handed the message), or `--quit` has done its work: no window.
+    // Another TUSKFiZZY holds the folder (and has been handed the message), or `--quit` has done its work: no window.
     if (started === 'not_running') app.releaseSingleInstanceLock()
     const report = quitReport(started)
     if (report.text !== null) process.stdout.write(`${report.text}\n`)
@@ -216,7 +216,7 @@ async function main(): Promise<void> {
       guarded('map close', () => mapHost?.dispose())
       guarded('tray close', () => tray?.destroy())
       if (alertText !== null) await desktop.alert(alertText).catch(() => undefined)
-      log.info('Guild Board is ending')
+      log.info('TUSKFiZZY is ending')
       await core.shutdown().catch(() => undefined)
       log.detach()
       removePidIfMine(pidPath, process.pid)
@@ -409,7 +409,7 @@ async function main(): Promise<void> {
     }
   }
 
-  /** The window being closed: the first close tells the player that Guild Board goes on in the tray (app.py: _on_hidden_to_tray). */
+  /** The window being closed: the first close tells the player that TUSKFiZZY goes on in the tray (app.py: _on_hidden_to_tray). */
   function onDashboardHidden(): void {
     mapHost?.windowGone() // the window's page is gone, and the map views with it
     if (hintGiven || settings === null || settings.tray_hint_shown || notifier === null) return
@@ -421,8 +421,8 @@ async function main(): Promise<void> {
   async function onReady(link: string): Promise<void> {
     if (ending) return
     log.attach(core)
-    log.info('Guild Board is starting its windows')
-    // The page says that closing the window keeps Guild Board in the tray; in a demo closing the window ends it (app.py:
+    log.info('TUSKFiZZY is starting its windows')
+    // The page says that closing the window keeps TUSKFiZZY in the tray; in a demo closing the window ends it (app.py:
     // `has_tray = not demo and ...`), so a demo says it has none.
     await prepareCore({ demo: args.demo, acknowledged: args.acknowledged, hasTray: tray !== null && !args.demo, call, warn })
     if (ending) return
@@ -523,7 +523,7 @@ async function main(): Promise<void> {
       )
     }
     if (invite !== null) offerInvite(invite)
-    log.info('Guild Board is running')
+    log.info('TUSKFiZZY is running')
   }
 }
 
