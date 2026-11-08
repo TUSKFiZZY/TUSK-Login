@@ -88,7 +88,7 @@ test("the modes' colours reach 3:1 on the card, and the white of their marks 4.5
     expect(contrast(t[name], t['--surface']), name).toBeGreaterThanOrEqual(3)
     expect(contrast('#FFFFFF', t[name]), name).toBeGreaterThanOrEqual(4.5)
   }
-  expect([t['--mode-abyss'], t['--mode-theater'], t['--mode-stygian']]).toEqual(['#3E5A9E', '#9C3B52', '#2D6E6A'])
+  expect([t['--mode-abyss'], t['--mode-theater'], t['--mode-stygian']]).toEqual(['#4C6FAE', '#9C3B52', '#2D6E6A'])
 })
 
 test('a lit star, the number of an act and the card read on parchment', () => {
