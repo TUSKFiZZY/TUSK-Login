@@ -715,6 +715,9 @@ def test_tuskfizzy_tracker_profiles_and_checklist_can_be_managed(client):
     assert tracker.status_code == 200
     assert tracker.json()["accounts"][0]["id"] == ident
     assert tracker.json()["daily"][ident] == [False, False, True]
+    month = client.get("/api/tuskfizzy/month", params={"month": "2026-11"})
+    assert month.status_code == 200
+    assert month.json()["records"]["2026-11-08"][ident] == [False, False, True]
 
     deleted = client.delete(f"/api/tuskfizzy/accounts/{ident}")
     assert deleted.status_code == 200
