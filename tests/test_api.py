@@ -695,3 +695,27 @@ def test_tuskfizzy_legacy_import_rejects_invalid_uid_without_writing(client, cor
     response = client.post("/api/tuskfizzy/import", json=payload)
     assert response.status_code == 422
     assert core.store.tuskfizzy_import_counts() == {"accounts": 0, "genshinAccounts": 0, "dailyRecords": 0}
+
+
+def test_tuskfizzy_tracker_profiles_and_checklist_can_be_managed(client):
+    created = client.post("/api/tuskfizzy/accounts", json={"name": "Main", "portrait": "", "genshinId": None})
+    assert created.status_code == 200
+    account = created.json()["account"]
+    ident = account["id"]
+    assert account["name"] == "Main"
+
+    changed = client.put(
+        "/api/tuskfizzy/daily",
+        json={"day": "2026-11-08", "accountId": ident, "task": "resin", "checked": True},
+    )
+    assert changed.status_code == 200
+    assert changed.json()["daily"][ident] == [False, False, True]
+
+    tracker = client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"})
+    assert tracker.status_code == 200
+    assert tracker.json()["accounts"][0]["id"] == ident
+    assert tracker.json()["daily"][ident] == [False, False, True]
+
+    deleted = client.delete(f"/api/tuskfizzy/accounts/{ident}")
+    assert deleted.status_code == 200
+    assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"}).json()["accounts"] == []
