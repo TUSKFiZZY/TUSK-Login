@@ -1423,3 +1423,29 @@ def test_writes_are_synced_at_the_normal_level_in_the_log(tmp_path):
     on_disk = Store.open(tmp_path / "guildboard.db", tmp_path / "backups", NOW)
     assert on_disk._conn.execute("PRAGMA synchronous").fetchone()[0] == 1  # NORMAL
     on_disk.close()
+
+
+def test_tuskfizzy_legacy_import_keeps_profiles_and_daily_history_idempotently(store):
+    accounts = [
+        {"id": "profile-a", "name": "Main", "portrait": "", "genshinId": "genshin-a", "createdAt": ""},
+        {"id": "profile-b", "name": "Alt", "portrait": "", "genshinId": None, "createdAt": ""},
+    ]
+    genshin = [{"id": "genshin-a", "name": "Asia", "uid": "1234567890", "server": "asia", "createdAt": ""}]
+    daily = {
+        "2026-11-08": {
+            "profile-a": [True, False, True],
+            "profile-b": [False, True, False],
+            "_resinLast": {"profile-a": True},
+        }
+    }
+    expected = {"accounts": 2, "genshinAccounts": 1, "dailyRecords": 2}
+    assert store.import_tuskfizzy_data(accounts, daily, genshin, "genshin-a") == expected
+    assert store.import_tuskfizzy_data(accounts, daily, genshin, "genshin-a") == expected
+    rows = store._conn.execute(
+        "SELECT day, account_id, login, commission, resin FROM tuskfizzy_daily ORDER BY account_id"
+    ).fetchall()
+    assert rows == [
+        ("2026-11-08", "profile-a", 1, 0, 1),
+        ("2026-11-08", "profile-b", 0, 1, 0),
+    ]
+    assert store.meta("tuskfizzy_selected_genshin_id") == "genshin-a"
