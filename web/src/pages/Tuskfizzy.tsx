@@ -5,7 +5,8 @@ import { Frame } from '../frame/Frame.tsx'
 import { type Live, useModel } from '../live.ts'
 
 type Account = { id: string; name: string; portrait: string; genshinId: string | null; createdAt: string }
-type Tracker = { accounts: Account[]; genshinAccounts: { id: string; name: string; uid: string; server: string }[]; daily: Record<string, boolean[]> }
+type GenshinAccount = { id: string; name: string; uid: string; server: string; createdAt?: string }
+type Tracker = { accounts: Account[]; genshinAccounts: GenshinAccount[]; daily: Record<string, boolean[]> }
 type MonthTracker = { records: Record<string, Record<string, boolean[]>> }
 const TASKS = [{ key: 'login', label: 'Login' }, { key: 'commission', label: 'Commission' }, { key: 'resin', label: 'Resin' }] as const
 
@@ -43,6 +44,10 @@ export function Tuskfizzy({ live }: { live: Live }) {
   const [editing, setEditing] = useState<string | null>(null)
   const [saving, setSaving] = useState<string | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
+  const [genshinName, setGenshinName] = useState('')
+  const [genshinUid, setGenshinUid] = useState('')
+  const [genshinServer, setGenshinServer] = useState('os_asia')
+  const [editingGenshin, setEditingGenshin] = useState<string | null>(null)
 
   const edit = (account: Account) => {
     setEditing(account.id)
@@ -81,6 +86,49 @@ export function Tuskfizzy({ live }: { live: Live }) {
     try {
       await api.delete(`/api/tuskfizzy/accounts/${encodeURIComponent(account.id)}`)
       if (editing === account.id) clearForm()
+      setRevision(value => value + 1)
+    } catch (failure) {
+      setProblem(messageOf(failure))
+    } finally {
+      setSaving(null)
+    }
+  }
+  const editGenshin = (account: GenshinAccount) => {
+    setEditingGenshin(account.id)
+    setGenshinName(account.name)
+    setGenshinUid(account.uid)
+    setGenshinServer(account.server || 'os_asia')
+    setProblem(null)
+  }
+  const clearGenshin = () => {
+    setEditingGenshin(null)
+    setGenshinName('')
+    setGenshinUid('')
+    setGenshinServer('os_asia')
+  }
+  const saveGenshin = async () => {
+    if (!genshinName.trim() || !/^[0-9]{9,10}$/.test(genshinUid) || saving !== null) return
+    setSaving('genshin')
+    setProblem(null)
+    try {
+      const body = { name: genshinName.trim(), uid: genshinUid, server: genshinServer }
+      if (editingGenshin) await api.put(`/api/tuskfizzy/genshin-accounts/${encodeURIComponent(editingGenshin)}`, body)
+      else await api.post('/api/tuskfizzy/genshin-accounts', body)
+      clearGenshin()
+      setRevision(value => value + 1)
+    } catch (failure) {
+      setProblem(messageOf(failure))
+    } finally {
+      setSaving(null)
+    }
+  }
+  const removeGenshin = async (account: GenshinAccount) => {
+    if (saving !== null || !window.confirm(`Remove Genshin profile ${account.name}? Checklist profiles linked to it will be unlinked.`)) return
+    setSaving(account.id)
+    setProblem(null)
+    try {
+      await api.delete(`/api/tuskfizzy/genshin-accounts/${encodeURIComponent(account.id)}`)
+      if (editingGenshin === account.id) clearGenshin()
       setRevision(value => value + 1)
     } catch (failure) {
       setProblem(messageOf(failure))
@@ -180,6 +228,30 @@ export function Tuskfizzy({ live }: { live: Live }) {
                 )
               })}
             </div>
+            <section className="gb-panel tf-genshin">
+              <h2>Genshin accounts</h2>
+              {data.genshinAccounts.length === 0 ? <p className="tf-muted">No Genshin profiles added yet.</p> : (
+                <div className="tf-genshin-list">
+                  {data.genshinAccounts.map(profile => (
+                    <div className="tf-genshin-row" key={profile.id}>
+                      <div><b>{profile.name}</b><span>UID {profile.uid} · {profile.server || 'Server not set'}</span></div>
+                      <button className="gb-link" type="button" onClick={() => editGenshin(profile)}>Edit</button>
+                      <button className="gb-link" type="button" onClick={() => void removeGenshin(profile)}>Remove</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <h3>{editingGenshin ? 'Edit Genshin profile' : 'Add Genshin profile'}</h3>
+              <label>Profile name<input value={genshinName} maxLength={80} onChange={event => setGenshinName(event.target.value)} placeholder="e.g. Asia account" /></label>
+              <label>UID<input value={genshinUid} inputMode="numeric" maxLength={10} onChange={event => setGenshinUid(event.target.value.replace(/[^0-9]/g, '').slice(0,10))} placeholder="9 or 10 digit UID" /></label>
+              <label>Server<select value={genshinServer} onChange={event => setGenshinServer(event.target.value)}>
+                <option value="os_asia">Asia</option><option value="os_usa">America</option><option value="os_euro">Europe</option><option value="os_cht">TW, HK, MO</option>
+              </select></label>
+              <div className="tf-editor-actions">
+                <button className="gb-btn" type="button" disabled={!genshinName.trim() || !/^[0-9]{9,10}$/.test(genshinUid) || saving !== null} onClick={() => void saveGenshin()}>{saving === 'genshin' ? 'Saving…' : editingGenshin ? 'Save Genshin profile' : 'Add Genshin profile'}</button>
+                {editingGenshin && <button className="gb-btn quiet" type="button" disabled={saving !== null} onClick={clearGenshin}>Cancel</button>}
+              </div>
+            </section>
             <section className="gb-panel tf-editor">
               <h2>{editing ? 'Edit profile' : 'Add checklist profile'}</h2>
               <label>Profile name<input value={name} maxLength={80} onChange={event => setName(event.target.value)} placeholder="Enter a profile name" /></label>
