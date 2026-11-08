@@ -1,0 +1,58 @@
+name: Verify TUSKFiZZY migration
+
+on:
+  push:
+    branches:
+      - migration/tuskfizzy-integration
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tuskfizzy-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04 # v6.0.0
+      - name: Install Python dependencies
+        run: uv sync --frozen
+      - name: Run Python tests
+        run: uv run --frozen python -m pytest -q -p no:cacheprovider
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: Install web dependencies
+        run: npm ci --prefix web
+      - name: Run web tests
+        run: npm test --prefix web
+      - name: Build web interface
+        run: npm run build --prefix web
+      - name: Install shell dependencies
+        run: npm ci --prefix shell
+      - name: Run shell tests
+        run: npm test --prefix shell
+      - name: Build shell
+        run: npm run build --prefix shell
