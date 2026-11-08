@@ -1386,6 +1386,25 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         core.bus.publish("tuskfizzy_changed")
         return JSONResponse({"deleted": True})
 
+    @app.post("/api/tuskfizzy/observe-note")
+    async def tuskfizzy_observe_note(body: dict[str, Any] = Body(...)) -> Response:
+        day, account_id = body.get("day"), body.get("accountId")
+        resin, claimed = body.get("resin"), body.get("extraRewardClaimed")
+        if not isinstance(day, str) or not re.fullmatch(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", day):
+            return _error(422, "Choose a valid calendar date.")
+        try:
+            datetime.strptime(day, "%Y-%m-%d")
+        except ValueError:
+            return _error(422, "Choose a valid calendar date.")
+        if not isinstance(account_id, str) or not account_id or len(account_id) > 128:
+            return _error(422, "Choose a valid TUSKFiZZY profile.")
+        if type(resin) is not int or not 0 <= resin <= 300 or type(claimed) is not bool:
+            return _error(422, "The Daily Note resin or commission status is invalid.")
+        if not core.store.tuskfizzy_observe_daily_note(day, account_id, resin, claimed):
+            return _error(404, "That TUSKFiZZY profile no longer exists.")
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"saved": True, "daily": core.store.tuskfizzy_daily_for(day)})
+
     @app.put("/api/tuskfizzy/daily")
     async def tuskfizzy_update_daily(body: dict[str, Any] = Body(...)) -> Response:
         day, account_id, task, checked = body.get("day"), body.get("accountId"), body.get("task"), body.get("checked")
