@@ -341,7 +341,7 @@ class Updater:
 
     async def _install(self, release: Release) -> None:
         self.folder.mkdir(parents=True, exist_ok=True)
-        target = self.folder / f"Guild Board Setup {release.version}.exe"
+        target = self.folder / f"TUSKFiZZY Setup {release.version}.exe"
         loop = asyncio.get_running_loop()
         shown = [0.0]
 

@@ -1,5 +1,16 @@
 # Guild Board release signatures
 Import-Module Microsoft.PowerShell.Utility -ErrorAction Stop
+
+function Get-FileSha256([string]$Path) {
+    $stream = [IO.File]::OpenRead($Path)
+    try {
+        $algorithm = [Security.Cryptography.SHA256]::Create()
+        try {
+            return ([BitConverter]::ToString($algorithm.ComputeHash($stream))).Replace('-', '').ToLowerInvariant()
+        } finally { $algorithm.Dispose() }
+    } finally { $stream.Dispose() }
+}
+
 #
 # What signs a release for the installed copies, which offer an update only with its signature (selfupdate.py):
 # ECDSA on the curve P-256 over the SHA-256 of the text "<tag>`n<installer name>`n<size>`n<sha256>", the release's tag
@@ -140,7 +151,7 @@ function Get-ReleaseFacts([string]$Json, [string]$Installer) {
     if ([long]$asset.size -le 0 -or [long]$asset.size -gt 600000000) {
         throw "GitHub's installer is $($asset.size) bytes, and installed copies take at most 600000000."
     }
-    $sha256 = (Get-FileHash -LiteralPath $Installer -Algorithm SHA256).Hash.ToLowerInvariant()
+    $sha256 = (Get-FileSha256 $Installer)
     $size = (Get-Item -LiteralPath $Installer).Length
     if ([long]$asset.size -ne $size -or "$($asset.digest)" -cne "sha256:$sha256") {
         throw ("GitHub's installer ($($asset.size) bytes, $($asset.digest)) is not the one that was uploaded " +
@@ -175,7 +186,7 @@ function Test-SignedRelease([string]$Json, [string]$Installer, [string]$Signatur
     $shown = @($release.assets | Where-Object { "$($_.name)" -ceq "$($facts.Name).sig" })
     if ($shown.Count -ne 1) { return $false }
     $asset = $shown[0]
-    $sha256 = (Get-FileHash -LiteralPath $Signature -Algorithm SHA256).Hash.ToLowerInvariant()
+    $sha256 = (Get-FileSha256 $Signature)
     if (-not (Test-AssetUrl "$($asset.url)") -or [long]$asset.size -ne 64 -or [long]$asset.size -ne $bytes.Length) {
         return $false
     }

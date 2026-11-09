@@ -115,7 +115,7 @@ if (-not (Test-Path -LiteralPath $setup -PathType Leaf) -or -not (Test-Path -Lit
         "the version it built. $unpublished")
 }
 $expected = ([IO.File]::ReadAllText($sumFile).Trim() -split '\s+')[0]
-$actual = (Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash.ToLowerInvariant()
+$actual = (Get-FileSha256 $setup)
 if ($expected -cnotmatch '^[0-9a-f]{64}$' -or $expected -cne $actual) {
     Stop-With "The installer's SHA-256 is $actual, not the one the build wrote down. It was changed after the build. $unpublished"
 }

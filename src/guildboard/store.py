@@ -402,7 +402,6 @@ MIGRATIONS: tuple[str, ...] = (
         commission INTEGER NOT NULL CHECK (commission IN (0,1)),
         resin INTEGER NOT NULL CHECK (resin IN (0,1)),
         resin_last INTEGER,
-        resin_transition INTEGER CHECK (resin_transition IN (0,1)),
         PRIMARY KEY (day, account_id)
     ) WITHOUT ROWID;
     CREATE INDEX tuskfizzy_daily_by_account ON tuskfizzy_daily(account_id, day);
@@ -918,12 +917,12 @@ class Store:
                 for account_id, flags in profiles.items():
                     if account_id == "_resinLast":
                         continue
-                    resin_transition = profiles.get("_resinLast", {}).get(account_id) if isinstance(profiles.get("_resinLast"), dict) else None
+                    resin_last = profiles.get("_resinLast", {}).get(account_id) if isinstance(profiles.get("_resinLast"), dict) else None
                     self._conn.execute(
-                        "INSERT INTO tuskfizzy_daily(day,account_id,login,commission,resin,resin_transition) VALUES(?,?,?,?,?,?) "
+                        "INSERT INTO tuskfizzy_daily(day,account_id,login,commission,resin,resin_last) VALUES(?,?,?,?,?,?) "
                         "ON CONFLICT(day,account_id) DO UPDATE SET login=excluded.login, commission=excluded.commission, "
-                        "resin=excluded.resin, resin_transition=excluded.resin_transition",
-                        (day, account_id, int(flags[0]), int(flags[1]), int(flags[2]), resin_transition),
+                        "resin=excluded.resin, resin_last=excluded.resin_last",
+                        (day, account_id, int(flags[0]), int(flags[1]), int(flags[2]), resin_last),
                     )
             if selected_genshin_id:
                 self.set_meta("tuskfizzy_selected_genshin_id", selected_genshin_id)
