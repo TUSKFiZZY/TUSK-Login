@@ -43,13 +43,22 @@ function Save($release) {
     [IO.File]::WriteAllText($releaseFile, (ConvertTo-Json -InputObject $release -Depth 6), (New-Object Text.UTF8Encoding $false))
 }
 function Load { [IO.File]::ReadAllText($releaseFile) | ConvertFrom-Json }
+function Get-FileSha256([string]$Path) {
+    $stream = [IO.File]::OpenRead($Path)
+    try {
+        $algorithm = [Security.Cryptography.SHA256]::Create()
+        try {
+            return ([BitConverter]::ToString($algorithm.ComputeHash($stream))).Replace('-', '').ToLowerInvariant()
+        } finally { $algorithm.Dispose() }
+    } finally { $stream.Dispose() }
+}
 function Asset($path, $id) {
     $repo = $args_repo
     [pscustomobject]@{
         name = ((Split-Path -Leaf $path) -replace ' ', '.')
         url = "https://api.github.com/repos/$repo/releases/assets/$id"
         size = (Get-Item -LiteralPath $path).Length
-        digest = 'sha256:' + (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+        digest = 'sha256:' + (Get-FileSha256 $path)
     }
 }
 switch -Wildcard ($line) {
