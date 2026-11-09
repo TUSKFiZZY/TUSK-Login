@@ -217,7 +217,7 @@ def test_a_good_release_is_signed_as_the_app_checks_and_published_last(world):
 
 @windows_powershell
 def test_the_bridge_releases_the_same_installer_in_the_old_releases_repository_for_the_copies_that_look_there(world):
-    # 2.0.0 and earlier look in TUSKFiZZY/TUSK-Login-releases: 2.0.1 goes there as well, signed as they check, so that it
+    # 2.0.0 and earlier look in QL1STY/guild-board-releases: 2.0.1 goes there as well, signed as they check, so that it
     # brings them to the code's repository. The installer is still the one the code's repository built and attested.
     done = world.run("-Tag", TAG, "-Bridge", private="false")
     assert done.returncode == 0, _said(done) + "\n".join(world.calls())
@@ -225,18 +225,18 @@ def test_the_bridge_releases_the_same_installer_in_the_old_releases_repository_f
     [verify] = [call for call in calls if call.startswith("attestation verify ")]
     assert verify.endswith(" --repo TUSKFiZZY/TUSK-Login")
     assert any(call.startswith("run list --repo TUSKFiZZY/TUSK-Login ") for call in calls)
-    assert any(call.startswith("release view v1.0.0 --repo TUSKFiZZY/TUSK-Login-releases ") for call in calls)
+    assert any(call.startswith("release view v1.0.0 --repo QL1STY/guild-board-releases ") for call in calls)
     for verb in ("create", "upload", "edit"):
-        assert " --repo TUSKFiZZY/TUSK-Login-releases " in world.made(verb)[0] + " ", verb
+        assert " --repo QL1STY/guild-board-releases " in world.made(verb)[0] + " ", verb
     assert "--verify-tag" not in world.made("create")[0]  # the old repository holds none of the code's tags
     release = json.loads((world.state / "release.json").read_text(encoding="utf-8"))
     assert release["draft"] is False
-    assert all(each["url"].startswith("https://api.github.com/repos/TUSKFiZZY/TUSK-Login-releases/") for each in release["assets"])
+    assert all(each["url"].startswith("https://api.github.com/repos/QL1STY/guild-board-releases/") for each in release["assets"])
     # The signature is the one those copies check: the text names the tag and the installer, not the repository.
     installer = release["assets"][0]
     text = release_text(TAG, installer["name"], installer["size"], installer["digest"].removeprefix("sha256:"))
     assert signed(text, (world.state / "signature.sig").read_bytes(), world.public)
-    assert "TUSKFiZZY/TUSK-Login-releases" in _said(done)
+    assert "QL1STY/guild-board-releases" in _said(done)
 
 
 @windows_powershell

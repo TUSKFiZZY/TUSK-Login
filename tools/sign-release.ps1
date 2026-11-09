@@ -5,7 +5,7 @@
 # after that workflow succeeded. It is the only place the release key is used, and the key never goes to GitHub.
 #
 # In order, and stopping with a plain sentence at any failure, with nothing published:
-#   1. gh is logged in as QL1STY, GUILDBOARD_RELEASE_KEY names the key (outside this repository), and the key is the one
+#   1. gh is logged in as TUSKFiZZY, GUILDBOARD_RELEASE_KEY names the key (outside this repository), and the key is the one
 #      the app pins (selfupdate.py). Nothing is downloaded before this.
 #   2. The tag has no release yet where it is to be released: the repository that built it, which installed copies of
 #      2.0.1 and later look in, or with -Bridge the old QL1STY/guild-board-releases.
@@ -19,7 +19,7 @@
 # Run it from this folder's parent with, for example:
 #     powershell -ExecutionPolicy Bypass -File tools\sign-release.ps1 -Tag v1.0.0
 #
-# -Repo is the repository that built the installer, QL1STY/guild-board by default, and the release is made there.
+# -Repo is the repository that built the installer, TUSKFiZZY/TUSK-Login by default, and the release is made there.
 # -NoAttestation skips step 5 for a trial on a private repository, where attestations may not be available; it is refused
 # for a public one. The release notes are those of the version in src\guildboard\reference\changes.json at the tag.
 #
@@ -49,7 +49,7 @@ $workflow = 'release.yml'
 $unpublished = 'Nothing was published.'
 if ($Tag -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') { Stop-With "The tag is a v and three numbers, for example v1.0.0. $unpublished" }
 if ($Repo -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
-    Stop-With "The repository is written owner/name, for example $account/guild-board. $unpublished"
+    Stop-With "The repository is written owner/name, for example $account/TUSK-Login. $unpublished"
 }
 $Version = $Tag.Substring(1)
 

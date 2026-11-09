@@ -131,7 +131,7 @@ You need Windows, [uv](https://docs.astral.sh/uv/) with Python 3.12, and Node.js
 
 ```powershell
 git clone https://github.com/TUSKFiZZY/TUSK-Login.git
-cd guild-board
+cd TUSK-Login
 powershell -ExecutionPolicy Bypass -File setup.ps1
 ```
 
