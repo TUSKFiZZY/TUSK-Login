@@ -178,7 +178,7 @@ def test_the_default_fetch_goes_through_netpolicy_to_the_history_address(monkeyp
 
     monkeypatch.setattr(netpolicy, "_open", fake_open)
     assert len(fetch_page(wish_link(), "301", "0", "character").rows) == 20
-    assert seen == [("GET", "public-operation-hk4e-sg.hoyoverse.com", "GuildBoard")]
+    assert seen == [("GET", "public-operation-hk4e-sg.hoyoverse.com", "TUSKFiZZY")]
 
 
 def _register(key: str) -> None:
