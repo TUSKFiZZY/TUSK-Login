@@ -1,6 +1,9 @@
 name: Verify Windows
 
 on:
+  push:
+    branches:
+      - migration/tuskfizzy-integration
   pull_request:
     branches:
       - main
