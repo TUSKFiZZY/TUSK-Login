@@ -60,7 +60,7 @@ def test_packing_stops_unless_the_core_folder_is_named_core(tmp_path):
 
 def test_the_installer_removes_what_the_old_build_left_and_the_build_script_packs_the_shell_last():
     recipe = _text("packaging", "installer.iss")
-    assert r'Name: "{app}\_internal"' in recipe and r'Name: "{app}\tuskfizzy-tray.exe"' in recipe
+    assert r'Name: "{app}\_internal"' in recipe and r'Name: "{app}\guildboard-tray.exe"' in recipe
     assert r'Name: "{app}\resources\core"' in recipe and r'Name: "{app}\resources"' not in recipe  # a shared folder's own resources stay
     build = _text("build-installer.ps1")
     # A TUSKFiZZY running from the checkout's Electron program stops the build before npm ci deletes it.
