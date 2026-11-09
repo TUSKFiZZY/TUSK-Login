@@ -47,7 +47,7 @@ def test_fetch_cloud_goes_to_the_one_host(monkeypatch):
     [(request, timeout)] = seen
     assert request.full_url == "https://tspjpcyhpkfetwzolzvi.supabase.co/rest/v1/profiles?select=name"
     assert request.get_method() == "GET"
-    assert request.get_header("User-agent") == "GuildBoard"
+    assert request.get_header("User-agent") == "TUSKFiZZY"
     assert request.follow_redirects is False
     assert timeout == 20.0
 
@@ -61,7 +61,7 @@ def test_a_post_sends_its_body_and_headers_and_the_callers_user_agent_is_dropped
     [(request, timeout)] = seen
     assert (request.get_method(), request.data, timeout) == ("POST", b"{}", 5.0)
     assert request.get_header("Apikey") == "key"
-    assert request.get_header("User-agent") == "GuildBoard"
+    assert request.get_header("User-agent") == "TUSKFiZZY"
 
 
 def test_a_delete_without_a_body_is_still_a_delete(monkeypatch):

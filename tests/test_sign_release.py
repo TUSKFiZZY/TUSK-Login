@@ -367,7 +367,7 @@ def test_the_script_names_the_steps_in_the_order_it_takes_them():
     text = (TOOLS / "sign-release.ps1").read_text(encoding="utf-8")
     code = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
     steps = ["Assert-GhAccount", "Get-ReleaseKeyFile", "Assert-ReleaseKeyTrusted", "Get-Draft", "gh run list",
-             "gh api \"repos/$Repo/commits/$Tag\"", "gh run download", "Get-FileHash", "gh attestation verify",
+             "gh api \"repos/$Repo/commits/$Tag\"", "gh run download", "Get-FileSha256", "gh attestation verify",
              "Get-ReleaseNotes", "New-DraftRelease", "Publish-SignedDraft"]
     at = 0
     for step in steps:
