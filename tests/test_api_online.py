@@ -26,7 +26,7 @@ LOGOUT = ("POST", "/auth/v1/logout")
 DELETE = ("POST", "/rest/v1/rpc/delete_my_account")
 PROFILE = ("GET", "/rest/v1/profiles")
 SIGNED_IN = "Signed in. You can close this tab."
-NOT_FINISHED = "Signing in did not finish. You can close this tab and try again in Guild Board."
+NOT_FINISHED = "Signing in did not finish. You can close this tab and try again in TUSKFiZZY."
 MADE_UP_ACCESS, MADE_UP_REFRESH = "MADE-UP-ACCESS-0123456789", "MADE-UP-REFRESH-0123456789"
 
 
@@ -175,7 +175,7 @@ def test_sign_in_opens_the_browser_at_the_authorize_address(page):
     query = parse_qs(parts.query)
     assert query["provider"] == ["custom:discord"]
     assert query["redirect_to"][0].startswith(f"http://127.0.0.1:{PORT}/auth/callback/")
-    assert page.cloud.requests == []  # the browser asks; Guild Board has sent nothing yet
+    assert page.cloud.requests == []  # the browser asks; TUSKFiZZY has sent nothing yet
 
 
 def test_a_browser_that_will_not_open_says_so(tmp_path, clock):

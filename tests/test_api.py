@@ -52,7 +52,7 @@ def test_api_needs_the_session_cookie(core):
     with TestClient(create_app(core, PORT), base_url=BASE) as anonymous:
         response = anonymous.get("/api/status")
         assert response.status_code == 401
-        assert response.json() == {"error": "Open Guild Board from its own window or launch link."}
+        assert response.json() == {"error": "Open TUSKFiZZY from its own window or launch link."}
         assert anonymous.get("/").status_code == 200  # the page itself is not a secret
 
 
@@ -262,7 +262,7 @@ def test_auth_windows_need_the_shell(tmp_path, clock):
         client.get("/launch", params={"k": core.launch_secret}, follow_redirects=False)
         response = client.post("/api/auth/login")
         assert response.status_code == 409
-        assert response.json() == {"error": "This needs the Guild Board window."}
+        assert response.json() == {"error": "This needs the TUSKFiZZY window."}
         opened: list[str] = []
         core.window_requests = lambda kind: opened.append(kind) is None
         assert client.post("/api/auth/login").json() == {"opened": True}
@@ -446,7 +446,7 @@ def test_root_serves_a_placeholder_or_the_built_interface(core, tmp_path):
         assert "interface has not been built" in plain.get("/").text
     web = tmp_path / "web"
     web.mkdir()
-    (web / "index.html").write_text("<!doctype html><title>Guild Board</title><p>built interface</p>", encoding="utf-8")
+    (web / "index.html").write_text("<!doctype html><title>TUSKFiZZY</title><p>built interface</p>", encoding="utf-8")
     (web / "app.js").write_text("console.log('hi')", encoding="utf-8")
     with TestClient(create_app(core, PORT, web), base_url=BASE) as built:
         assert "built interface" in built.get("/").text
@@ -515,7 +515,7 @@ def test_requests_from_another_origin_are_refused(client, core):
     for path in ("/api/sync", "/api/sync/pause", "/api/backup"):
         response = client.post(path, headers=foreign)
         assert response.status_code == 403, path
-        assert response.json() == {"error": "This request did not come from Guild Board."}
+        assert response.json() == {"error": "This request did not come from TUSKFiZZY."}
     assert client.put("/api/settings", json={"in_session_interval_min": 30}, headers=foreign).status_code == 403
     assert client.get("/api/status", headers={"Sec-Fetch-Site": "same-site"}).status_code == 403
     assert client.get("/api/status", headers={"Sec-Fetch-Site": "cross-site"}).status_code == 403
@@ -591,7 +591,7 @@ def test_requests_to_the_window_need_the_window(client, core):
     for path in ("/api/data/open", "/api/demo/open"):
         response = client.post(path)
         assert response.status_code == 409, path
-        assert response.json() == {"error": "This needs the Guild Board window."}
+        assert response.json() == {"error": "This needs the TUSKFiZZY window."}
     asked: list[str] = []
     core.window_requests = lambda kind: asked.append(kind) is None
     assert client.post("/api/data/open").json() == {"opened": True}
@@ -602,7 +602,7 @@ def test_requests_to_the_window_need_the_window(client, core):
 def test_the_page_may_load_nothing_from_elsewhere(core, tmp_path):
     web = tmp_path / "web"
     web.mkdir()
-    (web / "index.html").write_text("<!doctype html><title>Guild Board</title>", encoding="utf-8")
+    (web / "index.html").write_text("<!doctype html><title>TUSKFiZZY</title>", encoding="utf-8")
     policy = (
         "default-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; "
         "form-action 'none'; frame-ancestors 'none'"
@@ -794,29 +794,44 @@ def test_tuskfizzy_daily_note_endpoint_applies_threshold_rules(client):
     assert claimed.json()["daily"][ident] == [False, True, True]
 
 
-def test_tracker_applies_fresh_notes_only_to_the_linked_genshin_profile(client, core):
+def test_tracker_applies_fresh_notes_only_to_the_linked_genshin_profile(client, core, monkeypatch):
+    core.demo = False
     genshin = client.post(
         "/api/tuskfizzy/genshin-accounts",
         json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
     ).json()["account"]
-    profile = client.post(
+    linked = client.post(
         "/api/tuskfizzy/accounts",
         json={"name": "Main", "genshinId": genshin["id"]},
     ).json()["account"]
-    core.store.set_meta("account_uid", "1234567890")
+    unlinked = client.post(
+        "/api/tuskfizzy/accounts",
+        json={"name": "Alt", "genshinId": None},
+    ).json()["account"]
+    client.put("/api/tuskfizzy/selected-genshin", json={"id": genshin["id"]})
     day = core.clock.now().astimezone().date().isoformat()
+    notes = [
+        {"profileName": "Asia", "uid": "1234567890", "resin": 55, "bonusClaimed": False},
+        {"profileName": "Asia", "uid": "1234567890", "resin": 49, "bonusClaimed": False},
+        {"profileName": "Asia", "uid": "1234567890", "resin": 49, "bonusClaimed": True},
+    ]
 
-    core.store.set_latest_doc("notes", core.clock.now(), {"resin": 55, "extra_reward_claimed": False})
-    client.get("/api/tuskfizzy/tracker", params={"day": day})
-    assert core.store.tuskfizzy_daily_for(day)[profile["id"]] == [False, False, False]
+    async def note(profile_id):
+        assert profile_id == genshin["id"]
+        return notes.pop(0)
 
-    core.store.set_latest_doc("notes", core.clock.now(), {"resin": 49, "extra_reward_claimed": False})
-    client.get("/api/tuskfizzy/tracker", params={"day": day})
-    assert core.store.tuskfizzy_daily_for(day)[profile["id"]] == [False, False, True]
+    async def chronicle(profile_id):
+        assert profile_id == genshin["id"]
+        return None
 
-    core.store.set_latest_doc("notes", core.clock.now(), {"resin": 49, "extra_reward_claimed": True})
-    client.get("/api/tuskfizzy/tracker", params={"day": day})
-    assert core.store.tuskfizzy_daily_for(day)[profile["id"]] == [False, True, True]
+    monkeypatch.setattr(core, "tuskfizzy_profile_note", note)
+    monkeypatch.setattr(core, "tuskfizzy_profile_chronicle", chronicle)
+
+    for expected in ([False, False, False], [False, False, True], [False, True, True]):
+        response = client.get("/api/tuskfizzy/tracker", params={"day": day})
+        assert response.status_code == 200
+        assert response.json()["daily"][linked["id"]] == expected
+        assert unlinked["id"] not in response.json()["daily"]
 
 
 def test_tuskfizzy_daily_note_only_marks_resin_on_observed_crossing_and_keeps_it_checked(core):
@@ -957,7 +972,7 @@ def test_tuskfizzy_tracker_reads_the_selected_profile_session_not_primary_login(
     response = client.get("/api/tuskfizzy/tracker", params={"day": day})
     assert response.status_code == 200
     assert response.json()["dailyNote"]["profileName"] == "Asia"
-    assert response.json()["daily"][checklist["id"]] == [False, True, True]
+    assert response.json()["daily"][checklist["id"]] == [False, True, False]
     assert calls == [profile["id"]]
 
 

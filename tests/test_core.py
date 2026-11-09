@@ -808,7 +808,7 @@ def test_an_import_left_running_when_guild_board_closed_is_failed_at_the_next_st
     second = _core(tmp_path, clock, demo=True)
     try:
         row = next(row for row in second.store.wish_imports() if row.id == left)
-        assert (row.outcome, row.message) == ("failed", "Guild Board closed before this import finished.")
+        assert (row.outcome, row.message) == ("failed", "TUSKFiZZY closed before this import finished.")
         assert row.finished_at == clock.now()
     finally:
         second.store.close()

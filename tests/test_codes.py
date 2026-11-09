@@ -273,7 +273,7 @@ async def test_livestream_codes_are_new_until_redeemed_or_already_and_notified_o
     core.notifier = lambda kind, text: shown.append((kind, text)) or True
     core.has_tray = True
     await core.check_live(force=True)
-    assert shown == [("codes", "2 new livestream codes. Open Guild Board to redeem them.")]
+    assert shown == [("codes", "2 new livestream codes. Open TUSKFiZZY to redeem them.")]
     await core.check_live(force=True)
     assert len(shown) == 1  # told once
     assert [item["code"] for item in core.codes_model()["live"]] == ["LIVECODE1", "LIVECODE2"]
@@ -283,7 +283,7 @@ async def test_livestream_codes_are_new_until_redeemed_or_already_and_notified_o
     assert core.codebook.totals(UID) == {"primogems": 120, "redeemed": 2}
     source.live = [*live, {"code": "LIVECODE3", "primogems": 0}]
     await core.check_live(force=True)
-    assert len(shown) == 2 and shown[1][1] == "1 new livestream code. Open Guild Board to redeem it."
+    assert len(shown) == 2 and shown[1][1] == "1 new livestream code. Open TUSKFiZZY to redeem it."
     core.store.close()
 
 

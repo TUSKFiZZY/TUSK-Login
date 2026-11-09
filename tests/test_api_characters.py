@@ -203,7 +203,7 @@ def test_a_second_refresh_is_refused_with_the_minutes_to_wait(tmp_path, clock):
                 time.sleep(0.02)
             again = client.post("/api/characters/refresh")
             assert again.status_code == 409
-            assert again.json() == {"error": "Guild Board read HoYoLAB a moment ago. Try again in 5 minutes."}
+            assert again.json() == {"error": "TUSKFiZZY read HoYoLAB a moment ago. Try again in 5 minutes."}
             clock.advance(minutes=4)
             assert "Try again in 1 minute." in client.post("/api/characters/refresh").json()["error"]
     finally:
@@ -225,7 +225,7 @@ def test_a_refresh_after_the_days_24_runs_says_so_with_the_minutes_until_the_cou
         with opened(core) as client:
             refused = client.post("/api/characters/refresh")
             assert (refused.status_code, refused.json()) == (409, {
-                "error": f"Guild Board has read HoYoLAB 24 times today, the most it reads in a day. Try again in {minutes} minutes."
+                "error": f"TUSKFiZZY has read HoYoLAB 24 times today, the most it reads in a day. Try again in {minutes} minutes."
             })
     finally:
         core.store.close()

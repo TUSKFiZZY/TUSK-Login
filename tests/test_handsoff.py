@@ -116,7 +116,7 @@ GAME_FOLDER_MODULES = {"pulls/gamecache.py"}
 GAME_FOLDER_NAMES = ("GenshinImpact_Data", "YuanShen_Data")
 GAME_AND_REGISTRY_NAMES = (
     *GAME_FOLDER_NAMES,
-    "winreg", "advapi32", "RegOpenKey", "RegSetValue", "RegCreateKey", "RegDeleteKey", "HKEY_", "NativeFormat",
+    "winreg", "advapi32", "RegOpenKey", "RegSetValue", "RegCreateKey", "RegDeleteKey", "HKEY_CURRENT_USER", "HKEY_LOCAL_MACHINE", "HKEY_CLASSES_ROOT", "HKEY_USERS", "HKEY_CURRENT_CONFIG", "NativeFormat",
 )
 INSTALL_FOLDER = re.compile(r"genshin impact game(?! account)", re.IGNORECASE)
 

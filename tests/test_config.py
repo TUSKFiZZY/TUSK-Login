@@ -7,10 +7,10 @@ from guildboard.config import (
 
 
 def test_default_data_dir_is_under_local_app_data(monkeypatch):
-    monkeypatch.delenv("GUILDBOARD_DATA_DIR", raising=False)
+    monkeypatch.delenv("TUSKFIZZY_DATA_DIR", raising=False)
     monkeypatch.setenv("LOCALAPPDATA", r"C:\Users\someone\AppData\Local")
-    assert default_data_dir() == Path(r"C:\Users\someone\AppData\Local\GuildBoard")
-    assert default_data_dir(demo=True) == Path(r"C:\Users\someone\AppData\Local\GuildBoard-demo")
+    assert default_data_dir() == Path(r"C:\Users\someone\AppData\Local\TUSKFiZZY")
+    assert default_data_dir(demo=True) == Path(r"C:\Users\someone\AppData\Local\TUSKFiZZY-demo")
 
 
 def test_the_new_settings_keep_only_their_choices():
@@ -22,7 +22,7 @@ def test_the_new_settings_keep_only_their_choices():
 
 
 def test_data_dir_can_be_overridden(monkeypatch, tmp_path):
-    monkeypatch.setenv("GUILDBOARD_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("TUSKFIZZY_DATA_DIR", str(tmp_path))
     assert default_data_dir() == tmp_path
     assert default_data_dir(demo=True) == tmp_path
 
