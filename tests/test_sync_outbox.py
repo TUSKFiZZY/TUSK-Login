@@ -533,4 +533,4 @@ def test_a_fresh_database_has_the_sync_tables(store):
     tables = {name for (name,) in store._conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
     assert {"sync_outbox", "sync_gate"} <= tables
     assert store._conn.execute("SELECT id, applying FROM sync_gate").fetchall() == [(1, 0)]
-    assert store._conn.execute("PRAGMA user_version").fetchone()[0] == len(MIGRATIONS) == 16
+    assert store._conn.execute("PRAGMA user_version").fetchone()[0] == len(MIGRATIONS) == 17

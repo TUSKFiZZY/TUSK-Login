@@ -52,7 +52,7 @@ def test_api_needs_the_session_cookie(core):
     with TestClient(create_app(core, PORT), base_url=BASE) as anonymous:
         response = anonymous.get("/api/status")
         assert response.status_code == 401
-        assert response.json() == {"error": "Open Guild Board from its own window or launch link."}
+        assert response.json() == {"error": "Open TUSKFiZZY from its own window or launch link."}
         assert anonymous.get("/").status_code == 200  # the page itself is not a secret
 
 
@@ -262,7 +262,7 @@ def test_auth_windows_need_the_shell(tmp_path, clock):
         client.get("/launch", params={"k": core.launch_secret}, follow_redirects=False)
         response = client.post("/api/auth/login")
         assert response.status_code == 409
-        assert response.json() == {"error": "This needs the Guild Board window."}
+        assert response.json() == {"error": "This needs the TUSKFiZZY window."}
         opened: list[str] = []
         core.window_requests = lambda kind: opened.append(kind) is None
         assert client.post("/api/auth/login").json() == {"opened": True}
@@ -446,7 +446,7 @@ def test_root_serves_a_placeholder_or_the_built_interface(core, tmp_path):
         assert "interface has not been built" in plain.get("/").text
     web = tmp_path / "web"
     web.mkdir()
-    (web / "index.html").write_text("<!doctype html><title>Guild Board</title><p>built interface</p>", encoding="utf-8")
+    (web / "index.html").write_text("<!doctype html><title>TUSKFiZZY</title><p>built interface</p>", encoding="utf-8")
     (web / "app.js").write_text("console.log('hi')", encoding="utf-8")
     with TestClient(create_app(core, PORT, web), base_url=BASE) as built:
         assert "built interface" in built.get("/").text
@@ -515,7 +515,7 @@ def test_requests_from_another_origin_are_refused(client, core):
     for path in ("/api/sync", "/api/sync/pause", "/api/backup"):
         response = client.post(path, headers=foreign)
         assert response.status_code == 403, path
-        assert response.json() == {"error": "This request did not come from Guild Board."}
+        assert response.json() == {"error": "This request did not come from TUSKFiZZY."}
     assert client.put("/api/settings", json={"in_session_interval_min": 30}, headers=foreign).status_code == 403
     assert client.get("/api/status", headers={"Sec-Fetch-Site": "same-site"}).status_code == 403
     assert client.get("/api/status", headers={"Sec-Fetch-Site": "cross-site"}).status_code == 403
@@ -591,7 +591,7 @@ def test_requests_to_the_window_need_the_window(client, core):
     for path in ("/api/data/open", "/api/demo/open"):
         response = client.post(path)
         assert response.status_code == 409, path
-        assert response.json() == {"error": "This needs the Guild Board window."}
+        assert response.json() == {"error": "This needs the TUSKFiZZY window."}
     asked: list[str] = []
     core.window_requests = lambda kind: asked.append(kind) is None
     assert client.post("/api/data/open").json() == {"opened": True}
@@ -602,7 +602,7 @@ def test_requests_to_the_window_need_the_window(client, core):
 def test_the_page_may_load_nothing_from_elsewhere(core, tmp_path):
     web = tmp_path / "web"
     web.mkdir()
-    (web / "index.html").write_text("<!doctype html><title>Guild Board</title>", encoding="utf-8")
+    (web / "index.html").write_text("<!doctype html><title>TUSKFiZZY</title>", encoding="utf-8")
     policy = (
         "default-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; "
         "form-action 'none'; frame-ancestors 'none'"
@@ -659,3 +659,418 @@ def test_static_files_get_their_content_type_from_guild_board_not_the_registry(c
 def test_api_answers_say_nosniff_too(client):
     assert client.get("/api/status").headers["x-content-type-options"] == "nosniff"
     assert client.get("/api/icon/no.such.key").headers["x-content-type-options"] == "nosniff"
+
+
+def test_tuskfizzy_legacy_import_is_validated_and_repeatable(client, core):
+    payload = {
+        "format": "tuskfizzy-local-data",
+        "version": 1,
+        "accounts": [{"id": "profile-a", "name": "Main", "portrait": "", "genshinId": "genshin-a"}],
+        "genshinAccounts": [{"id": "genshin-a", "name": "Asia", "uid": "1234567890", "server": "asia"}],
+        "dailyRecords": {"2026-11-08": {"profile-a": [True, False, True], "_resinLast": {"profile-a": 55}}},
+        "selectedGenshinId": "genshin-a",
+    }
+    first = client.post("/api/tuskfizzy/import", json=payload)
+    assert first.status_code == 200
+    assert first.json() == {"imported": {"accounts": 1, "genshinAccounts": 1, "dailyRecords": 1}}
+    second = client.post("/api/tuskfizzy/import", json=payload)
+    assert second.status_code == 200
+    assert second.json() == first.json()
+    row = core.store._conn.execute(
+        "SELECT login, commission, resin FROM tuskfizzy_daily WHERE day = ? AND account_id = ?",
+        ("2026-11-08", "profile-a"),
+    ).fetchone()
+    assert row == (1, 0, 1)
+    previous_resin = core.store._conn.execute(
+        "SELECT resin_last FROM tuskfizzy_daily WHERE day = ? AND account_id = ?",
+        ("2026-11-08", "profile-a"),
+    ).fetchone()
+    assert previous_resin[0] == 55
+    assert core.store.meta("tuskfizzy_selected_genshin_id") == "genshin-a"
+
+
+def test_tuskfizzy_legacy_import_rejects_invalid_uid_without_writing(client, core):
+    payload = {
+        "format": "tuskfizzy-local-data",
+        "version": 1,
+        "accounts": [{"id": "profile-a", "name": "Main"}],
+        "genshinAccounts": [{"id": "genshin-a", "name": "Asia", "uid": "12345"}],
+        "dailyRecords": {},
+    }
+    response = client.post("/api/tuskfizzy/import", json=payload)
+    assert response.status_code == 422
+    assert core.store.tuskfizzy_import_counts() == {"accounts": 0, "genshinAccounts": 0, "dailyRecords": 0}
+
+
+def test_tuskfizzy_tracker_profiles_and_checklist_can_be_managed(client):
+    created = client.post("/api/tuskfizzy/accounts", json={"name": "Main", "portrait": "", "genshinId": None})
+    assert created.status_code == 200
+    account = created.json()["account"]
+    ident = account["id"]
+    assert account["name"] == "Main"
+
+    changed = client.put(
+        "/api/tuskfizzy/daily",
+        json={"day": "2026-11-08", "accountId": ident, "task": "resin", "checked": True},
+    )
+    assert changed.status_code == 200
+    assert changed.json()["daily"][ident] == [False, False, True]
+
+    tracker = client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"})
+    assert tracker.status_code == 200
+    assert tracker.json()["accounts"][0]["id"] == ident
+    assert tracker.json()["daily"][ident] == [False, False, True]
+    assert tracker.json()["dailyNote"] is None  # demo data must never be presented as a live HoYoLAB note
+    month = client.get("/api/tuskfizzy/month", params={"month": "2026-11"})
+    assert month.status_code == 200
+    assert month.json()["records"]["2026-11-08"][ident] == [False, False, True]
+
+    deleted = client.delete(f"/api/tuskfizzy/accounts/{ident}")
+    assert deleted.status_code == 200
+    assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"}).json()["accounts"] == []
+
+
+def test_tuskfizzy_genshin_profiles_can_be_managed_and_unlinked(client):
+    created = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    )
+    assert created.status_code == 200
+    profile = created.json()["account"]
+    ident = profile["id"]
+    assert profile["uid"] == "1234567890"
+
+    tracker_profile = client.post(
+        "/api/tuskfizzy/accounts",
+        json={"name": "Main", "portrait": "", "genshinId": ident},
+    ).json()["account"]
+    assert tracker_profile["genshinId"] == ident
+
+    removed = client.delete(f"/api/tuskfizzy/genshin-accounts/{ident}")
+    assert removed.status_code == 200
+    tracker = client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"}).json()
+    assert tracker["genshinAccounts"] == []
+    assert tracker["accounts"][0]["genshinId"] is None
+
+
+def test_tuskfizzy_selected_genshin_profile_can_be_changed(client):
+    first = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    second = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Europe", "uid": "9876543210", "server": "os_eu"},
+    ).json()["account"]
+
+    selected = client.put("/api/tuskfizzy/selected-genshin", json={"id": first["id"]})
+    assert selected.status_code == 200
+    assert selected.json()["selectedGenshinId"] == first["id"]
+    assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"}).json()["selectedGenshinId"] == first["id"]
+
+    changed = client.put("/api/tuskfizzy/selected-genshin", json={"id": second["id"]})
+    assert changed.status_code == 200
+    assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"}).json()["selectedGenshinId"] == second["id"]
+
+    cleared = client.put("/api/tuskfizzy/selected-genshin", json={"id": None})
+    assert cleared.status_code == 200
+    assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-08"}).json()["selectedGenshinId"] is None
+
+
+def test_tuskfizzy_daily_note_endpoint_applies_threshold_rules(client):
+    account = client.post("/api/tuskfizzy/accounts", json={"name": "Main"}).json()["account"]
+    ident = account["id"]
+    base = {"day": "2026-11-09", "accountId": ident, "extraRewardClaimed": False}
+
+    first = client.post("/api/tuskfizzy/observe-note", json={**base, "resin": 42})
+    assert first.status_code == 200
+    assert first.json()["daily"][ident] == [False, False, False]
+
+    client.post("/api/tuskfizzy/observe-note", json={**base, "resin": 55})
+    crossed = client.post("/api/tuskfizzy/observe-note", json={**base, "resin": 49})
+    assert crossed.json()["daily"][ident] == [False, False, True]
+
+    claimed = client.post("/api/tuskfizzy/observe-note", json={**base, "resin": 120, "extraRewardClaimed": True})
+    assert claimed.json()["daily"][ident] == [False, True, True]
+
+
+def test_tracker_applies_fresh_notes_only_to_the_linked_genshin_profile(client, core, monkeypatch):
+    core.demo = False
+    genshin = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    linked = client.post(
+        "/api/tuskfizzy/accounts",
+        json={"name": "Main", "genshinId": genshin["id"]},
+    ).json()["account"]
+    unlinked = client.post(
+        "/api/tuskfizzy/accounts",
+        json={"name": "Alt", "genshinId": None},
+    ).json()["account"]
+    client.put("/api/tuskfizzy/selected-genshin", json={"id": genshin["id"]})
+    day = core.clock.now().astimezone().date().isoformat()
+    notes = [
+        {"profileName": "Asia", "uid": "1234567890", "resin": 55, "bonusClaimed": False},
+        {"profileName": "Asia", "uid": "1234567890", "resin": 49, "bonusClaimed": False},
+        {"profileName": "Asia", "uid": "1234567890", "resin": 49, "bonusClaimed": True},
+    ]
+
+    async def note(profile_id):
+        assert profile_id == genshin["id"]
+        return notes.pop(0)
+
+    async def chronicle(profile_id):
+        assert profile_id == genshin["id"]
+        return None
+
+    monkeypatch.setattr(core, "tuskfizzy_profile_note", note)
+    monkeypatch.setattr(core, "tuskfizzy_profile_chronicle", chronicle)
+
+    for expected in ([False, False, False], [False, False, True], [False, True, True]):
+        response = client.get("/api/tuskfizzy/tracker", params={"day": day})
+        assert response.status_code == 200
+        assert response.json()["daily"][linked["id"]] == expected
+        assert unlinked["id"] not in response.json()["daily"]
+
+
+def test_tuskfizzy_daily_note_only_marks_resin_on_observed_crossing_and_keeps_it_checked(core):
+    store = core.store
+    store.tuskfizzy_put_account("profile-a", "Main", "", None, "2026-11-09T00:00:00")
+
+    # The first observation is already below 50: it must not auto-complete Resin.
+    assert store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 30, False)
+    assert store.tuskfizzy_daily_for("2026-11-09")["profile-a"] == [False, False, False]
+
+    # A later observation above the threshold followed by one below it is a real crossing.
+    assert store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 55, False)
+    assert store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 49, False)
+    assert store.tuskfizzy_daily_for("2026-11-09")["profile-a"] == [False, False, True]
+
+    # Refilling must not clear the completed Resin task; claiming the bonus completes Commission.
+    assert store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 160, True)
+    assert store.tuskfizzy_daily_for("2026-11-09")["profile-a"] == [False, True, True]
+
+
+def test_tuskfizzy_daily_note_does_not_update_unknown_profile(core):
+    assert not core.store.tuskfizzy_observe_daily_note("2026-11-09", "missing", 20, True)
+
+
+def test_tuskfizzy_selected_genshin_profile_can_be_changed_and_removed(client):
+    created = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    )
+    assert created.status_code == 200
+    ident = created.json()["account"]["id"]
+
+    selected = client.put("/api/tuskfizzy/selected-genshin", json={"id": ident})
+    assert selected.status_code == 200
+    assert selected.json() == {"selectedGenshinId": ident}
+    assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-09"}).json()["selectedGenshinId"] == ident
+
+    assert client.delete(f"/api/tuskfizzy/genshin-accounts/{ident}").status_code == 200
+    assert client.get("/api/tuskfizzy/tracker", params={"day": "2026-11-09"}).json()["selectedGenshinId"] is None
+
+
+def test_tuskfizzy_import_without_a_selected_profile_clears_old_selection(client, core):
+    core.store.tuskfizzy_put_genshin_account("genshin-a", "Asia", "1234567890", "os_asia", "2026-11-09T00:00:00")
+    assert core.store.tuskfizzy_select_genshin_account("genshin-a")
+    response = client.post("/api/tuskfizzy/import", json={
+        "format": "tuskfizzy-local-data",
+        "version": 1,
+        "accounts": [],
+        "genshinAccounts": [],
+        "dailyRecords": {},
+        "selectedGenshinId": "",
+    })
+    assert response.status_code == 200
+    assert core.store.tuskfizzy_selected_genshin_id() is None
+
+
+
+def test_tuskfizzy_enka_endpoint_validates_uid_and_returns_public_profile(client, monkeypatch):
+    from guildboard.api import app as api_app
+
+    seen = []
+    monkeypatch.setattr(api_app.enka, "get_profile", lambda uid: seen.append(uid) or {
+        "uid": uid, "playerInfo": {"nickname": "Traveler"}, "avatarInfoList": [], "ttl": 300,
+        "fetchedAt": 1, "cached": False,
+    })
+    invalid = client.get("/api/tuskfizzy/enka/12345678")
+    assert invalid.status_code == 422
+    response = client.get("/api/tuskfizzy/enka/1234567890")
+    assert response.status_code == 200
+    assert response.json()["playerInfo"]["nickname"] == "Traveler"
+    assert seen == ["1234567890"]
+
+
+def test_tuskfizzy_enka_endpoint_maps_missing_profile(client, monkeypatch):
+    from guildboard.api import app as api_app
+
+    def missing(uid):
+        raise api_app.enka.EnkaNotFound("No public profile.")
+    monkeypatch.setattr(api_app.enka, "get_profile", missing)
+    response = client.get("/api/tuskfizzy/enka/123456789")
+    assert response.status_code == 404
+    assert response.json() == {"error": "No public profile."}
+
+
+
+def test_tuskfizzy_profile_login_is_scoped_to_selected_profile(client, core, monkeypatch):
+    seen = []
+    async def login(profile_id, cookie_text):
+        seen.append((profile_id, cookie_text))
+        return {"uid": "1234567890", "nickname": "Traveler", "server": "os_asia"}
+    monkeypatch.setattr(core, "tuskfizzy_login", login, raising=False)
+    response = client.post(
+        "/api/tuskfizzy/genshin-accounts/profile-a/login",
+        json={"cookieText": "ltoken_v2=secret; ltuid_v2=1234567890"},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"connected": True, "account": {
+        "uid": "1234567890", "nickname": "Traveler", "server": "os_asia",
+    }}
+    assert seen == [("profile-a", "ltoken_v2=secret; ltuid_v2=1234567890")]
+
+
+def test_tuskfizzy_profile_login_requires_cookie_text(client):
+    response = client.post("/api/tuskfizzy/genshin-accounts/profile-a/login", json={"uid": "1234567890"})
+    assert response.status_code == 422
+
+
+def test_tuskfizzy_profile_logout_is_scoped_to_profile(client, core, monkeypatch):
+    seen = []
+    monkeypatch.setattr(core, "tuskfizzy_logout", lambda profile_id: seen.append(profile_id), raising=False)
+    response = client.delete("/api/tuskfizzy/genshin-accounts/profile-a/login")
+    assert response.status_code == 200
+    assert response.json() == {"connected": False}
+    assert seen == ["profile-a"]
+
+
+def test_tuskfizzy_tracker_reads_the_selected_profile_session_not_primary_login(client, core, monkeypatch):
+    core.demo = False
+    profile = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    checklist = client.post(
+        "/api/tuskfizzy/accounts",
+        json={"name": "Main", "genshinId": profile["id"]},
+    ).json()["account"]
+    client.put("/api/tuskfizzy/selected-genshin", json={"id": profile["id"]})
+    day = core.clock.now().astimezone().date().isoformat()
+    calls = []
+    async def note(profile_id):
+        calls.append(profile_id)
+        return {
+            "profileName": "Asia", "uid": "1234567890", "resin": 49, "resinMax": 200,
+            "commissionDone": 4, "commissionTotal": 4, "bonusClaimed": True,
+            "expeditionsDone": 5, "expeditionsTotal": 5, "readAt": core.clock.now().isoformat(),
+        }
+    monkeypatch.setattr(core, "tuskfizzy_profile_note", note)
+    response = client.get("/api/tuskfizzy/tracker", params={"day": day})
+    assert response.status_code == 200
+    assert response.json()["dailyNote"]["profileName"] == "Asia"
+    assert response.json()["daily"][checklist["id"]] == [False, True, False]
+    assert calls == [profile["id"]]
+
+
+def test_tuskfizzy_tracker_does_not_use_primary_login_for_unconnected_profile(client, core, monkeypatch):
+    core.demo = False
+    profile = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    client.put("/api/tuskfizzy/selected-genshin", json={"id": profile["id"]})
+    day = core.clock.now().astimezone().date().isoformat()
+    monkeypatch.setattr(core, "tuskfizzy_profile_note", lambda profile_id: None)
+    response = client.get("/api/tuskfizzy/tracker", params={"day": day})
+    assert response.status_code == 200
+    assert response.json()["dailyNote"] is None
+
+
+
+def test_tuskfizzy_tracker_includes_selected_profile_battle_chronicle(client, core, monkeypatch):
+    core.demo = False
+    profile = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    client.put("/api/tuskfizzy/selected-genshin", json={"id": profile["id"]})
+    day = core.clock.now().astimezone().date().isoformat()
+    calls = []
+    async def chronicle(profile_id):
+        calls.append(profile_id)
+        return {
+            "uid": "1234567890", "nickname": "Traveler", "server": "os_asia",
+            "adventureRank": 60, "abyssProgress": "12-3", "counters": {"spiral_abyss": 36},
+            "regions": [], "endgame": [], "readAt": core.clock.now().isoformat(),
+        }
+    async def note(profile_id):
+        return None
+    monkeypatch.setattr(core, "tuskfizzy_profile_chronicle", chronicle)
+    monkeypatch.setattr(core, "tuskfizzy_profile_note", note)
+    response = client.get("/api/tuskfizzy/tracker", params={"day": day})
+    assert response.status_code == 200
+    assert response.json()["battleChronicle"]["abyssProgress"] == "12-3"
+    assert calls == [profile["id"]]
+
+
+
+def test_tuskfizzy_profile_wish_import_passes_url_to_uid_scoped_importer(client, core, monkeypatch):
+    seen = []
+    monkeypatch.setattr(
+        core, "tuskfizzy_import_wish_link",
+        lambda profile_id, url: seen.append((profile_id, url)),
+        raising=False,
+    )
+    url = "https://webstatic-sea.hoyoverse.com/genshin/event/gacha?authkey=private&authkey_ver=1"
+    response = client.post(
+        "/api/tuskfizzy/genshin-accounts/profile-a/wish-import",
+        json={"url": url},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"started": True}
+    assert seen == [("profile-a", url)]
+
+
+def test_tuskfizzy_profile_wish_import_requires_url(client):
+    response = client.post("/api/tuskfizzy/genshin-accounts/profile-a/wish-import", json={})
+    assert response.status_code == 422
+
+
+
+def test_core_converts_legacy_wish_url_to_profile_scoped_import(client, core, monkeypatch):
+    core.demo = False
+    profile = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    seen = []
+    monkeypatch.setattr(core.wish_import, "start_with_link", lambda link, uid: seen.append((link, uid)))
+    url = "https://webstatic-sea.hoyoverse.com/genshin/event/gacha?authkey=sample-key&authkey_ver=1"
+    core.tuskfizzy_import_wish_link(profile["id"], url)
+    assert len(seen) == 1
+    link, uid = seen[0]
+    assert uid == 1234567890
+    assert link.query["authkey"] == "sample-key"
+    assert link.query["auth_appid"] == "webview_gacha"
+    assert link.query["sign_type"] == "2"
+    assert link.query["region"] == "os_asia"
+
+
+def test_core_refuses_legacy_wish_url_for_wrong_host_or_region(client, core, monkeypatch):
+    core.demo = False
+    profile = client.post(
+        "/api/tuskfizzy/genshin-accounts",
+        json={"name": "Asia", "uid": "1234567890", "server": "os_asia"},
+    ).json()["account"]
+    monkeypatch.setattr(core.wish_import, "start_with_link", lambda link, uid: None)
+    with pytest.raises(ValueError):
+        core.tuskfizzy_import_wish_link(profile["id"], "https://evil.example/?authkey=x&authkey_ver=1")
+    with pytest.raises(ValueError):
+        core.tuskfizzy_import_wish_link(
+            profile["id"],
+            "https://webstatic-sea.hoyoverse.com/gacha?authkey=x&authkey_ver=1&region=os_euro",
+        )

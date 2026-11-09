@@ -24,8 +24,8 @@ DAILY_BACKUPS_KEPT = 14
 SKIPPED_RUNS_KEPT_DAYS = 90  # a refused trigger leaves a record, and only the recent ones say anything
 RAW_FULL_DAYS = 30  # how long every raw body is kept; after that, the last one of each endpoint on each game day
 BUSY_SECONDS = 5.0  # how long to wait for another program that is writing to the database
-# How an import of the wish history that Guild Board's closing cut short ended, as the next start records it.
-IMPORT_CUT_SHORT = "Guild Board closed before this import finished."
+# How an import of the wish history that TUSKFiZZY's closing cut short ended, as the next start records it.
+IMPORT_CUT_SHORT = "TUSKFiZZY closed before this import finished."
 CHAR_FOCUS_MAX = 4  # the Characters pages' focus (the plan's FOCUS_MAX, which the store may not import)
 
 # What schema 12 watches for sync (the online plan, Task C2): the tables the player makes rows in, each with the columns that
@@ -386,6 +386,26 @@ MIGRATIONS: tuple[str, ...] = (
     DROP TABLE wiki_entries;
     ALTER TABLE wiki_entries_new RENAME TO wiki_entries;
     """,
+    # TUSKFiZZY's own checklist profiles and imported legacy history. Authentication is deliberately not stored here.
+    """
+    CREATE TABLE tuskfizzy_accounts (
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, portrait TEXT NOT NULL DEFAULT '',
+        genshin_id TEXT, created_at TEXT NOT NULL
+    );
+    CREATE TABLE tuskfizzy_genshin_accounts (
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, uid TEXT NOT NULL,
+        server TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL
+    );
+    CREATE TABLE tuskfizzy_daily (
+        day TEXT NOT NULL, account_id TEXT NOT NULL REFERENCES tuskfizzy_accounts(id) ON DELETE CASCADE,
+        login INTEGER NOT NULL CHECK (login IN (0,1)),
+        commission INTEGER NOT NULL CHECK (commission IN (0,1)),
+        resin INTEGER NOT NULL CHECK (resin IN (0,1)),
+        resin_last INTEGER,
+        PRIMARY KEY (day, account_id)
+    ) WITHOUT ROWID;
+    CREATE INDEX tuskfizzy_daily_by_account ON tuskfizzy_daily(account_id, day);
+    """,
 )
 
 POINTS_TRIMMED_AT = 14  # the schema whose upgrade deletes most of `points`: the upgrade to it gives the room back (Store._compact)
@@ -671,7 +691,7 @@ def _open_problem(path: Path, backups_dir: Path, error: sqlite3.Error) -> str:
     reason = str(error).lower()
     if "locked" in reason or "busy" in reason:
         return (
-            f"The history database at {path} is in use by another program (or by a second Guild Board). "
+            f"The history database at {path} is in use by another program (or by a second TUSKFiZZY). "
             "Close it and start again. The file has been left untouched."
         )
     if "readonly" in reason or "read-only" in reason:
@@ -689,7 +709,7 @@ def _full_check(conn: sqlite3.Connection) -> list[str]:
 
 
 def _closed_cleanly(conn: sqlite3.Connection) -> bool:
-    """Whether the last Guild Board that had the database closed it itself. A database from before `meta` was made, or one
+    """Whether the last TUSKFiZZY that had the database closed it itself. A database from before `meta` was made, or one
     whose flag is not there, was not."""
     try:
         row = conn.execute("SELECT value FROM meta WHERE key = 'closed_cleanly'").fetchone()
@@ -828,7 +848,7 @@ class Store:
         if version > len(MIGRATIONS):
             conn.close()
             raise StoreError(
-                f"The history database at {path} was written by a newer Guild Board (schema {version})."
+                f"The history database at {path} was written by a newer TUSKFiZZY (schema {version})."
             )
         store = cls(conn, path, backups_dir)
         try:
@@ -869,6 +889,170 @@ class Store:
         with self._commit():
             self._conn.execute("DELETE FROM meta WHERE key = ?", (key,))
 
+    # ------------------------------------------------------------------ TUSKFiZZY legacy checklist data
+    def tuskfizzy_import_counts(self) -> dict[str, int]:
+        return {
+            "accounts": int(self._conn.execute("SELECT COUNT(*) FROM tuskfizzy_accounts").fetchone()[0]),
+            "genshinAccounts": int(self._conn.execute("SELECT COUNT(*) FROM tuskfizzy_genshin_accounts").fetchone()[0]),
+            "dailyRecords": int(self._conn.execute("SELECT COUNT(*) FROM tuskfizzy_daily").fetchone()[0]),
+        }
+
+    def import_tuskfizzy_data(self, accounts: list[dict[str, Any]], daily: dict[str, dict[str, list[Any]]],
+                              genshin_accounts: list[dict[str, Any]], selected_genshin_id: str) -> dict[str, int]:
+        """Idempotently import validated, non-secret legacy profiles and checklist history in one transaction."""
+        with self.transaction():
+            for item in genshin_accounts:
+                self._conn.execute(
+                    "INSERT INTO tuskfizzy_genshin_accounts(id,name,uid,server,created_at) VALUES(?,?,?,?,?) "
+                    "ON CONFLICT(id) DO UPDATE SET name=excluded.name, uid=excluded.uid, server=excluded.server",
+                    (item["id"], item["name"], item["uid"], item.get("server", ""), item.get("createdAt", "")),
+                )
+            for item in accounts:
+                self._conn.execute(
+                    "INSERT INTO tuskfizzy_accounts(id,name,portrait,genshin_id,created_at) VALUES(?,?,?,?,?) "
+                    "ON CONFLICT(id) DO UPDATE SET name=excluded.name, portrait=excluded.portrait, genshin_id=excluded.genshin_id",
+                    (item["id"], item["name"], item.get("portrait", ""), item.get("genshinId"), item.get("createdAt", "")),
+                )
+            for day, profiles in daily.items():
+                for account_id, flags in profiles.items():
+                    if account_id == "_resinLast":
+                        continue
+                    resin_last = profiles.get("_resinLast", {}).get(account_id) if isinstance(profiles.get("_resinLast"), dict) else None
+                    self._conn.execute(
+                        "INSERT INTO tuskfizzy_daily(day,account_id,login,commission,resin,resin_last) VALUES(?,?,?,?,?,?) "
+                        "ON CONFLICT(day,account_id) DO UPDATE SET login=excluded.login, commission=excluded.commission, "
+                        "resin=excluded.resin, resin_last=excluded.resin_last",
+                        (day, account_id, int(flags[0]), int(flags[1]), int(flags[2]), resin_last),
+                    )
+            if selected_genshin_id:
+                self.set_meta("tuskfizzy_selected_genshin_id", selected_genshin_id)
+            else:
+                self._conn.execute("DELETE FROM meta WHERE key = ?", ("tuskfizzy_selected_genshin_id",))
+            return self.tuskfizzy_import_counts()
+
+    def tuskfizzy_accounts_list(self) -> list[dict[str, Any]]:
+        rows = self._conn.execute(
+            "SELECT id, name, portrait, genshin_id, created_at FROM tuskfizzy_accounts ORDER BY created_at, name, id"
+        ).fetchall()
+        return [
+            {"id": row[0], "name": row[1], "portrait": row[2], "genshinId": row[3], "createdAt": row[4]}
+            for row in rows
+        ]
+
+    def tuskfizzy_selected_genshin_id(self) -> str | None:
+        return self.meta("tuskfizzy_selected_genshin_id")
+
+    def tuskfizzy_select_genshin_account(self, ident: str | None) -> bool:
+        if ident is not None and self._conn.execute(
+            "SELECT 1 FROM tuskfizzy_genshin_accounts WHERE id = ?", (ident,)
+        ).fetchone() is None:
+            return False
+        with self._commit():
+            if ident is None:
+                self._conn.execute("DELETE FROM meta WHERE key = ?", ("tuskfizzy_selected_genshin_id",))
+            else:
+                self._conn.execute(
+                    "INSERT INTO meta(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    ("tuskfizzy_selected_genshin_id", ident),
+                )
+        return True
+
+    def tuskfizzy_genshin_accounts_list(self) -> list[dict[str, Any]]:
+        rows = self._conn.execute(
+            "SELECT id, name, uid, server, created_at FROM tuskfizzy_genshin_accounts ORDER BY name, id"
+        ).fetchall()
+        return [
+            {"id": row[0], "name": row[1], "uid": row[2], "server": row[3], "createdAt": row[4]}
+            for row in rows
+        ]
+
+    def tuskfizzy_month_for(self, month: str) -> dict[str, dict[str, list[bool]]]:
+        rows = self._conn.execute(
+            "SELECT day, account_id, login, commission, resin FROM tuskfizzy_daily "
+            "WHERE day >= ? AND day < ? ORDER BY day, account_id",
+            (month + "-01", month + "-32"),
+        ).fetchall()
+        result: dict[str, dict[str, list[bool]]] = {}
+        for row in rows:
+            result.setdefault(row[0], {})[row[1]] = [bool(row[2]), bool(row[3]), bool(row[4])]
+        return result
+
+    def tuskfizzy_put_genshin_account(self, ident: str, name: str, uid: str, server: str, created_at: str) -> None:
+        with self._commit():
+            self._conn.execute(
+                "INSERT INTO tuskfizzy_genshin_accounts(id,name,uid,server,created_at) VALUES(?,?,?,?,?) "
+                "ON CONFLICT(id) DO UPDATE SET name=excluded.name, uid=excluded.uid, server=excluded.server",
+                (ident, name, uid, server, created_at),
+            )
+
+    def tuskfizzy_delete_genshin_account(self, ident: str) -> bool:
+        with self._commit():
+            self._conn.execute("UPDATE tuskfizzy_accounts SET genshin_id = NULL WHERE genshin_id = ?", (ident,))
+            cursor = self._conn.execute("DELETE FROM tuskfizzy_genshin_accounts WHERE id = ?", (ident,))
+            if cursor.rowcount and self.meta("tuskfizzy_selected_genshin_id") == ident:
+                self._conn.execute("DELETE FROM meta WHERE key = ?", ("tuskfizzy_selected_genshin_id",))
+            return cursor.rowcount > 0
+
+    def tuskfizzy_daily_for(self, day: str) -> dict[str, list[bool]]:
+        rows = self._conn.execute(
+            "SELECT account_id, login, commission, resin FROM tuskfizzy_daily WHERE day = ?", (day,)
+        ).fetchall()
+        return {row[0]: [bool(row[1]), bool(row[2]), bool(row[3])] for row in rows}
+
+    def tuskfizzy_put_account(self, ident: str, name: str, portrait: str, genshin_id: str | None, created_at: str) -> None:
+        with self._commit():
+            self._conn.execute(
+                "INSERT INTO tuskfizzy_accounts(id,name,portrait,genshin_id,created_at) VALUES(?,?,?,?,?) "
+                "ON CONFLICT(id) DO UPDATE SET name=excluded.name, portrait=excluded.portrait, genshin_id=excluded.genshin_id",
+                (ident, name, portrait, genshin_id, created_at),
+            )
+
+    def tuskfizzy_delete_account(self, ident: str) -> bool:
+        with self._commit():
+            cursor = self._conn.execute("DELETE FROM tuskfizzy_accounts WHERE id = ?", (ident,))
+            return cursor.rowcount > 0
+
+    def tuskfizzy_observe_daily_note(self, day: str, account_id: str, resin: int, extra_reward_claimed: bool) -> bool:
+        if self._conn.execute("SELECT 1 FROM tuskfizzy_accounts WHERE id = ?", (account_id,)).fetchone() is None:
+            return False
+        with self.transaction():
+            self._conn.execute(
+                "INSERT INTO tuskfizzy_daily(day,account_id,login,commission,resin) VALUES(?,?,0,0,0) "
+                "ON CONFLICT(day,account_id) DO NOTHING",
+                (day, account_id),
+            )
+            row = self._conn.execute(
+                "SELECT commission, resin, resin_last FROM tuskfizzy_daily WHERE day = ? AND account_id = ?",
+                (day, account_id),
+            ).fetchone()
+            # A first observation below 50 is not a threshold crossing. Once checked, Resin stays checked all day.
+            crossed_below_50 = row[2] is not None and row[2] >= 50 and resin < 50
+            self._conn.execute(
+                "UPDATE tuskfizzy_daily SET commission = ?, resin = ?, resin_last = ? WHERE day = ? AND account_id = ?",
+                (int(bool(row[0]) or extra_reward_claimed), int(bool(row[1]) or crossed_below_50),
+                 resin, day, account_id),
+            )
+        return True
+
+    def tuskfizzy_set_task(self, day: str, account_id: str, task: str, checked: bool) -> bool:
+        columns = {"login": "login", "commission": "commission", "resin": "resin"}
+        column = columns.get(task)
+        if column is None:
+            raise ValueError("Unknown TUSKFiZZY checklist task.")
+        if self._conn.execute("SELECT 1 FROM tuskfizzy_accounts WHERE id = ?", (account_id,)).fetchone() is None:
+            return False
+        with self._commit():
+            self._conn.execute(
+                "INSERT INTO tuskfizzy_daily(day,account_id,login,commission,resin) VALUES(?,?,0,0,0) "
+                "ON CONFLICT(day,account_id) DO NOTHING",
+                (day, account_id),
+            )
+            self._conn.execute(
+                f"UPDATE tuskfizzy_daily SET {column} = ? WHERE day = ? AND account_id = ?",
+                (int(checked), day, account_id),
+            )
+        return True
+
     def claim(self, kind: str) -> None:
         """Mark the folder for the demo or for the real account, and refuse the other kind."""
         held = self.meta("kind")
@@ -904,7 +1088,7 @@ class Store:
         self._backups_dir.mkdir(parents=True, exist_ok=True)
         stamp = now.astimezone(timezone.utc).strftime("%Y%m%d-%H%M%S")
         target = self._backups_dir / f"guildboard-{label}-{stamp}.db"
-        # Written under another name and renamed when whole: a Guild Board that is killed while it copies leaves no file
+        # Written under another name and renamed when whole: a TUSKFiZZY that is killed while it copies leaves no file
         # that would count as the day's copy, and be offered for restore.
         partial = target.with_name(target.name + ".tmp")
         partial.unlink(missing_ok=True)
@@ -948,7 +1132,7 @@ class Store:
 
     def _prune_auto_backups(self) -> None:
         """Only the newest automatic backups are kept, and the newest copy made before an upgrade (`auto-v<schema>`) besides
-        them: five imports after an update must not take away the one copy an older Guild Board can still open. This is
+        them: five imports after an update must not take away the one copy an older TUSKFiZZY can still open. This is
         housekeeping: an old one that another program holds open stays until the next time, and nothing waits for it."""
         if self._backups_dir is None:
             return
@@ -1157,7 +1341,7 @@ class Store:
         with self._commit():
             self._conn.execute(
                 "UPDATE sync_runs SET finished_at = ?, outcome = 'failed', error_kind = 'error', "
-                "message = 'Guild Board closed before this sync finished.' WHERE outcome = 'running'",
+                "message = 'TUSKFiZZY closed before this sync finished.' WHERE outcome = 'running'",
                 (iso(at),),
             )
 
@@ -1824,7 +2008,7 @@ class Store:
 
     def wish_uids(self) -> list[int]:
         """The accounts a wish is kept of, the one the newest import found first. An import found an account when it
-        named it or kept a wish of it: an import that Guild Board's closing cut short kept wishes and named none."""
+        named it or kept a wish of it: an import that TUSKFiZZY's closing cut short kept wishes and named none."""
         rows = self._conn.execute(
             "SELECT uid FROM ("
             "  SELECT uid, MAX(id) AS newest FROM wish_imports WHERE uid IS NOT NULL GROUP BY uid"
@@ -1868,7 +2052,7 @@ class Store:
         self, import_id: int, rows: Iterable[WishRow], pools: Sequence[str], uid: int | None
     ) -> int:
         """Keep the new wishes of a pool an import fetched to its end, and note the pools it has finished so far, its
-        account and the wishes it kept, as one write: an import that Guild Board's closing cuts short still credits the
+        account and the wishes it kept, as one write: an import that TUSKFiZZY's closing cuts short still credits the
         pools it kept. How many wishes were new."""
         with self.transaction():
             kept = self.add_wishes(rows)
@@ -1879,7 +2063,7 @@ class Store:
         return kept
 
     def fail_running_wish_imports(self, at: datetime) -> None:
-        """At a start: an import still marked as running was cut short by Guild Board closing (IMPORT_CUT_SHORT)."""
+        """At a start: an import still marked as running was cut short by TUSKFiZZY closing (IMPORT_CUT_SHORT)."""
         with self._commit():
             self._conn.execute(
                 "UPDATE wish_imports SET finished_at = ?, outcome = 'failed', message = ? WHERE outcome = 'running'",

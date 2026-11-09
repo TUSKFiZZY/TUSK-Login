@@ -45,11 +45,11 @@ PUBLIC_PICTURE_HOSTS: tuple[str, ...] = tuple(
 # sends the installer from its download host, the one redirect such a request follows. Neither carries anything of
 # the player's. Since 2.0.1 the releases are those of the code's own repository (the player's choice, 2026-11-08):
 # 2.0.0 and earlier look in QL1STY/guild-board-releases, which got 2.0.1 too, to bring them here.
-RELEASES_REPO = "QL1STY/guild-board"
+RELEASES_REPO = "TUSKFiZZY/TUSK-Login"
 LATEST_RELEASE_URL = f"https://api.github.com/repos/{RELEASES_REPO}/releases/latest"
 INSTALLER_ASSET = re.compile(rf"https://api\.github\.com/repos/{re.escape(RELEASES_REPO)}/releases/assets/[0-9]+")
 DOWNLOAD_HOSTS = ("release-assets.githubusercontent.com", "objects.githubusercontent.com")
-USER_AGENT = "GuildBoard"
+USER_AGENT = "TUSKFiZZY"
 # The one address that gives the stored HoYoLAB login a read-only key for the wish history or the game's own history
 # logs, and the only cookies of the login it is sent (found at the check with the player, 2026-10-27).
 MINT_URL = "https://api-account-os.hoyoverse.com/binding/api/genAuthKeyByCookieToken"
@@ -229,6 +229,21 @@ def fetch_hoyoverse(
     sent["User-Agent"] = USER_AGENT
     request = urllib.request.Request(url, data=body, headers=sent, method="POST" if body is not None else "GET")
     request.follow_redirects = follow_redirects  # read by _CheckedRedirects
+    return _read(request, timeout, max_bytes)
+
+
+def fetch_enka_profile(uid: str, *, timeout: float = 20.0, max_bytes: int = 2_000_000) -> bytes:
+    """Fetch one public Enka Network profile for a 9- or 10-digit Genshin UID.
+
+    The URL is constructed only from validated ASCII digits, uses the one exact HTTPS
+    host, sends no HoYoLAB cookies, and refuses redirects. The caller should cache
+    successful responses according to Enka's TTL and handle 404/429/424 separately.
+    """
+    if not isinstance(uid, str) or not re.fullmatch(r"[0-9]{9,10}", uid):
+        raise ValueError("Genshin UID must contain 9 or 10 digits")
+    url = f"https://enka.network/api/uid/{uid}/"
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
+    request.follow_redirects = False
     return _read(request, timeout, max_bytes)
 
 

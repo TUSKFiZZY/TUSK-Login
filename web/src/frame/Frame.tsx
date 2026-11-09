@@ -15,6 +15,7 @@ import { UpdateNotice, useInstall } from './UpdateNotice.tsx'
 /** Each page with its sign (look pass spec 14.1), in the rail's order. */
 const NAV: { page: Page; label: string; sign: SignName }[] = [
   { page: 'board', label: 'Board', sign: 'cells' },
+  { page: 'tuskfizzy', label: 'Daily Tracker', sign: 'cells' },
   { page: 'achievements', label: 'Achievements', sign: 'cup' },
   { page: 'characters', label: 'Characters', sign: 'bust' },
   { page: 'week', label: 'Your week', sign: 'book' },
@@ -57,7 +58,7 @@ function gameLine(status: Status, now: Date): ReactNode {
 function TrayHint({ live }: { live: Live }) {
   return (
     <p className="gb-hint" data-testid="tray-hint">
-      Closing this window keeps Guild Board running in the tray. To end it, choose Quit in the tray icon's menu.
+      Closing this window keeps TUSKFiZZY running in the tray. To end it, choose Quit in the tray icon's menu.
       <button
         type="button"
         className="gb-link"
@@ -117,7 +118,7 @@ export function Frame({
     <div className={bare ? 'gb bare' : 'gb'}>
       {!bare && (
         <nav className="gb-rail" aria-label="Pages">
-          <div className="gb-brand">✦ Guild Board</div>
+          <div className="gb-brand">✦ TUSKFiZZY</div>
           {status !== null && <ProfileCard status={status} />}
           {/* The Gallery only while the player has it turned on (the ledger design, section 7). */}
           {NAV.filter((item) => item.page !== 'gallery' || live.settings?.gallery_enabled === true)

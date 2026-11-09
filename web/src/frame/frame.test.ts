@@ -41,6 +41,7 @@ function ruleOf(selector: string): string {
 test('each page of the rail has its sign in front of its name', () => {
   const pages: [string, SignName][] = [
     ['Board', 'cells'],
+    ['Daily Tracker', 'cells'],
     ['Achievements', 'cup'],
     ['Characters', 'bust'],
     ['Backlog', 'map'],
@@ -61,12 +62,12 @@ test('Your week is not in the rail until the core says it is shown', () => {
 
 test('the signs are drawn for the eye alone, so the links keep their names', () => {
   const links = [...rail().matchAll(/<a [^>]*>([\s\S]*?)<\/a>/g)].map((link) => link[1].replace(/<svg[\s\S]*?<\/svg>/g, ''))
-  expect(links).toEqual(['Board', 'Achievements', 'Characters', 'Backlog', 'Map', 'Stats', 'Pulls', 'Ledger', 'Friends', 'Settings'])
+  expect(links).toEqual(['Board', 'Daily Tracker', 'Achievements', 'Characters', 'Backlog', 'Map', 'Stats', 'Pulls', 'Ledger', 'Friends', 'Settings'])
 })
 
 test('every page of the rail is a link to its address, Pulls among them (the Pulls plan, calls item 18)', () => {
   const addresses = [...rail().matchAll(/<a [^>]*href="([^"]*)"/g)].map((link) => link[1])
-  expect(addresses).toEqual(['#/board', '#/achievements', '#/characters', '#/backlog', '#/map', '#/stats', '#/pulls', '#/ledger', '#/friends', '#/settings'])
+  expect(addresses).toEqual(['#/board', '#/tuskfizzy', '#/achievements', '#/characters', '#/backlog', '#/map', '#/stats', '#/pulls', '#/ledger', '#/friends', '#/settings'])
   expect(rail()).not.toContain('aria-disabled') // no page is shown as one for later
 })
 

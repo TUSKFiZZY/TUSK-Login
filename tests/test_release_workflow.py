@@ -113,6 +113,8 @@ def test_the_build_runs_on_windows_and_goes_through_the_steps_in_order():
         "npm test --prefix shell",
         "uv run --frozen python -m pytest -q -p no:cacheprovider",
         "npx vitest run",
+        "npm run build --prefix web",
+        "npm run e2e --prefix shell",
         "build-installer.ps1",
         "Get-FileHash",
         "uses: actions/upload-artifact@",
@@ -120,9 +122,9 @@ def test_the_build_runs_on_windows_and_goes_through_the_steps_in_order():
     assert "node-version: 22" in build
     # The build-installer script looks for the compiler where it is installed, and the workflow installs it if missing.
     assert "choco install innosetup" in build and "Inno Setup 6\\ISCC.exe" in build
-    assert "name: guild-board-installer" in build and "if-no-files-found: error" in build
+    assert "name: tuskfizzy-installer" in build and "if-no-files-found: error" in build
     # The installer and a text file of its SHA-256 are what the maintainer's script downloads.
-    assert "Guild Board Setup *.exe\n" in build and "Guild Board Setup *.exe.sha256" in build
+    assert "TUSKFiZZY Setup *.exe\n" in build and "TUSKFiZZY Setup *.exe.sha256" in build
 
 
 def test_a_tag_that_is_not_the_version_fails_with_a_plain_sentence():
@@ -141,7 +143,7 @@ def test_the_attestation_is_made_for_the_installer_and_skipped_in_a_private_repo
     attest = _jobs()["attest"]
     assert "if: github.event.repository.private == false" in attest
     assert "needs: build" in attest
-    _in_order(attest, "uses: actions/download-artifact@", "name: guild-board-installer", "path: setup",
+    _in_order(attest, "uses: actions/download-artifact@", "name: tuskfizzy-installer", "path: setup",
               "uses: actions/attest-build-provenance@", "subject-path: setup/*.exe")
     # The build is not conditional on it: a private trial still builds.
     assert "if:" not in _jobs()["build"].split("steps:", 1)[0]

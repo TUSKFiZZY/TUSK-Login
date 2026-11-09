@@ -35,7 +35,7 @@ SHOTS = "https://ql1sty.github.io/guild-board/shots/"
 def test_the_readme_says_fan_made_links_the_download_the_site_and_the_demo_and_shows_the_sites_screenshots():
     text = _text("README.md")
     assert text.count(FAN_MADE) == 2  # at the top and at the end
-    assert "](https://github.com/QL1STY/guild-board/releases/latest)" in text
+    assert "](https://github.com/TUSKFiZZY/TUSK-Login/releases/latest)" in text
     assert "guild-board-releases" not in text  # 2.0.1 moved the releases into the code's repository
     assert "](https://ql1sty.github.io/guild-board/)" in text and "](https://ql1sty.github.io/guild-board/demo/)" in text
     assert "TODO" not in text

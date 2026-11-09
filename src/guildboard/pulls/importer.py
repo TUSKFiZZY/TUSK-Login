@@ -102,6 +102,12 @@ class ImportBusy(Exception):
         super().__init__(BUSY)
 
 
+class ProfileMismatch(WishApiError):
+    """The supplied wish-history key returned wishes for a different UID than the selected profile."""
+
+    sentence = "This wish-history link belongs to a different Genshin account."
+
+
 class ImportNotReady(Exception):
     """Import was pressed before the player gave the first run's consent (ruling R21)."""
 
@@ -309,6 +315,19 @@ class WishImporter:
         self.ensure_pressable()
         self.running = True
         self.pressed()
+
+    def start_with_link(self, link: WishLink, expected_uid: int) -> asyncio.Task[None]:
+        """Import a supplied, already validated wish-history link for one named game account."""
+        if isinstance(expected_uid, bool) or not isinstance(expected_uid, int) or not 0 < expected_uid < 2**63:
+            raise ValueError("Choose a valid Genshin UID.")
+        self._reserve()
+        self._try_link(link)
+        kept = _Kept(link, self._clock.now() + KEEP_LINK, uid=expected_uid)
+        self._keep_link(link, kept.until)
+        task = asyncio.create_task(self._run(kept=kept))
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+        return task
 
     # ------------------------------------------------------------------ the updates of the kept link
     async def auto_update(self) -> bool:
@@ -641,6 +660,8 @@ class WishImporter:
         gacha_type = GACHA_TYPES[0]
         try:
             first = await self._page(kept.link, gacha_type, "0", POOL_OF[gacha_type])
+            if kept.uid is not None and first.rows and first.rows[0].uid != kept.uid:
+                raise ProfileMismatch()
             await self._fetch_types(run, kept.link, first)
         except (KeyExpired, KeyInvalid) as error:
             self.drop_wish_link()
@@ -651,6 +672,9 @@ class WishImporter:
             log.info("HoYoverse no longer accepts the link kept from the last import: it is dropped, and the updates "
                      "stop until Import is pressed again.")
             self._auto_stopped = "expired"
+            return str(error)
+        except ProfileMismatch as error:
+            self.drop_wish_link()
             return str(error)
         except WishApiError as error:
             return str(error)

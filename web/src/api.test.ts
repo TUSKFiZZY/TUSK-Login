@@ -158,7 +158,7 @@ test("a refused hotkey's detail is the error message, and FastAPI's own list the
 
   answers(422, '{"detail":[{"loc":["body"],"msg":"Field required","type":"missing"}]}')
   const listed = await failure(api.put('/api/settings', {}))
-  expect(listed.message).toBe('Guild Board answered with an error (422).')
+  expect(listed.message).toBe('TUSKFiZZY answered with an error (422).')
 })
 
 test("the core's own sentence and a missing session come before a detail", async () => {
@@ -183,5 +183,5 @@ test('a missing session and a dead core give plain messages', async () => {
 
   answers(500, '<html>Internal Server Error</html>')
   const broken = await failure(api.get('/api/backlog'))
-  expect(broken.message).toBe('Guild Board answered with an error (500).')
+  expect(broken.message).toBe('TUSKFiZZY answered with an error (500).')
 })

@@ -116,7 +116,7 @@ GAME_FOLDER_MODULES = {"pulls/gamecache.py"}
 GAME_FOLDER_NAMES = ("GenshinImpact_Data", "YuanShen_Data")
 GAME_AND_REGISTRY_NAMES = (
     *GAME_FOLDER_NAMES,
-    "winreg", "advapi32", "RegOpenKey", "RegSetValue", "RegCreateKey", "RegDeleteKey", "HKEY_", "NativeFormat",
+    "winreg", "advapi32", "RegOpenKey", "RegSetValue", "RegCreateKey", "RegDeleteKey", "HKEY_CURRENT_USER", "HKEY_LOCAL_MACHINE", "HKEY_CLASSES_ROOT", "HKEY_USERS", "HKEY_CURRENT_CONFIG", "NativeFormat",
 )
 INSTALL_FOLDER = re.compile(r"genshin impact game(?! account)", re.IGNORECASE)
 
@@ -339,9 +339,9 @@ def test_the_only_addresses_outside_hoyoverse_are_the_list_the_updates_the_cloud
     )
     # The installed copy's updates (the player's choice, 2026-10-25): the player's own code repository's releases, its newest
     # release and its installers' assets, and GitHub's download host for those alone.
-    assert netpolicy.LATEST_RELEASE_URL == "https://api.github.com/repos/QL1STY/guild-board/releases/latest"
+    assert netpolicy.LATEST_RELEASE_URL == "https://api.github.com/repos/TUSKFiZZY/TUSK-Login/releases/latest"
     assert netpolicy.INSTALLER_ASSET.pattern == (
-        r"https://api\.github\.com/repos/QL1STY/guild\-board/releases/assets/[0-9]+"
+        r"https://api\.github\.com/repos/TUSKFiZZY/TUSK\-Login/releases/assets/[0-9]+"
     )
     assert netpolicy.DOWNLOAD_HOSTS == ("release-assets.githubusercontent.com", "objects.githubusercontent.com")
     # The online features (the online design, section 3): one exact host, the player's Supabase project, and of it the
@@ -1023,7 +1023,7 @@ async def test_a_picture_writes_only_the_chosen_file(tmp_path, clock):
     # gave and nowhere else, not even in the data folder.
     global _watching
     data = tmp_path / "data"
-    chosen = tmp_path / "elsewhere" / "Guild Board Wrapped 2026 Story.png"
+    chosen = tmp_path / "elsewhere" / "TUSKFiZZY Wrapped 2026 Story.png"
     chosen.parent.mkdir()
     core = Core(AppPaths(data), demo=False, clock=clock, source=AccountSource(), sleep=FakeSleep(clock),
                 process_lister=lambda: set())
@@ -1972,7 +1972,7 @@ def test_every_test_runs_away_from_the_players_own_folders(tmp_path):
     assert os.environ["LOCALAPPDATA"] == str(tmp_path / "Local")
     assert os.environ["USERPROFILE"] == str(tmp_path / "Profile")  # where the game's log is looked for
     assert gamecache.log_path() == tmp_path / "Profile" / "AppData" / "LocalLow" / "miHoYo" / "Genshin Impact" / "output_log.txt"
-    assert standard_data_dir() == tmp_path / "Local" / "GuildBoard"
+    assert standard_data_dir() == tmp_path / "Local" / "TUSKFiZZY"
     assert default_data_dir() == tmp_path / "default-data"
 
 

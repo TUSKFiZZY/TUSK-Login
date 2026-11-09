@@ -170,7 +170,7 @@ def test_fetch_hoyoverse_gets_with_guild_boards_user_agent(monkeypatch):
     monkeypatch.setattr(netpolicy, "_open", fake_open)
     url = "https://sg-hk4e-api.hoyoverse.com/common/hk4e_global/announcement/api/getAnnList?game=hk4e"
     assert netpolicy.fetch_hoyoverse(url) == b'{"retcode": 0}'
-    assert seen == [("GET", url, None, {"User-agent": "GuildBoard"}, 20.0)]
+    assert seen == [("GET", url, None, {"User-agent": "TUSKFiZZY"}, 20.0)]
 
 
 def test_fetch_hoyoverse_posts_a_body_with_its_headers(monkeypatch):
@@ -189,7 +189,7 @@ def test_fetch_hoyoverse_posts_a_body_with_its_headers(monkeypatch):
     [(method, sent_to, data, sent_headers, timeout)] = seen
     assert (method, sent_to, data, timeout) == ("POST", url, body, 5.0)
     # Every header given is sent, and the user agent is always Guild Board's own.
-    assert sent_headers == {"Origin": "https://wiki.hoyolab.com", "X-rpc-language": "en-us", "User-agent": "GuildBoard"}
+    assert sent_headers == {"Origin": "https://wiki.hoyolab.com", "X-rpc-language": "en-us", "User-agent": "TUSKFiZZY"}
 
 
 def test_fetch_hoyoverse_can_refuse_every_redirect(monkeypatch):
@@ -272,7 +272,7 @@ def test_fetch_authkey_posts_to_its_one_address_with_the_four_cookies_alone(monk
     assert (method, url, data, follow) == ("POST", netpolicy.MINT_URL, b'{"auth_appid": "csc"}', False)
     assert headers == {
         "Cookie": "account_id_v2=1; account_mid_v2=m; cookie_token_v2=v2_COOKIE; lrsag=L",
-        "Content-type": "application/json", "User-agent": "GuildBoard",
+        "Content-type": "application/json", "User-agent": "TUSKFiZZY",
     }
     # Without lrsag, the others go.
     seen.clear()
@@ -362,7 +362,7 @@ def test_a_public_picture_is_fetched_with_the_user_agent_alone_and_no_redirect(m
     monkeypatch.setattr(netpolicy, "_open", fake_open)
     assert fetch_bytes(picture, max_bytes=8 * 1024 * 1024) == b"\xff\xd8\xffJPEG"
     # A plain GET, with no body, and of the headers Guild Board's user agent alone: no cookie, no token, no key.
-    assert seen == [("GET", picture, None, {"User-agent": "GuildBoard"})]
+    assert seen == [("GET", picture, None, {"User-agent": "TUSKFiZZY"})]
     # Its answer is held to the size the caller allows.
     monkeypatch.setattr(netpolicy, "_open", lambda request, timeout: _Response(b"x" * 11))
     with pytest.raises(netpolicy.ResponseTooLarge):
@@ -433,3 +433,34 @@ def test_every_request_of_netpolicy_verifies_as_the_entry_chose(monkeypatch):
         truststore.extract_from_ssl()
     netpolicy.take_the_tls_in_use()
     assert context_of_the_opener() is ssl.SSLContext
+
+
+
+def test_enka_uid_validation_happens_before_network(monkeypatch):
+    def must_not_open(*args, **kwargs):
+        raise AssertionError("invalid UID reached the network")
+
+    monkeypatch.setattr(netpolicy, "_open", must_not_open)
+    for uid in ("", "12345678", "12345678901", "12345678x", "１２３４５６７８９"):
+        with pytest.raises(ValueError):
+            netpolicy.fetch_enka_profile(uid)
+
+
+def test_enka_fetch_uses_only_the_validated_public_uid(monkeypatch):
+    seen = []
+
+    def fake_open(request, timeout):
+        seen.append((request.full_url, timeout, request.get_header("Cookie"), request.follow_redirects))
+        return _Response(b'{"playerInfo":{"nickname":"Test"}}')
+
+    monkeypatch.setattr(netpolicy, "_open", fake_open)
+    assert netpolicy.fetch_enka_profile("1234567890", timeout=4.0) == b'{"playerInfo":{"nickname":"Test"}}'
+    assert seen == [("https://enka.network/api/uid/1234567890/", 4.0, None, False)]
+
+
+def test_enka_redirects_are_refused():
+    handler = netpolicy._CheckedRedirects()
+    request = urllib.request.Request("https://enka.network/api/uid/123456789/")
+    request.follow_redirects = False
+    with pytest.raises(netpolicy.RedirectRefused):
+        handler.redirect_request(request, None, 302, "Found", {}, "https://evil.example/profile")

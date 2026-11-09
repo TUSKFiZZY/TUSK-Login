@@ -9,7 +9,7 @@
 }
 .eg-grow { flex: 1; }
 .eg-note { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.4; }
-.eg-refusal { margin: 6px 0 0; color: var(--eg-warn-ink); font-size: 13.5px; font-weight: 700; }
+.eg-refusal { margin: 6px 0 0; color: var(--gold-ink); font-size: 13.5px; font-weight: 700; }
 
 /* ---------- Top ---------- */
 .eg-top { display: grid; gap: 8px; padding: 16px 18px; }
@@ -66,7 +66,7 @@
 .eg-boss .n { font-size: 15px; font-weight: 800; }
 .eg-boss .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .eg-tag { padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 800; }
-.eg-tag.adv { background: var(--eg-good-soft); color: var(--good); }
+.eg-tag.adv { background: var(--eg-good-soft); color: #2E6B1F; }
 .eg-tag.dis { background: var(--eg-bad-soft); color: var(--eg-bad); }
 .eg-mini { display: flex; align-items: center; gap: 4px; }
 .eg-mini b { margin-left: 8px; font-size: 20px; }
@@ -81,7 +81,7 @@
 .eg-elsel button:hover { border-color: var(--r1); }
 .eg-elsel button i { width: 12px; height: 12px; border-radius: 50%; background: var(--el-ink); }
 .eg-elsel button[aria-pressed='true'] { border-color: var(--fill); background: var(--cr-gold-soft); color: var(--ink); }
-.eg-elsel button.month::after { content: 'this month'; margin-left: 2px; font-size: 11px; font-weight: 800; color: var(--eg-warn-ink); }
+.eg-elsel button.month::after { content: 'this month'; margin-left: 2px; font-size: 11px; font-weight: 800; color: var(--gold-ink); }
 .eg-back {
   justify-self: start; height: 30px; padding: 0 14px; border: 1px solid var(--fill); border-radius: 999px; background: var(--cr-gold-soft); color: var(--eg-warn-ink);
   font-size: 13px; font-weight: 800; cursor: pointer;

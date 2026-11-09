@@ -87,7 +87,7 @@ def test_newer_schema_is_refused(tmp_path):
     conn.close()
     with pytest.raises(StoreError) as error:
         Store.open(path, tmp_path / "backups", NOW)
-    assert "newer Guild Board" in str(error.value)
+    assert "newer TUSKFiZZY" in str(error.value)
 
 
 def test_manual_backup_writes_a_copy(tmp_path):
@@ -796,7 +796,7 @@ def test_an_import_left_running_is_failed_at_the_next_start(store):
     store.finish_wish_import(done, NOW + timedelta(minutes=6), "ok", UID, 3, 1, None, ("character",))
     store.fail_running_wish_imports(NOW + timedelta(hours=1))
     rows = {row.id: row for row in store.wish_imports()}
-    assert (rows[left].outcome, rows[left].message) == ("failed", "Guild Board closed before this import finished.")
+    assert (rows[left].outcome, rows[left].message) == ("failed", "TUSKFiZZY closed before this import finished.")
     assert rows[left].finished_at == NOW + timedelta(hours=1)
     assert (rows[done].outcome, rows[done].message, rows[done].found) == ("ok", None, 3)  # a finished one stays
 
@@ -975,7 +975,7 @@ def test_a_version_10_database_gains_the_characters_tables_after_a_backup(tmp_pa
     # and the ledger took 8 to 10. Sync is the 12th (the online plan, Task C2), its outbox's numbered lines the 13th, and the
     # database moves on to them. The 14th only deletes rows, the 15th keeps the endgame's cycles (the Stats design, 3.5),
     # and the 16th lets the wiki's table hold the Tutorial entries (the Stats design, 3.2).
-    assert len(MIGRATIONS) == 16
+    assert len(MIGRATIONS) == 17
     path = tmp_path / "guildboard.db"
     old = sqlite3.connect(path)
     old.executescript("".join(MIGRATIONS[:10]))
@@ -1423,3 +1423,47 @@ def test_writes_are_synced_at_the_normal_level_in_the_log(tmp_path):
     on_disk = Store.open(tmp_path / "guildboard.db", tmp_path / "backups", NOW)
     assert on_disk._conn.execute("PRAGMA synchronous").fetchone()[0] == 1  # NORMAL
     on_disk.close()
+
+
+def test_tuskfizzy_legacy_import_keeps_profiles_and_daily_history_idempotently(store):
+    accounts = [
+        {"id": "profile-a", "name": "Main", "portrait": "", "genshinId": "genshin-a", "createdAt": ""},
+        {"id": "profile-b", "name": "Alt", "portrait": "", "genshinId": None, "createdAt": ""},
+    ]
+    genshin = [{"id": "genshin-a", "name": "Asia", "uid": "1234567890", "server": "asia", "createdAt": ""}]
+    daily = {
+        "2026-11-08": {
+            "profile-a": [True, False, True],
+            "profile-b": [False, True, False],
+            "_resinLast": {"profile-a": 55},
+        }
+    }
+    expected = {"accounts": 2, "genshinAccounts": 1, "dailyRecords": 2}
+    assert store.import_tuskfizzy_data(accounts, daily, genshin, "genshin-a") == expected
+    assert store.import_tuskfizzy_data(accounts, daily, genshin, "genshin-a") == expected
+    rows = store._conn.execute(
+        "SELECT day, account_id, login, commission, resin, resin_last FROM tuskfizzy_daily ORDER BY account_id"
+    ).fetchall()
+    assert rows == [
+        ("2026-11-08", "profile-a", 1, 0, 1, 55),
+        ("2026-11-08", "profile-b", 0, 1, 0, None),
+    ]
+    assert store.meta("tuskfizzy_selected_genshin_id") == "genshin-a"
+
+
+def test_tuskfizzy_daily_note_uses_same_day_resin_transition_and_claimed_commission(store):
+    accounts = [{"id": "profile-a", "name": "Main", "portrait": "", "genshinId": None, "createdAt": ""}]
+    store.import_tuskfizzy_data(accounts, {}, [], "")
+
+    # Starting the day below 50 must not auto-complete Resin.
+    assert store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 40, False)
+    assert store.tuskfizzy_daily_for("2026-11-09")["profile-a"] == [False, False, False]
+
+    # A later observed crossing from 50+ to below 50 completes it.
+    store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 55, False)
+    store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 49, False)
+    assert store.tuskfizzy_daily_for("2026-11-09")["profile-a"] == [False, False, True]
+
+    # Resin remains checked after refill; Commission only checks after the bonus is claimed.
+    store.tuskfizzy_observe_daily_note("2026-11-09", "profile-a", 120, True)
+    assert store.tuskfizzy_daily_for("2026-11-09")["profile-a"] == [False, True, True]

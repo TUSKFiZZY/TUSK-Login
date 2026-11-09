@@ -25,12 +25,13 @@ TAG = "v1.0.0"
 SHA = "a" * 40
 INSTALLER = b"MZ the installer built by GitHub"
 CHANGES = {"1.0.0": [{"kind": "new", "title": "Pins", "text": "Ünïcode is fine."}, "A plain line"]}
-GITHUB_NAME = "Guild.Board.Setup.1.0.0.exe"  # as GitHub names the uploaded "Guild Board Setup 1.0.0.exe"
+GITHUB_NAME = "TUSKFiZZY.Setup.1.0.0.exe"  # as GitHub names the uploaded "TUSKFiZZY Setup 1.0.0.exe"
 
 # A stand-in for gh: it answers from the file GH_FAKE names, keeps the release it is asked to make in a folder, and logs
 # every call. A call it does not know ends the run with 99.
 FAKE_GH = r"""
 $ErrorActionPreference = 'Stop'
+Import-Module Microsoft.PowerShell.Utility -ErrorAction Stop
 $cfg = [IO.File]::ReadAllText($env:GH_FAKE) | ConvertFrom-Json
 $state = $cfg.state
 $line = $args -join ' '
@@ -42,13 +43,22 @@ function Save($release) {
     [IO.File]::WriteAllText($releaseFile, (ConvertTo-Json -InputObject $release -Depth 6), (New-Object Text.UTF8Encoding $false))
 }
 function Load { [IO.File]::ReadAllText($releaseFile) | ConvertFrom-Json }
+function Get-FileSha256([string]$Path) {
+    $stream = [IO.File]::OpenRead($Path)
+    try {
+        $algorithm = [Security.Cryptography.SHA256]::Create()
+        try {
+            return ([BitConverter]::ToString($algorithm.ComputeHash($stream))).Replace('-', '').ToLowerInvariant()
+        } finally { $algorithm.Dispose() }
+    } finally { $stream.Dispose() }
+}
 function Asset($path, $id) {
     $repo = $args_repo
     [pscustomobject]@{
         name = ((Split-Path -Leaf $path) -replace ' ', '.')
         url = "https://api.github.com/repos/$repo/releases/assets/$id"
         size = (Get-Item -LiteralPath $path).Length
-        digest = 'sha256:' + (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+        digest = 'sha256:' + (Get-FileSha256 $path)
     }
 }
 switch -Wildcard ($line) {
@@ -128,13 +138,13 @@ class World:
         self.temp = tmp_path / "temp"
         self.temp.mkdir()
         self.config = {
-            "state": str(self.state), "fixture": str(self.artifact), "user": "QL1STY", "private": "true",
+            "state": str(self.state), "fixture": str(self.artifact), "user": "TUSKFiZZY", "private": "true",
             "runs": json.dumps([{"databaseId": 555, "headSha": SHA, "event": "push"}]), "tag_sha": SHA,
             "attest_exit": 0, "changes": json.dumps(CHANGES),
         }
         self.write_artifact()
 
-    def write_artifact(self, sums: str | None = None, name: str = "Guild Board Setup 1.0.0.exe") -> None:
+    def write_artifact(self, sums: str | None = None, name: str = "TUSKFiZZY Setup 1.0.0.exe") -> None:
         for each in self.artifact.iterdir():
             each.unlink()
         (self.artifact / name).write_bytes(self.installer)
@@ -183,7 +193,7 @@ def test_a_good_release_is_signed_as_the_app_checks_and_published_last(world):
     # draft read back, and only then the publication.
     positions = {
         name: next(i for i, call in enumerate(calls) if call.startswith(name))
-        for name in ("api user", "release view", "run list", "api repos/QL1STY/guild-board/commits", "run download",
+        for name in ("api user", "release view", "run list", "api repos/TUSKFiZZY/TUSK-Login/commits", "run download",
                      "api -H", "release create", "release upload", "release edit")
     }
     assert list(positions.values()) == sorted(positions.values())
@@ -192,10 +202,10 @@ def test_a_good_release_is_signed_as_the_app_checks_and_published_last(world):
     # It is released in the repository that built it, which installed copies look in, on the tag that is there already:
     # GitHub makes no tag of its own on whatever its main holds.
     for verb in ("create", "upload", "edit"):
-        assert " --repo QL1STY/guild-board " in world.made(verb)[0] + " ", verb
+        assert " --repo TUSKFiZZY/TUSK-Login " in world.made(verb)[0] + " ", verb
     assert world.made("create")[0].endswith(" --verify-tag")
     assert calls[-1] == world.made("edit")[0]  # the publication is the last call...
-    assert calls[-2] == "api repos/QL1STY/guild-board/releases/7"  # ...after the draft was read back with its signature
+    assert calls[-2] == "api repos/TUSKFiZZY/TUSK-Login/releases/7"  # ...after the draft was read back with its signature
     assert calls.index(world.made("upload")[0]) < len(calls) - 2
     release = json.loads((world.state / "release.json").read_text(encoding="utf-8"))
     assert release["draft"] is False and [each["name"] for each in release["assets"]] == [GITHUB_NAME, GITHUB_NAME + ".sig"]
@@ -211,7 +221,7 @@ def test_a_good_release_is_signed_as_the_app_checks_and_published_last(world):
                               ({"kind": "new", "title": "Pins", "text": "Ünïcode is fine."}, {"kind": None, "title": "A plain line", "text": ""}))
     assert newer_release(json.dumps(release).encode(), "0.8.0", signature=lambda *asset: signature, key=world.other_public) is None
     # The folder the installer was downloaded to is outside the repository and gone.
-    assert list(world.temp.glob("guildboard-release-*")) == []
+    assert list(world.temp.glob("tuskfizzy-release-*")) == []
 
 
 @windows_powershell
@@ -222,8 +232,8 @@ def test_the_bridge_releases_the_same_installer_in_the_old_releases_repository_f
     assert done.returncode == 0, _said(done) + "\n".join(world.calls())
     calls = world.calls()
     [verify] = [call for call in calls if call.startswith("attestation verify ")]
-    assert verify.endswith(" --repo QL1STY/guild-board")
-    assert any(call.startswith("run list --repo QL1STY/guild-board ") for call in calls)
+    assert verify.endswith(" --repo TUSKFiZZY/TUSK-Login")
+    assert any(call.startswith("run list --repo TUSKFiZZY/TUSK-Login ") for call in calls)
     assert any(call.startswith("release view v1.0.0 --repo QL1STY/guild-board-releases ") for call in calls)
     for verb in ("create", "upload", "edit"):
         assert " --repo QL1STY/guild-board-releases " in world.made(verb)[0] + " ", verb
@@ -240,11 +250,11 @@ def test_the_bridge_releases_the_same_installer_in_the_old_releases_repository_f
 
 @windows_powershell
 def test_with_attestation_the_installer_is_verified_against_the_repository_before_anything_is_made(world):
-    done = world.run("-Tag", TAG, "-Repo", "QL1STY/guild-board", private="false")
+    done = world.run("-Tag", TAG, "-Repo", "TUSKFiZZY/TUSK-Login", private="false")
     assert done.returncode == 0, _said(done) + "\n".join(world.calls())
     calls = world.calls()
     [verify] = [call for call in calls if call.startswith("attestation verify ")]
-    assert verify.endswith(" --repo QL1STY/guild-board") and "Guild Board Setup 1.0.0.exe" in verify
+    assert verify.endswith(" --repo TUSKFiZZY/TUSK-Login") and "TUSKFiZZY Setup 1.0.0.exe" in verify
     assert calls.index(verify) < calls.index(world.made("create")[0])
     assert not any(call.startswith("repo view") for call in calls)  # only -NoAttestation asks whether it is private
 
@@ -274,7 +284,7 @@ def test_it_refuses_a_tag_or_repository_that_is_not_written_right(world, argumen
 
 @windows_powershell
 def test_it_refuses_unless_gh_is_there_and_logged_in_as_the_maintainer(world):
-    _refused(world, "logged in as 'someone-else', not QL1STY", user="someone-else")
+    _refused(world, "logged in as 'someone-else', not TUSKFiZZY", user="someone-else")
     assert world.calls() == ["api user --jq .login"]
     system = Path(os.environ["SystemRoot"]) / "System32"
     _refused(world, "The GitHub CLI, gh, is not installed.", path=f"{system};{system / 'WindowsPowerShell' / 'v1.0'}")
@@ -318,8 +328,8 @@ def test_it_refuses_a_tag_that_was_moved_after_the_build(world):
 def test_it_refuses_an_installer_it_could_not_download_or_that_is_not_the_one_built(world):
     _refused(world, "could not be downloaded", download_exit=1)
     # The artifact of another version, or without the SHA-256 file.
-    world.write_artifact(name="Guild Board Setup 0.9.0.exe")
-    _refused(world, "does not hold 'Guild Board Setup 1.0.0.exe'")
+    world.write_artifact(name="TUSKFiZZY Setup 0.9.0.exe")
+    _refused(world, "does not hold 'TUSKFiZZY Setup 1.0.0.exe'")
     # The installer changed after the build wrote down its SHA-256, or a SHA-256 that is no hash.
     world.write_artifact(sums="0" * 64)
     _refused(world, "was changed after the build")
@@ -332,7 +342,7 @@ def test_it_refuses_an_installer_it_could_not_download_or_that_is_not_the_one_bu
 
 @windows_powershell
 def test_it_refuses_an_installer_whose_attestation_does_not_verify(world):
-    _refused(world, "could not verify that QL1STY/guild-board built this installer", "-Tag", TAG, attest_exit=1, private="false")
+    _refused(world, "could not verify that TUSKFiZZY/TUSK-Login built this installer", "-Tag", TAG, attest_exit=1, private="false")
     assert any(call.startswith("attestation verify ") for call in world.calls())
 
 
@@ -366,7 +376,7 @@ def test_the_script_names_the_steps_in_the_order_it_takes_them():
     text = (TOOLS / "sign-release.ps1").read_text(encoding="utf-8")
     code = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
     steps = ["Assert-GhAccount", "Get-ReleaseKeyFile", "Assert-ReleaseKeyTrusted", "Get-Draft", "gh run list",
-             "gh api \"repos/$Repo/commits/$Tag\"", "gh run download", "Get-FileHash", "gh attestation verify",
+             "gh api \"repos/$Repo/commits/$Tag\"", "gh run download", "Get-FileSha256", "gh attestation verify",
              "Get-ReleaseNotes", "New-DraftRelease", "Publish-SignedDraft"]
     at = 0
     for step in steps:
@@ -375,6 +385,6 @@ def test_the_script_names_the_steps_in_the_order_it_takes_them():
     # The script itself never publishes or signs: the shared functions do, and only they.
     assert not re.search(r"gh release (create|upload|edit)", code) and "New-ReleaseSignatureFile" not in code
     # Defaults: the public repository, and the maintainer alone.
-    assert "[string]$Repo = 'QL1STY/guild-board'" in code and "$account = 'QL1STY'" in code
+    assert "[string]$Repo = 'TUSKFiZZY/TUSK-Login'" in code and "$account = 'TUSKFiZZY'" in code
     # No secret and no token of the releases repository is read from anywhere but gh's own login.
     assert "GH_TOKEN" not in code and "GITHUB_TOKEN" not in code

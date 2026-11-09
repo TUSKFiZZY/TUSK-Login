@@ -21,9 +21,9 @@ from guildboard.selfupdate import (
 )
 from support import FakeSleep
 
-ASSET = "https://api.github.com/repos/QL1STY/guild-board/releases/assets/123"
-SIGNATURE_ASSET = "https://api.github.com/repos/QL1STY/guild-board/releases/assets/124"
-NAME = "Guild.Board.Setup.0.2.0.exe"  # GitHub turns the spaces of an uploaded file's name into dots
+ASSET = "https://api.github.com/repos/TUSKFiZZY/TUSK-Login/releases/assets/123"
+SIGNATURE_ASSET = "https://api.github.com/repos/TUSKFiZZY/TUSK-Login/releases/assets/124"
+NAME = "TUSKFiZZY.Setup.0.2.0.exe"  # GitHub turns the spaces of an uploaded file's name into dots
 INSTALLER = b"MZ installer"
 SHA = hashlib.sha256(INSTALLER).hexdigest()
 
@@ -241,7 +241,7 @@ async def test_a_newer_release_is_offered_and_installed_on_the_press(tmp_path):
     await updater._install_task
     assert updater.state == "installing"
     # The installer starts only with the checksum its signed release names, to be checked once more.
-    assert launched == [(tmp_path / "updates" / "Guild Board Setup 0.2.0.exe", SHA)]
+    assert launched == [(tmp_path / "updates" / "TUSKFiZZY Setup 0.2.0.exe", SHA)]
 
 
 async def test_a_check_that_ends_during_an_install_leaves_the_install_alone(tmp_path):
@@ -306,7 +306,7 @@ async def test_a_checkout_and_the_demo_never_ask(tmp_path):
 async def test_old_installers_are_removed_at_the_start(tmp_path):
     folder = tmp_path / "updates"
     folder.mkdir()
-    (folder / "Guild Board Setup 0.1.0.exe").write_bytes(b"MZ")
+    (folder / "TUSKFiZZY Setup 0.1.0.exe").write_bytes(b"MZ")
     (folder / "release.sig").write_bytes(b"left by a start that ended while it checked")
     sleep = asyncio.Event()
 
@@ -355,9 +355,9 @@ def test_the_latest_release_is_asked_of_its_one_address(monkeypatch):
     sent = []
     monkeypatch.setattr(netpolicy, "_open", lambda request, timeout: sent.append(request) or _Answer(b"{}"))
     assert netpolicy.fetch_latest_release() == b"{}"
-    assert sent[0].full_url == "https://api.github.com/repos/QL1STY/guild-board/releases/latest"
+    assert sent[0].full_url == "https://api.github.com/repos/TUSKFiZZY/TUSK-Login/releases/latest"
     assert sent[0].follow_redirects is False
-    assert sent[0].get_header("User-agent") == "GuildBoard"
+    assert sent[0].get_header("User-agent") == "TUSKFiZZY"
 
 
 def test_the_installer_is_kept_only_when_it_is_the_one_its_release_names(monkeypatch, tmp_path):
@@ -423,7 +423,7 @@ async def test_a_failed_launch_says_so(tmp_path):
 def test_the_installer_is_read_again_and_held_while_it_starts(tmp_path, monkeypatch):
     # The file is hashed once more right before Windows starts it, held open so that nothing can write, rename or
     # delete it in between: what was checked is what starts.
-    path = tmp_path / "Guild Board Setup 0.2.0.exe"
+    path = tmp_path / "TUSKFiZZY Setup 0.2.0.exe"
     path.write_bytes(INSTALLER)
     started = []
 

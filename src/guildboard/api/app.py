@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import binascii
 import json
 import math
 import mimetypes
@@ -27,6 +29,7 @@ from guildboard.achievements.updates import UpdateError
 from guildboard.backups import DEMO as BACKUP_DEMO, MAX_BACKUP_BYTES, TOO_LARGE as BACKUP_TOO_LARGE, BackupRefused
 from guildboard.board.layouts import LayoutChanged, LayoutError, UnknownPlace, UnknownWidget
 from guildboard import characters, notices
+from guildboard import enka
 from guildboard.cloud import SHARE_KEYS
 from guildboard.cloud.demo import STATES as DEMO_ONLINE_STATES
 from guildboard.cloud.models import NOT_A_FRIEND, OnlineRefused
@@ -73,18 +76,18 @@ KEEP_ALIVE_SECONDS = 15.0
 MAX_LOG_ROWS = 500
 MAX_CLOCK_STEP_SECONDS = 400 * 86_400
 SLOW_DEMO_SECONDS = 0.5
-# The page may load and contact only Guild Board itself; the browser enforces it.
+# The page may load and contact only TUSKFiZZY itself; the browser enforces it.
 CONTENT_SECURITY_POLICY = (
     "default-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; "
     "form-action 'none'; frame-ancestors 'none'"
 )
 
 PLACEHOLDER_PAGE = (
-    "<!doctype html><meta charset='utf-8'><title>Guild Board</title>"
-    "<p>Guild Board's core is running. The interface has not been built yet.</p>"
+    "<!doctype html><meta charset='utf-8'><title>TUSKFiZZY</title>"
+    "<p>TUSKFiZZY's core is running. The interface has not been built yet.</p>"
 )
 SIGNED_IN_LINE = "Signed in. You can close this tab."
-NOT_FINISHED_LINE = "Signing in did not finish. You can close this tab and try again in Guild Board."
+NOT_FINISHED_LINE = "Signing in did not finish. You can close this tab and try again in TUSKFiZZY."
 # What a sign-in's code can be: URL-safe characters, 512 at most. Supabase's are far shorter.
 CALLBACK_CODE = re.compile(r"[A-Za-z0-9._~-]{1,512}")
 
@@ -142,6 +145,29 @@ def _demo_faults() -> dict[str, SourceError]:
 NO_NOTICES = "The list of open-source licences is not next to the program."
 
 
+def _valid_tuskfizzy_portrait(value: Any) -> bool:
+    if value == "":
+        return True
+    if not isinstance(value, str) or len(value) > 1_000_000:
+        return False
+    match = re.fullmatch(r"data:image/(png|jpeg|webp|gif);base64,([A-Za-z0-9+/]+={0,2})", value)
+    if match is None:
+        return False
+    try:
+        raw = base64.b64decode(match.group(2), validate=True)
+    except (ValueError, binascii.Error):
+        return False
+    if len(raw) > 750_000:
+        return False
+    kind = match.group(1)
+    return (
+        kind == "png" and raw.startswith(b"\x89PNG\r\n\x1a\n")
+        or kind == "jpeg" and raw.startswith(b"\xff\xd8\xff")
+        or kind == "webp" and len(raw) >= 12 and raw[:4] == b"RIFF" and raw[8:12] == b"WEBP"
+        or kind == "gif" and raw[:6] in (b"GIF87a", b"GIF89a")
+    )
+
+
 def _error(status: int, message: str) -> JSONResponse:
     return JSONResponse({"error": message}, status_code=status)
 
@@ -157,7 +183,7 @@ def _callback_page(line: str, status: int) -> HTMLResponse:
     """The line a browser ends on after signing in. The address it came to holds the code, so neither a cache nor a page it
     goes to next may keep it."""
     return HTMLResponse(
-        f"<!doctype html><meta charset='utf-8'><title>Guild Board</title><p>{line}</p>",
+        f"<!doctype html><meta charset='utf-8'><title>TUSKFiZZY</title><p>{line}</p>",
         status_code=status, headers={"Cache-Control": "no-store", "Referrer-Policy": "no-referrer"},
     )
 
@@ -302,7 +328,7 @@ async def sse_stream(bus: EventBus, hello: Callable[[], dict[str, Any]]) -> Asyn
                 yield ": keep-alive\n\n"
                 continue
             if event["type"] == "shutdown":
-                return  # Guild Board is closing; ending the stream lets the server stop at once
+                return  # TUSKFiZZY is closing; ending the stream lets the server stop at once
             yield _sse(event["type"], event)
     finally:
         bus.unsubscribe(queue)
@@ -333,14 +359,14 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         if request.url.path.startswith("/api/"):
             # A page served by another program on this PC would send the session cookie too, because
             # cookies ignore the port. Browsers say where a request comes from, so anything that is
-            # not Guild Board's own page is refused. Programs that are not browsers send neither header.
+            # not TUSKFiZZY's own page is refused. Programs that are not browsers send neither header.
             origin = request.headers.get("origin")
             fetch_site = request.headers.get("sec-fetch-site")
             if (origin is not None and origin not in allowed_origins) or fetch_site not in (None, "same-origin", "none"):
-                return _error(403, "This request did not come from Guild Board.")
+                return _error(403, "This request did not come from TUSKFiZZY.")
             presented = request.cookies.get(SESSION_COOKIE, "")
             if not _same(presented, core.session_token):
-                return _error(401, "Open Guild Board from its own window or launch link.")
+                return _error(401, "Open TUSKFiZZY from its own window or launch link.")
             return await call_next(request)
         response = await call_next(request)
         response.headers["Content-Security-Policy"] = CONTENT_SECURITY_POLICY
@@ -529,7 +555,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
 
     @app.post("/api/update/install")
     async def install_update() -> Any:
-        """Download the newer release's installer and start it; the installer asks Guild Board to quit."""
+        """Download the newer release's installer and start it; the installer asks TUSKFiZZY to quit."""
         if not core.updater.install():
             return _error(409, "There is no update to install.")
         return core.status()
@@ -677,7 +703,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             return _error(422, str(error))
         if not core.request_window("save_picture"):
             core.drop_picture()
-            return _error(409, "Open Guild Board's window to save the picture.")
+            return _error(409, "Open TUSKFiZZY's window to save the picture.")
         return JSONResponse({"opened": True})
 
     @app.get("/api/synclog")
@@ -715,7 +741,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
 
     async def _ask_window(kind: str) -> Response:
         if not core.request_window(kind):
-            return _error(409, "This needs the Guild Board window.")
+            return _error(409, "This needs the TUSKFiZZY window.")
         return JSONResponse({"opened": True})
 
     async def _open_window(kind: str) -> Response:
@@ -761,7 +787,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
         if core.demo:
             return _error(422, BACKUP_DEMO)
         if not core.request_window("export_backup"):
-            return _error(409, "Open Guild Board's window to export a backup.")
+            return _error(409, "Open TUSKFiZZY's window to export a backup.")
         return JSONResponse({"opened": True})
 
     @app.get("/api/backups")
@@ -1131,7 +1157,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
 
     @app.post("/api/notifications/test")
     async def notifications_test() -> dict[str, bool]:
-        """Send a test notification from the tray icon. False when Guild Board runs without one, as the core alone."""
+        """Send a test notification from the tray icon. False when TUSKFiZZY runs without one, as the core alone."""
         return {"sent": core.notify("test", TEST_TEXT)}
 
     @app.get("/api/achievements/list")
@@ -1177,6 +1203,334 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             return _error(409, str(error))
         except ImportFileError as error:
             return _error(422, str(error))
+
+    @app.post("/api/tuskfizzy/import")
+    async def tuskfizzy_import(body: dict[str, Any] = Body(...)) -> Response:
+        """Import the legacy tracker's portable, non-secret export. Validation finishes before the one DB transaction."""
+        if body.get("format") != "tuskfizzy-local-data" or body.get("version") != 1:
+            return _error(422, "This is not a supported TUSKFiZZY data export.")
+        if len(json.dumps(body, ensure_ascii=False).encode("utf-8")) > 10_000_000:
+            return _error(413, "The TUSKFiZZY export is larger than 10 MB.")
+        accounts = body.get("accounts")
+        daily = body.get("dailyRecords")
+        genshin = body.get("genshinAccounts")
+        selected = body.get("selectedGenshinId", "")
+        if not isinstance(accounts, list) or not isinstance(daily, dict) or not isinstance(genshin, list):
+            return _error(422, "The export is missing its profiles or daily history.")
+        if len(accounts) > 100 or len(genshin) > 100 or len(daily) > 5000:
+            return _error(422, "The export contains more profiles or days than TUSKFiZZY can import.")
+        if not isinstance(selected, str) or len(selected) > 128:
+            return _error(422, "The selected Genshin account is invalid.")
+        account_ids: set[str] = set()
+        genshin_ids: set[str] = set()
+        clean_accounts: list[dict[str, Any]] = []
+        clean_genshin: list[dict[str, Any]] = []
+        for item in accounts:
+            if not isinstance(item, dict):
+                return _error(422, "A checklist profile is malformed.")
+            ident, name = item.get("id"), item.get("name")
+            portrait, genshin_id = item.get("portrait", ""), item.get("genshinId")
+            if (not isinstance(ident, str) or not ident or len(ident) > 128 or ident in account_ids
+                    or not isinstance(name, str) or not name.strip() or len(name) > 80
+                    or not _valid_tuskfizzy_portrait(portrait)
+                    or (genshin_id is not None and (not isinstance(genshin_id, str) or len(genshin_id) > 128))):
+                return _error(422, "A checklist profile has invalid or duplicate fields.")
+            account_ids.add(ident)
+            clean_accounts.append({"id": ident, "name": name.strip(), "portrait": portrait,
+                                   "genshinId": genshin_id, "createdAt": str(item.get("createdAt", ""))[:40]})
+        for item in genshin:
+            if not isinstance(item, dict):
+                return _error(422, "A Genshin profile is malformed.")
+            ident, name, uid = item.get("id"), item.get("name"), item.get("uid")
+            server = item.get("server", "")
+            if (not isinstance(ident, str) or not ident or len(ident) > 128 or ident in genshin_ids
+                    or not isinstance(name, str) or not name.strip() or len(name) > 80
+                    or not isinstance(uid, str) or not re.fullmatch(r"[0-9]{9,10}", uid)
+                    or not isinstance(server, str) or len(server) > 32):
+                return _error(422, "A Genshin profile has invalid or duplicate fields. UIDs must contain 9 or 10 digits.")
+            genshin_ids.add(ident)
+            clean_genshin.append({"id": ident, "name": name.strip(), "uid": uid, "server": server,
+                                  "createdAt": str(item.get("createdAt", ""))[:40]})
+        if selected and selected not in genshin_ids:
+            return _error(422, "The selected Genshin profile is not in this export.")
+        if any(item.get("genshinId") and item["genshinId"] not in genshin_ids for item in clean_accounts):
+            return _error(422, "A checklist profile refers to a Genshin account that is not in this export.")
+        clean_daily: dict[str, dict[str, list[Any]]] = {}
+        for day, profiles in daily.items():
+            if not isinstance(day, str) or not re.fullmatch(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", day) or not isinstance(profiles, dict):
+                return _error(422, "A daily record has an invalid date or shape.")
+            try:
+                datetime.strptime(day, "%Y-%m-%d")
+            except ValueError:
+                return _error(422, "A daily record has an invalid calendar date.")
+            clean_profiles: dict[str, list[Any]] = {}
+            resin_meta = profiles.get("_resinLast", {})
+            if not isinstance(resin_meta, dict):
+                return _error(422, "The resin history metadata is malformed.")
+            if any(ident not in account_ids or type(value) not in (int, float) or not 0 <= value <= 300 for ident, value in resin_meta.items()):
+                return _error(422, "The resin history metadata refers to an unknown profile or invalid resin value.")
+            for ident, flags in profiles.items():
+                if ident == "_resinLast":
+                    continue
+                if ident not in account_ids or not isinstance(flags, list) or len(flags) != 3 or any(type(v) is not bool for v in flags):
+                    return _error(422, "A daily record refers to an unknown profile or has invalid checklist values.")
+                clean_profiles[ident] = flags
+            clean_profiles["_resinLast"] = resin_meta
+            clean_daily[day] = clean_profiles
+        previous_genshin = core.store.tuskfizzy_genshin_accounts_list()
+        try:
+            counts = core.store.import_tuskfizzy_data(clean_accounts, clean_daily, clean_genshin, selected)
+        except (ValueError, TypeError) as error:
+            return _error(422, f"The export could not be imported: {error}")
+        imported_by_id = {item["id"]: item for item in clean_genshin}
+        for previous in previous_genshin:
+            replacement = imported_by_id.get(previous["id"])
+            if replacement is None or replacement["uid"] != previous["uid"] or replacement["server"] != previous["server"]:
+                core.tuskfizzy_forget_session_id(previous["id"])
+        core.bus.publish("tuskfizzy_imported", counts=counts)
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"imported": counts})
+
+    @app.put("/api/tuskfizzy/selected-genshin")
+    async def tuskfizzy_select_genshin(body: dict[str, Any] = Body(...)) -> Response:
+        ident = body.get("id")
+        if ident is not None and (not isinstance(ident, str) or not ident or len(ident) > 128):
+            return _error(422, "Choose a valid Genshin profile.")
+        if not core.store.tuskfizzy_select_genshin_account(ident):
+            return _error(404, "That Genshin profile no longer exists.")
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"selectedGenshinId": ident})
+
+    @app.post("/api/tuskfizzy/genshin-accounts/{account_id}/wish-import")
+    async def tuskfizzy_profile_wish_import(account_id: str, body: dict[str, Any] = Body(...)) -> Response:
+        url = body.get("url")
+        if not isinstance(url, str):
+            return _error(422, "Paste the complete wish-history URL.")
+        try:
+            core.tuskfizzy_import_wish_link(account_id, url)
+        except (ValueError, ImportBusy, ImportNotReady) as error:
+            return _error(409 if isinstance(error, (ImportBusy, ImportNotReady)) else 422, str(error))
+        core.bus.publish("pulls_changed")
+        return JSONResponse({"started": True})
+
+    @app.post("/api/tuskfizzy/genshin-accounts/{account_id}/login")
+    async def tuskfizzy_genshin_login(account_id: str, body: dict[str, Any] = Body(...)) -> Response:
+        cookie_text = body.get("cookieText")
+        if not isinstance(cookie_text, str):
+            return _error(422, "Paste the complete HoYoLAB Cookie header.")
+        try:
+            account = await core.tuskfizzy_login(account_id, cookie_text)
+        except ValueError as error:
+            return _error(422, str(error))
+        except Exception:
+            return _error(503, "HoYoLAB could not verify this profile login. Check the connection and try again.")
+        return JSONResponse({"connected": True, "account": account})
+
+    @app.delete("/api/tuskfizzy/genshin-accounts/{account_id}/login")
+    async def tuskfizzy_genshin_logout(account_id: str) -> Response:
+        try:
+            core.tuskfizzy_logout(account_id)
+        except ValueError as error:
+            return _error(404, str(error))
+        return JSONResponse({"connected": False})
+
+    @app.post("/api/tuskfizzy/genshin-accounts")
+    async def tuskfizzy_create_genshin_account(body: dict[str, Any] = Body(...)) -> Response:
+        name, uid, server = body.get("name"), body.get("uid"), body.get("server", "")
+        if not isinstance(name, str) or not name.strip() or len(name.strip()) > 80:
+            return _error(422, "Enter a Genshin profile name of up to 80 characters.")
+        if not isinstance(uid, str) or not re.fullmatch(r"[0-9]{9,10}", uid):
+            return _error(422, "A Genshin UID must contain 9 or 10 digits.")
+        if not isinstance(server, str) or len(server) > 32:
+            return _error(422, "Choose a valid Genshin server.")
+        ident = secrets.token_hex(12)
+        created = datetime.now().astimezone().isoformat(timespec="seconds")
+        core.store.tuskfizzy_put_genshin_account(ident, name.strip(), uid, server, created)
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"account": next(item for item in core.store.tuskfizzy_genshin_accounts_list() if item["id"] == ident)})
+
+    @app.put("/api/tuskfizzy/genshin-accounts/{account_id}")
+    async def tuskfizzy_update_genshin_account(account_id: str, body: dict[str, Any] = Body(...)) -> Response:
+        current = next((item for item in core.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+        if current is None:
+            return _error(404, "That Genshin profile no longer exists.")
+        name, uid, server = body.get("name"), body.get("uid"), body.get("server", current["server"])
+        if not isinstance(name, str) or not name.strip() or len(name.strip()) > 80:
+            return _error(422, "Enter a Genshin profile name of up to 80 characters.")
+        if not isinstance(uid, str) or not re.fullmatch(r"[0-9]{9,10}", uid):
+            return _error(422, "A Genshin UID must contain 9 or 10 digits.")
+        if not isinstance(server, str) or len(server) > 32:
+            return _error(422, "Choose a valid Genshin server.")
+        if uid != current["uid"] or server != current["server"]:
+            try:
+                core.tuskfizzy_logout(account_id)
+            except ValueError:
+                pass
+        core.store.tuskfizzy_put_genshin_account(account_id, name.strip(), uid, server, current["createdAt"])
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"account": next(item for item in core.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id)})
+
+    @app.delete("/api/tuskfizzy/genshin-accounts/{account_id}")
+    async def tuskfizzy_remove_genshin_account(account_id: str) -> Response:
+        try:
+            core.tuskfizzy_logout(account_id)
+        except ValueError:
+            return _error(404, "That Genshin profile no longer exists.")
+        if not core.store.tuskfizzy_delete_genshin_account(account_id):
+            return _error(404, "That Genshin profile no longer exists.")
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"deleted": True})
+
+    @app.get("/api/tuskfizzy/month")
+    async def tuskfizzy_month(month: str = Query(...)) -> Response:
+        if not re.fullmatch(r"20[0-9]{2}-(?:0[1-9]|1[0-2])", month):
+            return _error(422, "Choose a valid month.")
+        return JSONResponse({
+            "accounts": core.store.tuskfizzy_accounts_list(),
+            "records": core.store.tuskfizzy_month_for(month),
+        })
+
+    @app.get("/api/tuskfizzy/enka/{uid}")
+    async def tuskfizzy_enka(uid: str) -> Response:
+        """Read a public Enka showcase for one validated Genshin UID; no HoYoLAB session is sent."""
+        if not re.fullmatch(r"[0-9]{9,10}", uid):
+            return _error(422, "Genshin UID must contain 9 or 10 digits.")
+        try:
+            profile = await asyncio.to_thread(enka.get_profile, uid)
+        except ValueError:
+            return _error(422, "Genshin UID must contain 9 or 10 digits.")
+        except enka.EnkaNotFound as error:
+            return _error(404, str(error))
+        except enka.EnkaUnavailable as error:
+            return _error(503, str(error))
+        except enka.EnkaError as error:
+            return _error(502, str(error))
+        except Exception:
+            return _error(502, "Enka Network returned a profile that could not be read.")
+        return JSONResponse(profile)
+
+    @app.get("/api/tuskfizzy/tracker")
+    async def tuskfizzy_tracker(day: str = Query(...)) -> Response:
+        if not re.fullmatch(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", day):
+            return _error(422, "Choose a valid calendar date.")
+        try:
+            datetime.strptime(day, "%Y-%m-%d")
+        except ValueError:
+            return _error(422, "Choose a valid calendar date.")
+        accounts = core.store.tuskfizzy_accounts_list()
+        genshin_accounts = [
+            {**item, "sessionConnected": core.tuskfizzy_session_connected(item["id"])}
+            for item in core.store.tuskfizzy_genshin_accounts_list()
+        ]
+        daily_note = None
+        battle_chronicle = None
+        # Each Genshin profile reads from its own encrypted HoYoLAB session. Selecting a profile never
+        # borrows the primary Guild Board login or another profile's cookies.
+        if day == core.clock.now().astimezone().date().isoformat() and not core.demo:
+            selected_genshin_id = core.store.tuskfizzy_selected_genshin_id()
+            if selected_genshin_id is not None:
+                try:
+                    battle_chronicle = await core.tuskfizzy_profile_chronicle(selected_genshin_id)
+                except Exception:
+                    battle_chronicle = None
+                try:
+                    note = await core.tuskfizzy_profile_note(selected_genshin_id)
+                except Exception:
+                    note = None
+                if note is not None:
+                    resin, claimed = note["resin"], note["bonusClaimed"]
+                    if type(resin) is int:
+                        for linked_profile in accounts:
+                            if linked_profile["genshinId"] == selected_genshin_id:
+                                core.store.tuskfizzy_observe_daily_note(day, linked_profile["id"], resin, claimed)
+                    daily_note = note
+        return JSONResponse({
+            "accounts": accounts,
+            "genshinAccounts": genshin_accounts,
+            "selectedGenshinId": core.store.tuskfizzy_selected_genshin_id(),
+            "daily": core.store.tuskfizzy_daily_for(day),
+            "dailyNote": daily_note,
+            "battleChronicle": battle_chronicle,
+        })
+
+    @app.post("/api/tuskfizzy/accounts")
+    async def tuskfizzy_create_account(body: dict[str, Any] = Body(...)) -> Response:
+        name, portrait, genshin_id = body.get("name"), body.get("portrait", ""), body.get("genshinId")
+        if not isinstance(name, str) or not name.strip() or len(name.strip()) > 80:
+            return _error(422, "Enter a profile name of up to 80 characters.")
+        if (not _valid_tuskfizzy_portrait(portrait)):
+            return _error(422, "Choose a valid PNG, JPEG, WebP or GIF profile picture smaller than 1 MB.")
+        if genshin_id is not None and (not isinstance(genshin_id, str) or len(genshin_id) > 128):
+            return _error(422, "Choose a valid linked Genshin profile.")
+        if genshin_id and not any(item["id"] == genshin_id for item in core.store.tuskfizzy_genshin_accounts_list()):
+            return _error(422, "That Genshin profile is not available.")
+        ident = secrets.token_hex(12)
+        created = datetime.now().astimezone().isoformat(timespec="seconds")
+        core.store.tuskfizzy_put_account(ident, name.strip(), portrait, genshin_id, created)
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"account": next(item for item in core.store.tuskfizzy_accounts_list() if item["id"] == ident)})
+
+    @app.put("/api/tuskfizzy/accounts/{account_id}")
+    async def tuskfizzy_update_account(account_id: str, body: dict[str, Any] = Body(...)) -> Response:
+        current = next((item for item in core.store.tuskfizzy_accounts_list() if item["id"] == account_id), None)
+        if current is None:
+            return _error(404, "That TUSKFiZZY profile no longer exists.")
+        name, portrait, genshin_id = body.get("name"), body.get("portrait", current["portrait"]), body.get("genshinId", current["genshinId"])
+        if not isinstance(name, str) or not name.strip() or len(name.strip()) > 80:
+            return _error(422, "Enter a profile name of up to 80 characters.")
+        if not _valid_tuskfizzy_portrait(portrait):
+            return _error(422, "Choose a valid PNG, JPEG, WebP or GIF profile picture smaller than 1 MB.")
+        if genshin_id is not None and (not isinstance(genshin_id, str) or len(genshin_id) > 128):
+            return _error(422, "Choose a valid linked Genshin profile.")
+        if genshin_id and not any(item["id"] == genshin_id for item in core.store.tuskfizzy_genshin_accounts_list()):
+            return _error(422, "That Genshin profile is not available.")
+        core.store.tuskfizzy_put_account(account_id, name.strip(), portrait, genshin_id, current["createdAt"])
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"account": next(item for item in core.store.tuskfizzy_accounts_list() if item["id"] == account_id)})
+
+    @app.delete("/api/tuskfizzy/accounts/{account_id}")
+    async def tuskfizzy_remove_account(account_id: str) -> Response:
+        if not core.store.tuskfizzy_delete_account(account_id):
+            return _error(404, "That TUSKFiZZY profile no longer exists.")
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"deleted": True})
+
+    @app.post("/api/tuskfizzy/observe-note")
+    async def tuskfizzy_observe_note(body: dict[str, Any] = Body(...)) -> Response:
+        day, account_id = body.get("day"), body.get("accountId")
+        resin, claimed = body.get("resin"), body.get("extraRewardClaimed")
+        if not isinstance(day, str) or not re.fullmatch(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", day):
+            return _error(422, "Choose a valid calendar date.")
+        try:
+            datetime.strptime(day, "%Y-%m-%d")
+        except ValueError:
+            return _error(422, "Choose a valid calendar date.")
+        if not isinstance(account_id, str) or not account_id or len(account_id) > 128:
+            return _error(422, "Choose a valid TUSKFiZZY profile.")
+        if type(resin) is not int or not 0 <= resin <= 300 or type(claimed) is not bool:
+            return _error(422, "The Daily Note resin or commission status is invalid.")
+        if not core.store.tuskfizzy_observe_daily_note(day, account_id, resin, claimed):
+            return _error(404, "That TUSKFiZZY profile no longer exists.")
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"saved": True, "daily": core.store.tuskfizzy_daily_for(day)})
+
+    @app.put("/api/tuskfizzy/daily")
+    async def tuskfizzy_update_daily(body: dict[str, Any] = Body(...)) -> Response:
+        day, account_id, task, checked = body.get("day"), body.get("accountId"), body.get("task"), body.get("checked")
+        if not isinstance(day, str) or not re.fullmatch(r"20[0-9]{2}-[0-9]{2}-[0-9]{2}", day):
+            return _error(422, "Choose a valid calendar date.")
+        try:
+            datetime.strptime(day, "%Y-%m-%d")
+        except ValueError:
+            return _error(422, "Choose a valid calendar date.")
+        if not isinstance(account_id, str) or not account_id or len(account_id) > 128:
+            return _error(422, "Choose a valid TUSKFiZZY profile.")
+        if task not in ("login", "commission", "resin") or type(checked) is not bool:
+            return _error(422, "Choose Login, Commission or Resin and a valid checkbox value.")
+        if not core.store.tuskfizzy_set_task(day, account_id, task, checked):
+            return _error(404, "That TUSKFiZZY profile no longer exists.")
+        core.bus.publish("tuskfizzy_changed")
+        return JSONResponse({"saved": True, "daily": core.store.tuskfizzy_daily_for(day)})
 
     @app.post("/api/import/preview")
     async def import_preview(body: dict[str, Any] = Body(...)) -> Response:
@@ -1269,7 +1623,7 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
 
     @app.post("/api/demo/update")
     async def demo_update(body: dict[str, Any] = Body(...)) -> Response:
-        """Demo mode only: show the notice of a newer Guild Board in one of its states."""
+        """Demo mode only: show the notice of a newer TUSKFiZZY in one of its states."""
         if not core.demo:
             return _error(404, "Not found.")
         state = body.get("state")
@@ -1447,8 +1801,8 @@ def create_app(core: "Core", port: int, web_dir: Path | None = None) -> FastAPI:
             minutes = max(1, math.ceil(until_count / 60)) if until_count else answer["wait_minutes"]
             again = f"Try again in {minutes} minute{'' if minutes == 1 else 's'}."
             if until_count:
-                return _error(409, f"Guild Board has read HoYoLAB {DAILY_CAP} times today, the most it reads in a day. {again}")
-            return _error(409, f"Guild Board read HoYoLAB a moment ago. {again}")
+                return _error(409, f"TUSKFiZZY has read HoYoLAB {DAILY_CAP} times today, the most it reads in a day. {again}")
+            return _error(409, f"TUSKFiZZY read HoYoLAB a moment ago. {again}")
         if answer.get("login") or answer.get("blocked") in ("login_needed", None):
             return _error(409, "Log in to HoYoLAB first.")
         if answer["blocked"] == "paused":

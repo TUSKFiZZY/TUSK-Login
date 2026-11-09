@@ -465,7 +465,7 @@ async def test_the_state_when_idle_names_the_last_import_that_ended_well(store):
     }
 
 
-CLOSED ="Guild Board closed before this import finished."
+CLOSED = "TUSKFiZZY closed before this import finished."
 
 
 async def test_after_a_start_an_import_the_closing_cut_short_shows_how_it_ended(store):

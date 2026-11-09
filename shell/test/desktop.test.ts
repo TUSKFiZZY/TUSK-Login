@@ -12,7 +12,7 @@ function setup(options: { packaged?: boolean; chosen?: string | null; opened?: s
   const deps: DesktopDeps = {
     documents: 'C:\\Users\\Mia\\Documents',
     pictures: 'C:\\Users\\Mia\\Pictures',
-    execPath: packaged ? 'C:\\Guild Board\\guildboard-app.exe' : 'Z:\\repo\\shell\\node_modules\\electron\\dist\\electron.exe',
+    execPath: packaged ? 'C:\\TUSKFiZZY\\guildboard-app.exe' : 'Z:\\repo\\shell\\node_modules\\electron\\dist\\electron.exe',
     appFolder: packaged ? null : 'Z:\\repo\\shell',
     async showSaveDialog(dialogOptions) {
       saves.push(dialogOptions)
@@ -38,14 +38,14 @@ function setup(options: { packaged?: boolean; chosen?: string | null; opened?: s
   return { desktop: new Desktop(deps), saves, boxes, opened, spawned, relaunched, warnings }
 }
 
-test('the backup dialog is Export backup in Documents, for a Guild Board backup (*.gbbackup)', async () => {
+test('the backup dialog is Export backup in Documents, for a TUSKFiZZY backup (*.gbbackup)', async () => {
   const { desktop, saves } = setup()
   expect(await desktop.chooseBackupFile('guild-board-2026-11-07.gbbackup')).toBe('C:\\Users\\Mia\\Documents\\chosen.gbbackup')
   expect(saves).toEqual([
     {
       title: 'Export backup',
       defaultPath: 'C:\\Users\\Mia\\Documents\\guild-board-2026-11-07.gbbackup',
-      filters: [{ name: 'Guild Board backup', extensions: ['gbbackup'] }],
+      filters: [{ name: 'TUSKFiZZY backup', extensions: ['gbbackup'] }],
     },
   ])
 })
@@ -68,18 +68,18 @@ test('a cancelled dialog answers null', async () => {
   expect(await desktop.choosePictureFile('a.png')).toBeNull()
 })
 
-test('an alert is an error box titled Guild Board with the text', async () => {
+test('an alert is an error box titled TUSKFiZZY with the text', async () => {
   const { desktop, boxes } = setup()
-  await desktop.alert('Guild Board stopped unexpectedly. The log file says why.')
+  await desktop.alert('TUSKFiZZY stopped unexpectedly. The log file says why.')
   expect(boxes).toEqual([
-    { type: 'error', title: 'Guild Board', message: 'Guild Board stopped unexpectedly. The log file says why.', buttons: ['OK'] },
+    { type: 'error', title: 'TUSKFiZZY', message: 'TUSKFiZZY stopped unexpectedly. The log file says why.', buttons: ['OK'] },
   ])
 })
 
 test('the data folder opens in Explorer', async () => {
   const { desktop, opened } = setup()
-  await desktop.openFolder('C:\\Users\\Mia\\AppData\\Local\\GuildBoard')
-  expect(opened).toEqual(['C:\\Users\\Mia\\AppData\\Local\\GuildBoard'])
+  await desktop.openFolder('C:\\Users\\Mia\\AppData\\Local\\TUSKFiZZY')
+  expect(opened).toEqual(['C:\\Users\\Mia\\AppData\\Local\\TUSKFiZZY'])
 })
 
 test('a folder that will not open is told to the log, not thrown', async () => {
@@ -91,7 +91,7 @@ test('a folder that will not open is told to the log, not thrown', async () => {
 test('the demo starts as guildboard-app.exe --demo --acknowledged', () => {
   const { desktop, spawned } = setup()
   desktop.startDemo()
-  expect(spawned).toEqual([{ program: 'C:\\Guild Board\\guildboard-app.exe', args: ['--demo', '--acknowledged'] }])
+  expect(spawned).toEqual([{ program: 'C:\\TUSKFiZZY\\guildboard-app.exe', args: ['--demo', '--acknowledged'] }])
 })
 
 test('in development the demo starts electron.exe with the app’s folder first', () => {
@@ -104,8 +104,8 @@ test('in development the demo starts electron.exe with the app’s folder first'
 
 test('start again keeps --data-dir only: not --hidden, not --demo', () => {
   const { desktop, relaunched } = setup()
-  desktop.startAgain('D:\\GuildBoard data')
-  expect(relaunched).toEqual([{ args: ['--data-dir', 'D:\\GuildBoard data'] }])
+  desktop.startAgain('D:\\TUSKFiZZY data')
+  expect(relaunched).toEqual([{ args: ['--data-dir', 'D:\\TUSKFiZZY data'] }])
 })
 
 test('start again with no data folder given keeps nothing', () => {

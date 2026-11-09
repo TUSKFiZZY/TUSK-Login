@@ -17,11 +17,11 @@ from guildboard.selfupdate import Release, newer_release
 ROOT = Path(__file__).resolve().parents[1]
 TOOLS = ROOT / "tools"
 RELEASE = ROOT / "release.ps1"
-ASSET = "https://api.github.com/repos/QL1STY/guild-board/releases/assets/123"
-SIGNATURE_ASSET = "https://api.github.com/repos/QL1STY/guild-board/releases/assets/124"
+ASSET = "https://api.github.com/repos/TUSKFiZZY/TUSK-Login/releases/assets/123"
+SIGNATURE_ASSET = "https://api.github.com/repos/TUSKFiZZY/TUSK-Login/releases/assets/124"
 # Where 2.0.0 and earlier look, and the bridge release 2.0.1 reached them.
 OLD_ASSET = "https://api.github.com/repos/QL1STY/guild-board-releases/releases/assets/123"
-NAME = "Guild.Board.Setup.0.2.0.exe"  # as GitHub names the uploaded "Guild Board Setup 0.2.0.exe"
+NAME = "TUSKFiZZY.Setup.0.2.0.exe"  # as GitHub names the uploaded "TUSKFiZZY Setup 0.2.0.exe"
 
 windows_powershell = pytest.mark.skipif(shutil.which("powershell") is None, reason="needs Windows PowerShell")
 private_build = pytest.mark.skipif(not RELEASE.exists(), reason="release.ps1 is not in the public tree")
@@ -55,7 +55,7 @@ def _make_key(path: Path) -> str:
 
 def _draft(tmp_path: Path, **asset) -> tuple[Path, Path]:
     """An installer, and GitHub's answer for the draft it was uploaded to, before its signature is."""
-    installer = tmp_path / "Guild Board Setup 0.2.0.exe"
+    installer = tmp_path / "TUSKFiZZY Setup 0.2.0.exe"
     installer.write_bytes(b"MZ the installer")
     facts = {"name": NAME, "url": ASSET, "size": installer.stat().st_size,
              "digest": "sha256:" + hashlib.sha256(installer.read_bytes()).hexdigest()}

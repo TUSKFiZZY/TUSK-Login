@@ -80,6 +80,7 @@ def test_notes():
     assert record.resin_full_at == "2026-10-13T15:44:00+00:00"  # 27,840 seconds later
     assert (record.realm_currency, record.realm_currency_max) == (1800, 2400)
     assert (record.commissions_done, record.commissions_max) == (4, 4)
+    assert record.extra_reward_claimed is True
     assert (record.boss_discounts_left, record.boss_discounts_max) == (1, 3)
     assert (record.expeditions_done, record.expeditions_total) == (1, 2)
     assert record.archon_open == (

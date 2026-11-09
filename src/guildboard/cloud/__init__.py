@@ -1,4 +1,4 @@
-"""Guild Board's online account (the online design): one Supabase project, reached only by cloud/client.py, and only after
+"""TUSKFiZZY's online account (the online design): one Supabase project, reached only by cloud/client.py, and only after
 the player signs in. Row level security decides who can read what; everything local works without it."""
 from __future__ import annotations
 
@@ -14,11 +14,11 @@ SITE = "https://" + netpolicy.CLOUD_HOST
 SHARE_KEYS = ("status", "primogems", "playtime", "achievements", "endgame", "account", "wishes", "spending")
 STAT_KEYS = SHARE_KEYS[1:]
 PIN_ORDER = ("primogems", "playtime", "endgame", "achievements", "account", "wishes", "spending")
-# The address the invite function sends a browser to, which Windows hands to Guild Board. Its code has the function's pattern.
+# The address the invite function sends a browser to, which Windows hands to TUSKFiZZY. Its code has the function's pattern.
 INVITE = re.compile(r"guildboard://invite/([A-Za-z0-9_-]{16,64})")
 
 
 def invite_code(link: str) -> str | None:
-    """The code of an invite link, or None for anything else: another program can start Guild Board with any argument."""
+    """The code of an invite link, or None for anything else: another program can start TUSKFiZZY with any argument."""
     found = INVITE.fullmatch(link)
     return found.group(1) if found is not None else None

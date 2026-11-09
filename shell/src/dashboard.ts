@@ -15,7 +15,7 @@ export const RELEASE_AFTER_MS = 2_000
 // fill it, and a narrower one keeps today's narrow layout.
 export const REFERENCE_WIDTH = 1640
 // `--page-dark` (web/src/styles/tokens.css): the window opens in the page's colour, with no white flash.
-export const BACKGROUND = '#E6DDCA'
+export const BACKGROUND = '#100E18'
 
 // The page sizes, in percent of the size the page grows to with the window: 100 fills the window as before the setting
 // (PAGE_SIZES in src/guildboard/config.py). Ctrl and + or -, and Ctrl and the mouse wheel, step through them.
@@ -324,7 +324,7 @@ export class Dashboard {
     const { bounds, maximized } = restoredBounds(readPlacement(this.deps.placementFile), workAreas, primary)
     const win = this.deps.createWindow({
       ...bounds,
-      title: this.deps.demo ? 'Guild Board - demo data' : 'Guild Board',
+      title: this.deps.demo ? 'TUSKFiZZY - demo data' : 'TUSKFiZZY',
       icon: this.deps.icon,
       backgroundColor: BACKGROUND,
       show: false,

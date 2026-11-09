@@ -284,7 +284,7 @@ async def test_the_live_download_is_one_plain_get_of_the_one_address(monkeypatch
     assert (request.full_url, request.get_method(), request.data, timeout) == (
         netpolicy.ACHIEVEMENT_LIST_URL, "GET", None, 30.0,
     )
-    assert request.header_items() == [("User-agent", "GuildBoard")]  # Guild Board's user agent and nothing else
+    assert request.header_items() == [("User-agent", "TUSKFiZZY")]  # Guild Board's user agent and nothing else
     assert not request.has_header("Cookie")
 
 

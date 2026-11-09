@@ -14,6 +14,7 @@ import sys
 import tempfile
 import threading
 import webbrowser
+from urllib.parse import parse_qsl, urlsplit
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Coroutine, Mapping
@@ -26,7 +27,7 @@ from guildboard.achievements.notes import load_notes
 from guildboard.achievements.progress import Progress
 from guildboard.achievements.updates import ListUpdates, demo_fetch, github_fetch
 from guildboard.api.icons import IconCache
-from guildboard.auth import Auth
+from guildboard.auth import Auth, has_required, parse_cookie_text
 from guildboard.backups import (
     DEMO as BACKUP_DEMO, SUFFIX as BACKUP_SUFFIX, RESTORE_UNFINISHED, BackupRefused, apply_pending, database_copy,
     export_target, stage_database, stage_restore, write_backup,
@@ -62,6 +63,7 @@ from guildboard.characters.art import ArtCache, live_download
 from guildboard.characters.service import Characters
 from guildboard.characters.wiki import TUTORIAL, CharacterWiki
 from guildboard.pulls import gamecache, nextversion, wishapi
+from guildboard.pulls.gamecache import WishLink
 from guildboard.pulls.banners import Banners
 from guildboard.pulls.importer import (
     AUTO_EVERY, ImportBusy, ImportNotReady, WishImporter, demo_links, demo_pages, demo_pause,
@@ -114,10 +116,10 @@ LIVE_GAP = 60  # a page that asks again within this many seconds is told what th
 # most, until the window's Save dialog has a place for it, and for ten minutes at most. Its name is the one the dialog
 # offers, and no other is taken.
 PICTURE_HELD = timedelta(minutes=10)
-PICTURE_NAME = re.compile(r"Guild Board Wrapped [0-9]{4} (?:Story|Wide)\.png")
+PICTURE_NAME = re.compile(r"TUSKFiZZY Wrapped [0-9]{4} (?:Story|Wide)\.png")
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
-NOT_A_PICTURE = "This is not a picture of Guild Board's Wrapped."
-SOURCE_BUILD_FAILED = "Guild Board could not load its HoYoLAB library. See the log file."
+NOT_A_PICTURE = "This is not a picture of TUSKFiZZY's Wrapped."
+SOURCE_BUILD_FAILED = "TUSKFiZZY could not load its HoYoLAB library. See the log file."
 NO_PICTURE = "There is no picture to save. Press Save as picture again."
 PICTURE_GAME_FOLDER = "A picture cannot be saved in the game's folders. Choose another place."
 PICTURE_REPLACED = "This picture was not saved: a newer one took its place, and it has a Save dialog of its own."
@@ -276,6 +278,8 @@ class Core:
             except (OSError, sqlite3.Error, StoreError):
                 log.warning("The daily backup could not be made", exc_info=True)
         self.tokens = TokenStore(paths.token_path)
+        self._tuskfizzy_note_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
+        self._tuskfizzy_chronicle_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
         self._source: Any = None
         self._make_source: Callable[[], Any] | None = None  # the live source's maker, until it is made
         self._source_lock = threading.Lock()
@@ -350,7 +354,7 @@ class Core:
         self._picture: tuple[int, str, bytes, datetime] | None = None
         self._picture_timer: asyncio.TimerHandle | None = None
         self._pictures_held = 0
-        # set by the shell when its tray icon keeps Guild Board running after the window closes
+        # set by the shell when its tray icon keeps TUSKFiZZY running after the window closes
         self.has_tray = False
         # Set by the shell: shows a notification from the tray icon, a reminder or a test, with its text.
         self.notifier: Callable[[str, str], bool] | None = None
@@ -366,7 +370,7 @@ class Core:
         # What the shell reported about the overlay, by overlay_shell: its displays and the state of its hotkey. None
         # while there is no shell.
         self._overlay_report: tuple[list[dict[str, Any]], str] | None = None
-        # Whether Guild Board's window is maximized, as the shell reports it (window_state): the Board then shows its
+        # Whether TUSKFiZZY's window is maximized, as the shell reports it (window_state): the Board then shows its
         # arrangement for a maximized window. False while there is no shell.
         self._window_maximized = False
         self._watch_task: asyncio.Task[None] | None = None
@@ -420,7 +424,7 @@ class Core:
             notify=self.remind, quick=self.quick,
         )
         self._reminders_task: asyncio.Task[None] | None = None
-        # Pulls. An import that Guild Board's closing cut short is ended as failed, as a sync is. The planner reads what
+        # Pulls. An import that TUSKFiZZY's closing cut short is ended as failed, as a sync is. The planner reads what
         # is kept. The banners and the icons are read from HoYoverse's own pages, through netpolicy; the demo's stay
         # without any read, as the demo contacts nothing.
         now = self.clock.now()
@@ -449,7 +453,7 @@ class Core:
             read_links, pages, pause = gamecache.read_history_links, wishapi.fetch_page, asyncio.sleep
             ledger_pages, ledger_user = ledger_api.fetch_page, ledger_api.fetch_user
         # Both histories also update themselves with read-only keys HoYoverse gives the stored HoYoLAB login, reading no
-        # file of the game's: at the start, once the first sync has run, and then every AUTO_EVERY while Guild Board
+        # file of the game's: at the start, once the first sync has run, and then every AUTO_EVERY while TUSKFiZZY
         # runs. A refusal of the login stops them until the next login; Import stays, reading the game's files. The
         # demo's keys are stand-ins, and its first update waits for AUTO_EVERY or POST /api/demo/refresh.
         self._login_refused = False
@@ -495,7 +499,7 @@ class Core:
         # for an update every AUTO_EVERY; when it closes, one more is asked for, in a task of its own.
         self._auto_task: asyncio.Task[None] | None = None
         self._last_auto_task: asyncio.Task[None] | None = None
-        # Guild Board's own updates, for the installed copy alone: a checkout updates itself with git, and the demo
+        # TUSKFiZZY's own updates, for the installed copy alone: a checkout updates itself with git, and the demo
         # contacts nothing.
         self.updater = Updater(
             paths.data_dir / "updates", self.bus, enabled=not demo and getattr(sys, "frozen", False),
@@ -954,6 +958,192 @@ class Core:
         log.info("A %s reminder: line %s, notification %s.", kind, "yes" if line else "no", "yes" if notified else "no")
         return line or notified
 
+    def _tuskfizzy_session_path(self, account_id: str) -> Path:
+        """A profile's own DPAPI-protected HoYoLAB login, separate from the Board's primary session."""
+        if not isinstance(account_id, str) or not account_id or len(account_id) > 128:
+            raise ValueError("Choose a valid Genshin profile.")
+        profile = next((item for item in self.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+        if profile is None:
+            raise ValueError("That Genshin profile no longer exists.")
+        # IDs from legacy imports are arbitrary text; only a digest becomes a filename.
+        digest = hashlib.sha256(account_id.encode("utf-8")).hexdigest()
+        return self.paths.data_dir / "tuskfizzy_sessions" / f"{digest}.bin"
+
+    async def tuskfizzy_login(self, account_id: str, cookie_text: str) -> dict[str, Any]:
+        """Validate and save a dedicated HoYoLAB login for exactly one TUSKFiZZY Genshin profile."""
+        if self.demo:
+            raise ValueError("Demo mode cannot save HoYoLAB sessions.")
+        if not isinstance(cookie_text, str) or len(cookie_text) > 32_000:
+            raise ValueError("Paste the complete HoYoLAB Cookie header.")
+        profile = next((item for item in self.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+        if profile is None:
+            raise ValueError("That Genshin profile no longer exists.")
+        cookies = parse_cookie_text(cookie_text)
+        if not has_required(cookies):
+            raise ValueError("The pasted text does not contain a complete HoYoLAB login.")
+        for value in cookies.values():
+            register_secret(value)
+        await self._source_ready()
+        accounts = await self.source.list_accounts(cookies)
+        chosen = next((item for item in accounts if str(item.uid) == profile["uid"]), None)
+        if chosen is None:
+            raise ValueError("This HoYoLAB login does not contain the Genshin UID saved in this profile.")
+        if chosen.server != profile["server"]:
+            raise ValueError("The HoYoLAB login's server does not match this Genshin profile.")
+        path = self._tuskfizzy_session_path(account_id)
+        TokenStore(path).save(StoredToken(dict(cookies), chosen.uid, chosen.server, chosen.nickname))
+        self._tuskfizzy_note_cache.pop(account_id, None)
+        self._tuskfizzy_chronicle_cache.pop(account_id, None)
+        self.bus.publish("tuskfizzy_changed")
+        return {"uid": str(chosen.uid), "nickname": chosen.nickname, "server": chosen.server}
+
+    def tuskfizzy_forget_session_id(self, account_id: str) -> None:
+        """Delete a profile's encrypted session even when an import has just removed its profile row."""
+        if not isinstance(account_id, str) or not account_id or len(account_id) > 128:
+            raise ValueError("Choose a valid Genshin profile.")
+        digest = hashlib.sha256(account_id.encode("utf-8")).hexdigest()
+        TokenStore(self.paths.data_dir / "tuskfizzy_sessions" / f"{digest}.bin").delete()
+        self._tuskfizzy_note_cache.pop(account_id, None)
+        self._tuskfizzy_chronicle_cache.pop(account_id, None)
+
+    def tuskfizzy_logout(self, account_id: str) -> None:
+        self._tuskfizzy_session_path(account_id)  # refuse unknown profile IDs
+        self.tuskfizzy_forget_session_id(account_id)
+        self.bus.publish("tuskfizzy_changed")
+
+    async def tuskfizzy_profile_chronicle(self, account_id: str) -> dict[str, Any] | None:
+        """Read Battle Chronicle overview and endgame using this profile's own encrypted HoYoLAB session."""
+        if self.demo:
+            return None
+        profile = next((item for item in self.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+        if profile is None:
+            return None
+        now = self.clock.now()
+        cached = self._tuskfizzy_chronicle_cache.get(account_id)
+        if cached is not None and 0 <= (now - cached[0]).total_seconds() < 900:
+            return dict(cached[1])
+        tokens = TokenStore(self._tuskfizzy_session_path(account_id))
+        token = tokens.load()
+        if token is None or str(token.uid) != profile["uid"] or token.server != profile["server"]:
+            return None
+        await self._source_ready()
+        from guildboard.sources.hoyolab import HoyolabSource
+        source = HoyolabSource(tokens)
+        overview_result = await source.fetch("overview", now=now)
+        overview = overview_result.record
+        if overview is None:
+            return None
+        endgame_result = await source.fetch("endgame", now=now)
+        endgame = endgame_result.record
+        value = {
+            "uid": profile["uid"],
+            "nickname": overview.nickname,
+            "server": overview.server,
+            "adventureRank": overview.adventure_rank,
+            "abyssProgress": overview.abyss_progress,
+            "counters": dict(overview.counters),
+            "regions": [
+                {"name": region.name, "progress": region.pct,
+                 "areas": [{"name": area.name, "progress": area.pct} for area in region.areas]}
+                for region in overview.regions
+            ],
+            "endgame": [
+                {"mode": mode.mode, "label": mode.label, "hasData": mode.has_data,
+                 "result": mode.result_text, "score": mode.score, "period": mode.period_label}
+                for mode in (endgame.modes if endgame is not None else ())
+            ],
+            "readAt": overview_result.fetched_at.isoformat(),
+        }
+        self._tuskfizzy_chronicle_cache[account_id] = (now, value)
+        return dict(value)
+
+    def tuskfizzy_import_wish_link(self, account_id: str, url: str) -> None:
+        """Start a TUSKFiZZY profile-scoped import from the legacy PowerShell wish-history URL."""
+        if self.demo:
+            raise ValueError("Demo mode cannot import a real wish-history URL.")
+        profile = next((item for item in self.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+        if profile is None:
+            raise ValueError("That Genshin profile no longer exists.")
+        if not isinstance(url, str) or not url or len(url) > 16_000:
+            raise ValueError("Paste the complete wish-history URL.")
+        parts = urlsplit(url.strip())
+        host = (parts.hostname or "").lower()
+        if (parts.scheme != "https" or not (host.endswith(".hoyoverse.com") or host.endswith(".mihoyo.com"))
+                or parts.username is not None or parts.password is not None or parts.port is not None):
+            raise ValueError("Use the HTTPS wish-history URL copied from the official Genshin wish-history method.")
+        pairs = parse_qsl(parts.query, keep_blank_values=True, strict_parsing=False, max_num_fields=64)
+        query: dict[str, str] = {}
+        for key, value in pairs:
+            if key in query:
+                raise ValueError("The wish-history URL contains duplicate parameters.")
+            query[key] = value
+        authkey = query.get("authkey", "")
+        if not authkey or len(authkey) > 8_000:
+            raise ValueError("The wish-history URL is missing its authkey.")
+        if query.get("authkey_ver", "1") not in ("1", "2"):
+            raise ValueError("The wish-history URL has an unsupported key version.")
+        if query.get("auth_appid", "webview_gacha") != "webview_gacha":
+            raise ValueError("This URL is not a Genshin wish-history link.")
+        if query.get("game_biz", "hk4e_global") != "hk4e_global":
+            raise ValueError("This URL is not for Genshin Impact.")
+        region = query.get("region", profile["server"])
+        if region != profile["server"]:
+            raise ValueError("The wish-history URL's server does not match this Genshin profile.")
+        query.update({
+            "authkey_ver": query.get("authkey_ver", "1"),
+            "auth_appid": "webview_gacha",
+            "sign_type": query.get("sign_type", "2"),
+            "game_biz": "hk4e_global",
+            "region": region,
+            "lang": query.get("lang", "en"),
+        })
+        link = WishLink(url.strip(), query, Path())
+        self.wish_import.start_with_link(link, int(profile["uid"]))
+
+    def tuskfizzy_session_connected(self, account_id: str) -> bool:
+        """Whether this Genshin profile has its own saved login, without exposing any cookie."""
+        try:
+            profile = next((item for item in self.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+            if profile is None:
+                return False
+            token = TokenStore(self._tuskfizzy_session_path(account_id)).load()
+            return token is not None and str(token.uid) == profile["uid"] and token.server == profile["server"]
+        except (OSError, ValueError):
+            return False
+
+    async def tuskfizzy_profile_note(self, account_id: str) -> dict[str, Any] | None:
+        """Fetch a profile's own Daily Note using its own encrypted cookies, never the primary account's session."""
+        if self.demo:
+            return None
+        profile = next((item for item in self.store.tuskfizzy_genshin_accounts_list() if item["id"] == account_id), None)
+        if profile is None:
+            return None
+        now = self.clock.now()
+        cached = self._tuskfizzy_note_cache.get(account_id)
+        if cached is not None and 0 <= (now - cached[0]).total_seconds() < 300:
+            return dict(cached[1])
+        tokens = TokenStore(self._tuskfizzy_session_path(account_id))
+        token = tokens.load()
+        if token is None or str(token.uid) != profile["uid"] or token.server != profile["server"]:
+            return None
+        await self._source_ready()
+        from guildboard.sources.hoyolab import HoyolabSource
+        source = HoyolabSource(tokens)
+        result = await source.fetch("notes", now=now)
+        record = result.record
+        if record is None:
+            return None
+        note = {
+            "profileName": profile["name"], "uid": profile["uid"],
+            "resin": record.resin, "resinMax": record.resin_max,
+            "commissionDone": record.commissions_done, "commissionTotal": record.commissions_max,
+            "bonusClaimed": record.extra_reward_claimed,
+            "expeditionsDone": record.expeditions_done, "expeditionsTotal": record.expeditions_total,
+            "readAt": result.fetched_at.isoformat(),
+        }
+        self._tuskfizzy_note_cache[account_id] = (now, note)
+        return dict(note)
+
     def logout(self) -> None:
         if self.auth is not None:
             self.auth.logout()
@@ -1000,7 +1190,7 @@ class Core:
 
     def backup_file_name(self) -> str:
         """The name the export offers: the core's date, in the player's own time zone."""
-        return f"Guild Board backup {self.clock.now().astimezone().date().isoformat()}{BACKUP_SUFFIX}"
+        return f"TUSKFiZZY backup {self.clock.now().astimezone().date().isoformat()}{BACKUP_SUFFIX}"
 
     async def export_backup(self, target: Path) -> str:
         """Write the backup file the player chose; the file name written. Refused in the game's folders, and no folder is
@@ -1084,7 +1274,7 @@ class Core:
         return target.name
 
     def _game_folders(self) -> list[Path]:
-        """The game's folders Guild Board knows without reading anything of the game's: the folder of its log, and the
+        """The game's folders TUSKFiZZY knows without reading anything of the game's: the folder of its log, and the
         ScreenShot folder the gallery has, found through the log or pasted. Its install folder is not among them: the
         settings keep a folder that was found and one that was pasted alike, and the folder beside a pasted one may be a
         whole drive. An install folder is told by the program it holds (backups.export_target)."""
@@ -1109,7 +1299,7 @@ class Core:
 
     async def restore_from(self, source: Path) -> dict[str, bool]:
         """Stage a restore of a backup file, or of one of the copies in the backups folder, and ask the shell to restart
-        Guild Board, which puts it in place at its start. Without a shell the player restarts it. Staging unpacks and
+        TUSKFiZZY, which puts it in place at its start. Without a shell the player restarts it. Staging unpacks and
         checks a file of up to 200 MB, so it runs in a worker thread; it reads no store."""
         if self.demo:
             raise BackupRefused(BACKUP_DEMO)
@@ -1429,8 +1619,8 @@ class Core:
                 self.codebook.mark_noticed([item["code"] for item in fresh], now)
                 if self.settings.notifications:
                     self.notify("codes", (
-                        "1 new livestream code. Open Guild Board to redeem it." if len(fresh) == 1
-                        else f"{len(fresh)} new livestream codes. Open Guild Board to redeem them."
+                        "1 new livestream code. Open TUSKFiZZY to redeem it." if len(fresh) == 1
+                        else f"{len(fresh)} new livestream codes. Open TUSKFiZZY to redeem them."
                     ))
         if changed:
             self.codes_changed()
@@ -1445,7 +1635,7 @@ class Core:
             await asyncio.sleep(LIVE_EVERY)
 
     async def _daily_backups(self) -> None:
-        """The daily copy for the date a Guild Board left running reaches: the start makes the first of a day, and one kept in
+        """The daily copy for the date a TUSKFiZZY left running reaches: the start makes the first of a day, and one kept in
         the tray for a week would make none after it. Real waits, as the banners' are. The copy is cheap while it is made on
         the loop's thread (SQLite's backup API, about 20 ms for 18 MB), and the connection is the loop's alone."""
         while True:
@@ -1776,7 +1966,7 @@ class Core:
         self.bus.publish("overlay_changed")
 
     def window_state(self, maximized: bool) -> None:
-        """Whether Guild Board's window is maximized, as the shell reports it each time it changes: the Board shows its
+        """Whether TUSKFiZZY's window is maximized, as the shell reports it each time it changes: the Board shows its
         arrangement for that window, so the pages are told."""
         self._window_maximized = maximized
         self.bus.publish("window_changed")
@@ -1834,6 +2024,6 @@ class Core:
         await self.characters.stop()
         await self.updater.stop()
         await self.wish_import.stop()  # an import cut short is recorded as failed at the next start
-        self.wish_import.drop_link()  # the key of the link it kept goes with Guild Board
+        self.wish_import.drop_link()  # the key of the link it kept goes with TUSKFiZZY
         await self.scheduler.stop()
         self.store.close()

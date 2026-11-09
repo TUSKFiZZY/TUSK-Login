@@ -13,7 +13,7 @@ from guildboard.ledger.reasons import CURRENCIES, PACK_IDS
 
 log = logging.getLogger(__name__)
 
-APP_DIR_NAME = "GuildBoard"
+APP_DIR_NAME = "TUSKFiZZY"
 ALLOWED_INTERVALS = (0, 30, 60)
 OVERLAY_OPACITY = (50, 100)  # percent: the least and the most of a pinned widget that shows
 OVERLAY_SIZES = (100, 125, 150, 175, 200)  # percent; the Board's size, 100, unless the player chooses larger
@@ -71,13 +71,13 @@ class AppPaths:
 
 
 def standard_data_dir(demo: bool = False) -> Path:
-    """The folder a start with no --data-dir and no GUILDBOARD_DATA_DIR uses."""
+    """The folder a start with no --data-dir and no TUSKFIZZY_DATA_DIR uses."""
     base = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
     return Path(base) / (APP_DIR_NAME + ("-demo" if demo else ""))
 
 
 def default_data_dir(demo: bool = False) -> Path:
-    override = os.environ.get("GUILDBOARD_DATA_DIR")
+    override = os.environ.get("TUSKFIZZY_DATA_DIR")
     if override:
         return Path(override)
     return standard_data_dir(demo)

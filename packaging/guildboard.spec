@@ -1,9 +1,9 @@
-# PyInstaller recipe for the core of the installed copy of Guild Board. Run by build-installer.ps1, which first builds the
+# PyInstaller recipe for the core of the installed copy of TUSKFiZZY. Run by build-installer.ps1, which first builds the
 # interface (web/dist) and writes build/package/version.txt.
 #
-# One folder, named core, with one program in it: guildboard-core.exe. The Electron shell starts it hidden, with the channel
+# One folder, named core, with one program in it: tuskfizzy-core.exe. The Electron shell starts it hidden, with the channel
 # on its standard input and output, so it is a console program. shell/build/package.mjs puts the folder into the shell's
-# resources, at resources\core\guildboard-core.exe, where the shell looks (shell/src/paths.ts).
+# resources, at resources\core\tuskfizzy-core.exe, where the shell looks (shell/src/paths.ts).
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_all
@@ -44,7 +44,7 @@ COLLECT(
         core.scripts,
         [],
         exclude_binaries=True,
-        name="guildboard-core",
+        name="tuskfizzy-core",
         icon=ICON,
         version=str(ROOT / "build" / "package" / "version.txt"),
         console=True,

@@ -20,6 +20,7 @@ import { Segmented } from '../ui/Segmented.tsx'
 import { Sign, type SignName } from '../ui/Sign.tsx'
 import { Switch } from '../ui/Switch.tsx'
 import { ImportPanel } from './ImportPanel.tsx'
+import { TuskfizzyImportPanel } from './TuskfizzyImportPanel.tsx'
 import { ListPanel, useListUpdates } from './ListPanel.tsx'
 import { hashOf } from '../route.ts'
 import { weekShown } from './characters/hidden.ts'
@@ -1232,6 +1233,10 @@ function YourData({ live, status }: { live: Live; status: Status }) {
       <div className="set-row set-held">
         <b>Import progress</b>
         <ImportPanel />
+      </div>
+      <div className="set-row set-held">
+        <b>Old TUSKFiZZY data</b>
+        <TuskfizzyImportPanel />
       </div>
     </Group>
   )

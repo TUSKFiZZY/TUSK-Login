@@ -122,7 +122,7 @@ def test_the_login_mode_asks_for_a_key_as_guild_board_does_and_sends_no_cookie_e
         "account_mid_v2": "ACCOUNT-MID-VALUE-0123456789",
     }
     minted = "MINTED-PROBE-KEY/0123+456789=="  # made up; HoYoverse's answer writes it URL-encoded
-    monkeypatch.setenv("GUILDBOARD_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("TUSKFIZZY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("USERPROFILE", str(tmp_path / "home"))  # no game here: nothing of it may be needed
     paths = AppPaths(tmp_path / "data")
     paths.ensure()

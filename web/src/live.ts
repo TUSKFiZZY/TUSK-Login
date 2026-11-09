@@ -14,7 +14,7 @@ import type { PullsImportEvent, Settings, Status } from './types.ts'
 export const EVENTS = [
   'sync_started', 'sync_finished', 'state_changed', 'game_started', 'game_stopped', 'achievements_changed',
   'timers_changed', 'layout_changed', 'settings_changed', 'overlay_changed', 'pulls_changed', 'update_changed', 'map_changed', 'codes_changed',
-  'characters_changed', 'online_changed', 'checkin_changed', 'stats_changed', 'window_changed',
+  'characters_changed', 'online_changed', 'checkin_changed', 'tuskfizzy_changed', 'tuskfizzy_imported', 'stats_changed', 'window_changed',
 ]
 const REFRESH_EVERY_MS = 30_000
 

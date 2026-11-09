@@ -11,7 +11,7 @@ export const EXTERNAL_LINKS: readonly string[] = [
   'https://act.hoyolab.com/app/community-game-records-sea/',
   // HoYoLAB's own check-in page, where the player claims when it asks for a check (the daily check-in design).
   'https://act.hoyolab.com/ys/event/signin-sea-v3/',
-  // Settings, About: Guild Board's source and privacy notice. The player's browser opens them; Guild Board asks for nothing.
+  // Settings, About: TUSKFiZZY's upstream source and privacy notice. The player's browser opens them; TUSKFiZZY asks for nothing.
   'https://github.com/QL1STY/guild-board/',
 ]
 

@@ -1,15 +1,15 @@
-/* Guild Board's own dialog pages: the interface's parchment (web/src/styles/tokens.css), plainly. */
+/* TUSKFiZZY's own dialog pages: the dark purple interface palette. */
 :root {
-  --page-dark: #E6DDCA;
-  --surface: #F7F2E7;
-  --border: #D9CDB0;
-  --ink: #3B4255;
-  --ink2: #5E6272;
-  --button: #4A5366;
-  --button-text: #F1EADB;
-  --gold-ink: #8E661B;
-  --warn-soft: #F6E3C4;
-  --warn-line: #E0BE8A;
+  --page-dark: #100E18;
+  --surface: #1B1826;
+  --border: #39334C;
+  --ink: #F5F1FF;
+  --ink2: #D4CBE5;
+  --button: #8D61E8;
+  --button-text: #FFFFFF;
+  --gold-ink: #D1B8FF;
+  --warn-soft: #3A2B45;
+  --warn-line: #805A9A;
 }
 
 * { box-sizing: border-box; }

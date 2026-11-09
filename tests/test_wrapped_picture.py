@@ -16,7 +16,7 @@ from guildboard.core import NO_PICTURE, PICTURE_GAME_FOLDER, PICTURE_REPLACED, C
 from support import AccountSource, FakeSleep
 
 PNG = b"\x89PNG\r\n\x1a\n" + bytes(range(256)) * 4
-NAME = "Guild Board Wrapped 2026 Story.png"
+NAME = "TUSKFiZZY Wrapped 2026 Story.png"
 PICTURE = "/api/stats/year/picture"
 
 
@@ -90,7 +90,7 @@ def test_a_picture_replaced_while_its_dialog_was_open_is_not_saved_under_its_nam
     core.hold_picture(NAME, PNG)
     first, offered = core.picture_offer()
     assert offered == NAME
-    wide = "Guild Board Wrapped 2026 Wide.png"
+    wide = "TUSKFiZZY Wrapped 2026 Wide.png"
     core.hold_picture(wide, PNG + b"wide")
     second, offered = core.picture_offer()
     assert offered == wide and second != first
@@ -109,7 +109,7 @@ def test_a_picture_replaced_while_its_dialog_was_open_is_not_saved_under_its_nam
 def test_a_picture_with_no_window_answers_409(client, core):
     answer = _send(client, PNG)
     assert answer.status_code == 409
-    assert answer.json()["error"] == "Open Guild Board's window to save the picture."
+    assert answer.json()["error"] == "Open TUSKFiZZY's window to save the picture."
     assert core.picture_name() is None  # nothing is kept that no dialog will ask for
 
 
@@ -119,11 +119,11 @@ def test_a_picture_that_is_not_a_png_is_refused(client, core):
     for body in (b"GIF89a" + PNG, b"", PNG[:7], b"<svg/>"):
         answer = _send(client, body)
         assert answer.status_code == 422, body[:8]
-        assert answer.json()["error"] == "This is not a picture of Guild Board's Wrapped."
+        assert answer.json()["error"] == "This is not a picture of TUSKFiZZY's Wrapped."
     # And a name that is not the poster's: a place, another kind of file, another name.
     for name in (
-        "..\\..\\x.png", "C:/Windows/x.png", "Guild Board Wrapped 2026 Story.exe", "notes.png", "", NAME + " ",
-        "Guild Board Wrapped \u0662\u0660\u0662\u0666 Story.png",  # digits, but not 0 to 9
+        "..\\..\\x.png", "C:/Windows/x.png", "TUSKFiZZY Wrapped 2026 Story.exe", "notes.png", "", NAME + " ",
+        "TUSKFiZZY Wrapped \u0662\u0660\u0662\u0666 Story.png",  # digits, but not 0 to 9
     ):
         answer = _send(client, PNG, name)
         assert answer.status_code == 422, name
@@ -133,10 +133,10 @@ def test_a_picture_that_is_not_a_png_is_refused(client, core):
 def test_a_picture_is_offered_to_the_window_and_written_where_the_player_chose(client, core, tmp_path):
     asked: list[str] = []
     core.window_requests = lambda kind: asked.append(kind) or True
-    answer = _send(client, PNG, "Guild Board Wrapped 2026 Wide.png")
+    answer = _send(client, PNG, "TUSKFiZZY Wrapped 2026 Wide.png")
     assert answer.status_code == 200 and answer.json() == {"opened": True}
     assert asked == ["save_picture"]
-    assert core.picture_name() == "Guild Board Wrapped 2026 Wide.png"
+    assert core.picture_name() == "TUSKFiZZY Wrapped 2026 Wide.png"
     chosen = tmp_path / "Pictures" / "My Wrapped.png"
     chosen.parent.mkdir()
     assert core.save_picture(chosen) == "My Wrapped.png"
@@ -152,10 +152,10 @@ def test_a_picture_is_offered_to_the_window_and_written_where_the_player_chose(c
 
 def test_one_picture_is_held_at_most_and_dropped_after_ten_minutes(core, clock, tmp_path):
     core.hold_picture(NAME, PNG)
-    core.hold_picture("Guild Board Wrapped 2025 Wide.png", PNG + b"x")
-    assert core.picture_name() == "Guild Board Wrapped 2025 Wide.png"
+    core.hold_picture("TUSKFiZZY Wrapped 2025 Wide.png", PNG + b"x")
+    assert core.picture_name() == "TUSKFiZZY Wrapped 2025 Wide.png"
     clock.advance(minutes=9, seconds=59)
-    assert core.picture_name() == "Guild Board Wrapped 2025 Wide.png"
+    assert core.picture_name() == "TUSKFiZZY Wrapped 2025 Wide.png"
     clock.advance(seconds=2)
     assert core.picture_name() is None
     with pytest.raises(BackupRefused):

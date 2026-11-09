@@ -105,7 +105,7 @@ test('stacked is true only when the core sends groups', () => {
 
 test('the groups have the plan\'s colours, and Other its own token', () => {
   const t = tokenValues(tokens)
-  expect(t['--other']).toBe('#B9AD92')
+  expect(t['--other']).toBe('#6B607C')
   expect(GROUP_COLOURS).toEqual({
     commissions: 'var(--fill)',
     welkin: 'var(--series)',

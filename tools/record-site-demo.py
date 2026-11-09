@@ -58,6 +58,7 @@ PAGES: dict[str, tuple[str, ...]] = {
     "week": (),
     "codes": ("/api/codes",),
     "gallery": ("/api/gallery",),
+    "tuskfizzy": ("/api/tuskfizzy/month?month=2026-11", "/api/tuskfizzy/tracker?day=2026-11-09"),
     "settings": (
         "/api/synclog?limit=50", "/api/overlay", "/api/ledger", "/api/achievements?unlisted=true", "/api/backups",
         "/api/whats-new", "/api/notices", "/api/gallery",
@@ -148,6 +149,7 @@ EXPANDERS: dict[str, Callable[[Get], list[str]]] = {
 # What the interface asks of the core that is not a model to record, by the address it starts with, and why.
 NOT_RECORDED = {
     "/api/events": "the stream of the core's events, left out of the browser demo",
+    "/api/tuskfizzy/enka/": "a live public Enka profile is specific to a UID and is not part of the made-up browser demo",
     "/api/icon/": "a picture, read by the browser from an address that icons.json holds for its key (web/src/sitedemo.ts)",
     "/api/art/": "a picture, read by the browser from HoYoverse's address (web/src/sitedemo.ts)",
     "/api/gallery/": "the gallery is off, and its pictures are the player's own",
@@ -161,7 +163,7 @@ NOT_RECORDED = {
 # browser demo's transport refuses what a page sends (web/src/sitedemo.ts). A test reads the interface's source for any other path.
 WRITE_ONLY = (
     "/api/achievements/counter", "/api/achievements/group", "/api/achievements/stage", "/api/auth/", "/api/codes/redeem",
-    "/api/demo/open", "/api/online/", "/api/profile/pins", "/api/profile/sharing", "/api/sync/pause", "/api/sync/resume",
+    "/api/demo/open", "/api/tuskfizzy/import", "/api/online/", "/api/profile/pins", "/api/profile/sharing", "/api/sync/pause", "/api/sync/resume",
 )
 
 

@@ -25,7 +25,7 @@ from guildboard.store import StoreError
 
 _TLS_READY = False
 NO_SHELL_TEXT = (
-    "Guild Board's window is its shell. Start it with guildboard-app.exe, or with npm start --prefix shell in a checkout."
+    "TUSKFiZZY's window is its shell. Start it with tuskfizzy-app.exe, or with npm start --prefix shell in a checkout."
 )
 
 
@@ -53,7 +53,7 @@ def default_web_dir() -> Path:
 
 
 def _announce(link: str) -> None:
-    """Print the launch link at once. A program that started Guild Board reads it from a pipe, where
+    """Print the launch link at once. A program that started TUSKFiZZY reads it from a pipe, where
     output would otherwise be held back until the process ends."""
     print(link, flush=True)
 
@@ -100,8 +100,8 @@ async def serve(
         listener.listen(128)  # from here on a connection is queued, so the link can be announced
         bound = listener.getsockname()[1]
         app = create_app(core, bound, web_dir)
-        # log_config=None: the server's own messages go to Guild Board's log file, not only to the console.
-        # timeout_graceful_shutdown: a connection that stays open cannot keep Guild Board from closing.
+        # log_config=None: the server's own messages go to TUSKFiZZY's log file, not only to the console.
+        # timeout_graceful_shutdown: a connection that stays open cannot keep TUSKFiZZY from closing.
         server = uvicorn.Server(uvicorn.Config(app, log_level="warning", log_config=None, timeout_graceful_shutdown=3))
         core.start()
         ready(f"http://127.0.0.1:{bound}/launch?k={core.launch_secret}")
@@ -136,7 +136,7 @@ def _run_for_shell(paths: AppPaths, *, demo: bool, demo_now: datetime | None) ->
 
 def main(argv: Sequence[str] | None = None) -> int:
     use_the_windows_store()
-    parser = argparse.ArgumentParser(prog="guildboard", description="Guild Board")
+    parser = argparse.ArgumentParser(prog="tuskfizzy", description="TUSKFiZZY")
     parser.add_argument("link", nargs="?", default=None, help="an invite link, which Windows hands over when one is opened")
     parser.add_argument("--demo", action="store_true", help="run on a synthetic account, with no network access")
     parser.add_argument("--no-shell", action="store_true", help="run the core alone and print a launch link")
@@ -180,7 +180,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if demo_now is None or demo_now.tzinfo is None:
             print("--demo-now needs a date and time with a time zone, for example 2026-10-13T08:00:00+00:00.")
             return 2
-    # Anything else in its place is ignored: another program can start Guild Board with any argument.
+    # Anything else in its place is ignored: another program can start TUSKFiZZY with any argument.
     invite = invite_code(args.link) if args.link is not None else None
     paths = AppPaths(args.data_dir or default_data_dir(demo=args.demo))
     paths.ensure()
@@ -197,7 +197,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     except Exception:
         # The log closes below, before Python reports the error, so it is written here; under pythonw nothing else
         # would show it.
-        logging.getLogger("guildboard").exception("Guild Board stopped on an error nothing expected")
+        logging.getLogger("guildboard").exception("TUSKFiZZY stopped on an error nothing expected")
         raise
     finally:
         shutdown_logging()

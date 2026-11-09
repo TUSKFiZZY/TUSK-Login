@@ -265,8 +265,8 @@ test('open on a shown window goes to the place without a second window', () => {
 test('the window: title, background, session, settings and no menu', () => {
   make().open()
   const { options, menu } = windows[0]
-  expect(options.title).toBe('Guild Board')
-  expect(options.backgroundColor).toBe('#E6DDCA')
+  expect(options.title).toBe('TUSKFiZZY')
+  expect(options.backgroundColor).toBe('#100E18')
   expect(options.show).toBe(false)
   expect(options.webPreferences).toEqual({
     partition: 'gb-core',
@@ -281,7 +281,7 @@ test('the window: title, background, session, settings and no menu', () => {
 
 test('the demo’s window says so', () => {
   make({ demo: true }).open()
-  expect(windows[0].options.title).toBe('Guild Board - demo data')
+  expect(windows[0].options.title).toBe('TUSKFiZZY - demo data')
 })
 
 test('the window has the app’s icon, on the taskbar and in its title bar, and so has one made again', () => {
@@ -735,7 +735,7 @@ test('with no tray (canHide false) a close ends the app as the demo’s does, an
   dashboard.open()
   const win = windows[0]
   win.visible = true
-  expect(win.options.title).toBe('Guild Board')
+  expect(win.options.title).toBe('TUSKFiZZY')
   const event = { preventDefault: vi.fn() }
   win.emit('close', event)
   expect(event.preventDefault).not.toHaveBeenCalled()

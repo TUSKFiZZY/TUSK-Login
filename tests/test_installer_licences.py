@@ -19,5 +19,5 @@ def test_electrons_own_licence_files_stay_beside_the_program_and_guild_boards_li
     # The packed shell folder carries Electron's LICENSE and LICENSES.chromium.html, which the notices say lie beside the
     # program; Guild Board's own licence must not be written over the first.
     recipe = (ROOT / "packaging" / "installer.iss").read_text("utf-8")
-    assert re.search(r'^Source: "\{#Root\}\\LICENSE"; DestDir: "\{app\}"; DestName: "LICENSE-GuildBoard.txt"', recipe, re.MULTILINE)
-    assert r'#define Built Root + "\shell\out\Guild Board-win32-x64"' in recipe
+    assert re.search(r'^Source: "\{#Root\}\\LICENSE"; DestDir: "\{app\}"; DestName: "LICENSE-TUSKFiZZY.txt"', recipe, re.MULTILINE)
+    assert r'#define Built Root + "\shell\out\TUSKFiZZY-win32-x64"' in recipe

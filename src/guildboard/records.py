@@ -84,6 +84,7 @@ class NotesRecord:
     transformer_obtained: bool = False
     transformer_ready_at: str | None = None  # the time read when it was ready already
     realm_currency_full_at: str | None = None
+    extra_reward_claimed: bool = False
 
 
 @dataclass(frozen=True)

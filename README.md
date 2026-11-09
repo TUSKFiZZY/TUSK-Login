@@ -1,19 +1,17 @@
 <div align="center">
 
-# ✦ Guild Board
+# ✦ TUSKFiZZY
 
 **Your Genshin day on one board.**
 
+*TUSKFiZZY is an independent integration based on Guild Board by QL1STY.*
+
 Resin, commissions, achievements, wishes, primogems and your characters' plans, in one Windows app that keeps it all on your PC and never touches the game.
 
-[![Latest release](https://img.shields.io/github/v/release/QL1STY/guild-board?style=for-the-badge&color=a6751f&labelColor=3b4255&label=latest)](https://github.com/QL1STY/guild-board/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/QL1STY/guild-board/total?style=for-the-badge&color=a6751f&labelColor=3b4255)](https://github.com/QL1STY/guild-board/releases)
 [![MIT licence](https://img.shields.io/badge/licence-MIT-a6751f?style=for-the-badge&labelColor=3b4255)](LICENSE)
 ![Windows 10 and 11](https://img.shields.io/badge/Windows-10%20%7C%2011-a6751f?style=for-the-badge&labelColor=3b4255)
 
-### [⬇ Download for Windows](https://github.com/QL1STY/guild-board/releases/latest) · [▶ Try it in your browser](https://ql1sty.github.io/guild-board/demo/) · [Website](https://ql1sty.github.io/guild-board/)
-
-<sub>Free and open source · no ads, no account needed · about 130 MB · no administrator rights · updates itself</sub>
+<sub>Migration in progress · not yet ready to download or install</sub>
 
 <br>
 
@@ -29,7 +27,7 @@ Unofficial and fan-made. Not affiliated with or endorsed by HoYoverse or COGNOSP
 
 ## What it does
 
-Guild Board reads your HoYoLAB account, with the login you give it, and keeps what it finds on your own PC. Unless you sign in to its optional online features, nothing about you reaches its developer.
+TUSKFiZZY is being built on Guild Board's local-first foundation. The upstream Guild Board project is by QL1STY and is used under its MIT licence. This integration is a work in progress; some Guild Board features are already present, while TUSKFiZZY-specific multi-account sessions, Enka and Battle Chronicle integration, and Windows release verification remain unfinished. Guild Board reads your HoYoLAB account, with the login you give it, and keeps what it finds on your own PC. Unless you sign in to its optional online features, nothing about you reaches its developer.
 
 ### 🧭 The Board: your day at a glance
 
@@ -77,13 +75,13 @@ Press **Ctrl+Alt+G** and a panel of your widgets appears over the game: timers, 
 
 ## Download
 
-Windows 10 or 11. Get the installer from the [latest release](https://github.com/QL1STY/guild-board/releases/latest). It needs no administrator rights, and an update or an uninstall leaves your data where it is. An installed copy checks the same page for a newer version and offers it.
+Windows 10 or 11. Get the installer from the [latest release](https://github.com/TUSKFiZZY/TUSK-Login/releases/latest). It needs no administrator rights, and an update or an uninstall leaves your data where it is. An installed copy checks the same page for a newer version and offers it.
 
 An installed copy updates only to an installer that carries a signature by the release key pinned in `src/guildboard/selfupdate.py`.
 
 To check an installer before you run it, see [`SECURITY.md`](SECURITY.md): `gh attestation verify` shows which commit of this repository GitHub built it from.
 
-Want to look around first? [Try it in your browser](https://ql1sty.github.io/guild-board/demo/) on a made-up account, or start the installed app's demo mode, which contacts nothing.
+Visit the [project site](https://ql1sty.github.io/guild-board/) or [try it in your browser](https://ql1sty.github.io/guild-board/demo/) on a made-up account, or start the installed app's demo mode, which contacts nothing.
 
 ## What it reads
 
@@ -97,7 +95,7 @@ From HoYoLAB, with your own login:
 - Your daily check-in: this month's rewards and how many you claimed.
 - Your characters' builds, and how many materials you hold, from HoYoLAB; character, weapon and artifact pages and pictures from the HoYoLAB wiki.
 
-Everything stays in one folder on your PC, `%LOCALAPPDATA%\GuildBoard`. Nothing is uploaded unless you sign in to an online account. What an online account sends, and what it does not, is in the [privacy notice](PRIVACY.md).
+Everything stays in one folder on your PC, `%LOCALAPPDATA%\TUSKFiZZY`. Nothing is uploaded unless you sign in to an online account. What an online account sends, and what it does not, is in the [privacy notice](PRIVACY.md).
 
 ## What it never does
 
@@ -132,14 +130,14 @@ If HoYoverse asks for something here to change or stop, it changes or stops.
 You need Windows, [uv](https://docs.astral.sh/uv/) with Python 3.12, and Node.js 22.
 
 ```powershell
-git clone https://github.com/QL1STY/guild-board.git
-cd guild-board
+git clone https://github.com/TUSKFiZZY/TUSK-Login.git
+cd TUSK-Login
 powershell -ExecutionPolicy Bypass -File setup.ps1
 ```
 
 `setup.ps1` installs the Python packages and the packages of the interface and of the shell, builds both and puts a shortcut on your desktop. The window is an Electron shell in `shell/`, written in TypeScript; it starts the Python core and shows the interface. Then:
 
-- `npm start --prefix shell -- --demo` runs Guild Board with its window on made-up data. The shell starts the core from `.venv`. `uv run guildboard --demo --no-shell` runs the core alone and prints a link for your browser.
+- `npm start --prefix shell -- --demo` runs Guild Board with its window on made-up data. The shell starts the core from `.venv`. `uv run tuskfizzy --demo --no-shell` runs the core alone and prints a link for your browser.
 - `uv run pytest -n auto` runs the Python tests on every core. In `web/`, `npm test` runs the interface's unit tests and `npm run e2e` its browser tests. In `shell/`, `npm test` runs the shell's unit tests and `npm run e2e` its browser tests.
 - `powershell -ExecutionPolicy Bypass -File build-installer.ps1` makes the installer. It refuses to build until a release key is pinned in `src/guildboard/selfupdate.py`; `-WithoutReleaseKey` builds an installer that never updates.
 

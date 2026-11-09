@@ -5,7 +5,7 @@
 # after that workflow succeeded. It is the only place the release key is used, and the key never goes to GitHub.
 #
 # In order, and stopping with a plain sentence at any failure, with nothing published:
-#   1. gh is logged in as QL1STY, GUILDBOARD_RELEASE_KEY names the key (outside this repository), and the key is the one
+#   1. gh is logged in as TUSKFiZZY, GUILDBOARD_RELEASE_KEY names the key (outside this repository), and the key is the one
 #      the app pins (selfupdate.py). Nothing is downloaded before this.
 #   2. The tag has no release yet where it is to be released: the repository that built it, which installed copies of
 #      2.0.1 and later look in, or with -Bridge the old QL1STY/guild-board-releases.
@@ -19,7 +19,7 @@
 # Run it from this folder's parent with, for example:
 #     powershell -ExecutionPolicy Bypass -File tools\sign-release.ps1 -Tag v1.0.0
 #
-# -Repo is the repository that built the installer, QL1STY/guild-board by default, and the release is made there.
+# -Repo is the repository that built the installer, TUSKFiZZY/TUSK-Login by default, and the release is made there.
 # -NoAttestation skips step 5 for a trial on a private repository, where attestations may not be available; it is refused
 # for a public one. The release notes are those of the version in src\guildboard\reference\changes.json at the tag.
 #
@@ -29,7 +29,7 @@
 
 param(
     [Parameter(Mandatory = $true)][string]$Tag,
-    [string]$Repo = 'QL1STY/guild-board',
+    [string]$Repo = 'TUSKFiZZY/TUSK-Login',
     [switch]$NoAttestation,
     [switch]$Bridge
 )
@@ -37,10 +37,10 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')).TrimEnd('\')
 Set-Location -LiteralPath $root
-$account = 'QL1STY'
+$account = 'TUSKFiZZY'
 # Where it is released: the repository that built it, or the old releases repository with -Bridge.
 $releases = if ($Bridge) { 'QL1STY/guild-board-releases' } else { $Repo }
-$artifact = 'guild-board-installer'
+$artifact = 'tuskfizzy-installer'
 $workflow = 'release.yml'
 . (Join-Path $PSScriptRoot 'release-signing.ps1')
 # What gh writes (the release notes) is read as the UTF-8 it is.
@@ -49,7 +49,7 @@ $workflow = 'release.yml'
 $unpublished = 'Nothing was published.'
 if ($Tag -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') { Stop-With "The tag is a v and three numbers, for example v1.0.0. $unpublished" }
 if ($Repo -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
-    Stop-With "The repository is written owner/name, for example $account/guild-board. $unpublished"
+    Stop-With "The repository is written owner/name, for example $account/TUSK-Login. $unpublished"
 }
 $Version = $Tag.Substring(1)
 
@@ -101,21 +101,21 @@ if ($tagged -cne $built) {
 }
 
 # 4. What it built, into a folder made for this alone, outside this repository.
-$folder = Join-Path ([IO.Path]::GetTempPath()) ("guildboard-release-$Tag-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
+$folder = Join-Path ([IO.Path]::GetTempPath()) ("tuskfizzy-release-$Tag-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
 if (($folder + '\').StartsWith("$root\", [StringComparison]::OrdinalIgnoreCase) -or (Test-Path -LiteralPath $folder)) {
     Stop-With "The folder for the download is inside this repository or already there. $unpublished"
 }
 Write-Output "- Download the installer of run $($run.databaseId)"
 gh run download "$($run.databaseId)" --repo $Repo --name $artifact --dir $folder
 if ($LASTEXITCODE -ne 0) { Stop-With "The installer could not be downloaded from run $($run.databaseId). $unpublished" }
-$setup = Join-Path $folder "Guild Board Setup $Version.exe"
+$setup = Join-Path $folder "TUSKFiZZY Setup $Version.exe"
 $sumFile = "$setup.sha256"
 if (-not (Test-Path -LiteralPath $setup -PathType Leaf) -or -not (Test-Path -LiteralPath $sumFile -PathType Leaf)) {
-    Stop-With ("The run's artifact does not hold 'Guild Board Setup $Version.exe' and its .sha256 file, so $Tag is not " +
+    Stop-With ("The run's artifact does not hold 'TUSKFiZZY Setup $Version.exe' and its .sha256 file, so $Tag is not " +
         "the version it built. $unpublished")
 }
 $expected = ([IO.File]::ReadAllText($sumFile).Trim() -split '\s+')[0]
-$actual = (Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash.ToLowerInvariant()
+$actual = (Get-FileSha256 $setup)
 if ($expected -cnotmatch '^[0-9a-f]{64}$' -or $expected -cne $actual) {
     Stop-With "The installer's SHA-256 is $actual, not the one the build wrote down. It was changed after the build. $unpublished"
 }
@@ -136,7 +136,7 @@ $changes = (gh api -H 'Accept: application/vnd.github.raw+json' "repos/$Repo/con
 if ($LASTEXITCODE -ne 0) { Stop-With "GitHub did not give changes.json at $Tag. $unpublished" }
 try { $notes = Get-ReleaseNotes $Version $changes } catch { Stop-With "changes.json at $Tag is not readable. $unpublished" }
 
-Write-Output "- Upload Guild Board $Version to $releases as a draft, which installed copies do not see"
+Write-Output "- Upload TUSKFiZZY $Version to $releases as a draft, which installed copies do not see"
 # In the repository that built it, the tag is there already, and the release must be on it.
 if (-not (New-DraftRelease $Tag $Version $setup $notes $releases -VerifyTag:(-not $Bridge))) {
     Stop-With "The draft could not be made. $unpublished"
@@ -144,5 +144,5 @@ if (-not (New-DraftRelease $Tag $Version $setup $notes $releases -VerifyTag:(-no
 Publish-SignedDraft $Tag $Version $setup $keyFile $trusted $releases
 
 Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction SilentlyContinue
-Write-Output "Guild Board $Version is released in $releases. Installed copies that look there offer it within twelve hours, or at their next start."
+Write-Output "TUSKFiZZY $Version is released in $releases. Installed copies that look there offer it within twelve hours, or at their next start."
 Write-Output "It was built by $Repo at commit $($tagged.Substring(0, 7)); the installer's SHA-256 is $actual."

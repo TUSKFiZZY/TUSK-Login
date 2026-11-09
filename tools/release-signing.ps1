@@ -1,4 +1,16 @@
 # Guild Board release signatures
+Import-Module Microsoft.PowerShell.Utility -ErrorAction Stop
+
+function Get-FileSha256([string]$Path) {
+    $stream = [IO.File]::OpenRead($Path)
+    try {
+        $algorithm = [Security.Cryptography.SHA256]::Create()
+        try {
+            return ([BitConverter]::ToString($algorithm.ComputeHash($stream))).Replace('-', '').ToLowerInvariant()
+        } finally { $algorithm.Dispose() }
+    } finally { $stream.Dispose() }
+}
+
 #
 # What signs a release for the installed copies, which offer an update only with its signature (selfupdate.py):
 # ECDSA on the curve P-256 over the SHA-256 of the text "<tag>`n<installer name>`n<size>`n<sha256>", the release's tag
@@ -83,7 +95,7 @@ function Test-AssetUrl([string]$Url) {
     # Whether an asset's address is one installed copies download from (INSTALLER_ASSET in netpolicy.py): the code's
     # repository's, where 2.0.1 and later look, or the old releases repository's, where 2.0.0 and earlier look and which
     # the bridge release 2.0.1 reached them in.
-    return $Url -cmatch '^https://api\.github\.com/repos/QL1STY/guild-board(-releases)?/releases/assets/[0-9]+\z'
+    return $Url -cmatch '^https://api\.github\.com/repos/(?:TUSKFiZZY/TUSK-Login|QL1STY/guild-board-releases)/releases/assets/[0-9]+\z'
 }
 
 function Get-ReleaseText([string]$Tag, [string]$Name, [long]$Size, [string]$Sha256) {
@@ -139,7 +151,7 @@ function Get-ReleaseFacts([string]$Json, [string]$Installer) {
     if ([long]$asset.size -le 0 -or [long]$asset.size -gt 600000000) {
         throw "GitHub's installer is $($asset.size) bytes, and installed copies take at most 600000000."
     }
-    $sha256 = (Get-FileHash -LiteralPath $Installer -Algorithm SHA256).Hash.ToLowerInvariant()
+    $sha256 = (Get-FileSha256 $Installer)
     $size = (Get-Item -LiteralPath $Installer).Length
     if ([long]$asset.size -ne $size -or "$($asset.digest)" -cne "sha256:$sha256") {
         throw ("GitHub's installer ($($asset.size) bytes, $($asset.digest)) is not the one that was uploaded " +
@@ -174,7 +186,7 @@ function Test-SignedRelease([string]$Json, [string]$Installer, [string]$Signatur
     $shown = @($release.assets | Where-Object { "$($_.name)" -ceq "$($facts.Name).sig" })
     if ($shown.Count -ne 1) { return $false }
     $asset = $shown[0]
-    $sha256 = (Get-FileHash -LiteralPath $Signature -Algorithm SHA256).Hash.ToLowerInvariant()
+    $sha256 = (Get-FileSha256 $Signature)
     if (-not (Test-AssetUrl "$($asset.url)") -or [long]$asset.size -ne 64 -or [long]$asset.size -ne $bytes.Length) {
         return $false
     }
@@ -260,7 +272,7 @@ function Get-ReleaseNotes([string]$Version, [string]$ChangesJson) {
     # parse_notes). Without an entry, the plain line.
     $changes = $ChangesJson | ConvertFrom-Json
     $lines = $changes.PSObject.Properties | Where-Object { $_.Name -eq $Version } | ForEach-Object { $_.Value }
-    if (-not $lines) { return "Guild Board $Version." }
+    if (-not $lines) { return "TUSKFiZZY $Version." }
     $bullets = $lines | ForEach-Object {
         if ($_ -is [string]) { "- $_" }
         else {
@@ -281,7 +293,7 @@ function New-DraftRelease([string]$Tag, [string]$Version, [string]$Installer, [s
     $notesFile = Join-Path ([IO.Path]::GetTempPath()) "guildboard-notes-$Version.md"
     [IO.File]::WriteAllText($notesFile, $Notes, (New-Object Text.UTF8Encoding $false))
     $verify = @(if ($VerifyTag) { '--verify-tag' })
-    gh release create $Tag $Installer --repo $Repo --title "Guild Board $Version" --notes-file $notesFile --draft @verify | Out-Host
+    gh release create $Tag $Installer --repo $Repo --title "TUSKFiZZY $Version" --notes-file $notesFile --draft @verify | Out-Host
     $drafted = $LASTEXITCODE -eq 0
     Remove-Item -LiteralPath $notesFile -ErrorAction SilentlyContinue
     return $drafted
@@ -311,7 +323,7 @@ function Publish-SignedDraft([string]$Tag, [string]$Version, [string]$Installer,
     }
     Remove-Item -LiteralPath $folder -Recurse -Force -ErrorAction SilentlyContinue
 
-    Write-Output "- Publish Guild Board $Version"
+    Write-Output "- Publish TUSKFiZZY $Version"
     gh release edit $Tag --repo $Repo --draft=false --latest
     if ($LASTEXITCODE -ne 0) { Stop-With "The release could not be published. It is still a draft on GitHub; publish it there." }
 }

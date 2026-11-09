@@ -2,13 +2,13 @@ export type Page =
   | 'board' | 'achievements' | 'backlog' | 'map' | 'stats' | 'pulls'
   | 'ledger' | 'friends'
   | 'characters' | 'week'
-  | 'codes' | 'gallery' | 'settings'
+  | 'codes' | 'gallery' | 'settings' | 'tuskfizzy'
 
 const PAGES: readonly string[] = [
   'board', 'achievements', 'backlog', 'map', 'stats', 'pulls',
   'ledger', 'friends',
   'characters', 'week',
-  'codes', 'gallery', 'settings',
+  'codes', 'gallery', 'settings', 'tuskfizzy',
 ]
 
 export const PAGE_TITLES: Record<Page, string> = {
@@ -25,6 +25,7 @@ export const PAGE_TITLES: Record<Page, string> = {
   codes: 'Gift codes',
   gallery: 'Gallery',
   settings: 'Settings',
+  tuskfizzy: 'Daily Tracker',
 }
 
 /** The special categories of the Achievements page that have an address of their own (spec 12.3). */

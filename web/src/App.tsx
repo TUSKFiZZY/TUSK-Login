@@ -16,6 +16,7 @@ import { MapPage } from './pages/Map.tsx'
 import { Pulls } from './pages/Pulls.tsx'
 import { Ledger } from './pages/Ledger.tsx'
 import { Settings } from './pages/Settings.tsx'
+import { Tuskfizzy } from './pages/Tuskfizzy.tsx'
 import { Stats } from './pages/Stats.tsx'
 import { YourProfile } from './pages/YourProfile.tsx'
 import { hashOf, type Page, pageOf, routeOf } from './route.ts'
@@ -65,7 +66,7 @@ export default function App() {
     // Nothing to show yet: either the first answer is on its way, or the core is not there.
     return (
       <div className="gb-wait" role="status">
-        {live.problem ?? 'Opening Guild Board…'}
+        {live.problem ?? 'Opening TUSKFiZZY…'}
       </div>
     )
   }
@@ -88,6 +89,7 @@ function pageShown(page: Page, hash: string, live: Live, galleryOff: boolean, hi
     return stats.page === 'stats' ? <Stats live={live} route={stats} /> : null
   }
   if (page === 'settings' || galleryOff) return <Settings live={live} />
+  if (page === 'tuskfizzy') return <Tuskfizzy live={live} />
   if (page === 'gallery') return <Gallery live={live} />
   if (page === 'backlog') return <Backlog live={live} />
   if (page === 'pulls') return <Pulls live={live} />

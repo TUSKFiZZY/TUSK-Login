@@ -4,14 +4,14 @@ import { win32 as path } from 'node:path'
 import type { ShellArgs } from './args.js'
 
 /**
- * The core's own rule: `--data-dir`, else `GUILDBOARD_DATA_DIR`, else `%LOCALAPPDATA%\GuildBoard` (the demo: `GuildBoard-demo`).
+ * The core's own rule: `--data-dir`, else `TUSKFIZZY_DATA_DIR`, else `%LOCALAPPDATA%\TUSKFiZZY` (the demo: `TUSKFiZZY-demo`).
  * A relative folder is made absolute here: the core would read it against its own folder, and Electron refuses it.
  */
 export function dataFolder(args: ShellArgs, env: NodeJS.ProcessEnv): string {
   if (args.dataDir) return path.resolve(args.dataDir)
-  if (env.GUILDBOARD_DATA_DIR) return path.resolve(env.GUILDBOARD_DATA_DIR)
+  if (env.TUSKFIZZY_DATA_DIR) return path.resolve(env.TUSKFIZZY_DATA_DIR)
   const local = env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local')
-  return path.join(local, args.demo ? 'GuildBoard-demo' : 'GuildBoard')
+  return path.join(local, args.demo ? 'TUSKFiZZY-demo' : 'TUSKFiZZY')
 }
 
 export interface CoreCommand {
@@ -28,7 +28,7 @@ export function coreCommand(args: ShellArgs, folder: string, packaged: boolean, 
   if (args.weekAndEndgame) channel.push('--week-and-endgame')
   if (packaged) {
     const cwd = path.join(resourcesPath, 'core')
-    return { program: path.join(cwd, 'guildboard-core.exe'), args: channel, cwd }
+    return { program: path.join(cwd, 'tuskfizzy-core.exe'), args: channel, cwd }
   }
   return {
     program: path.join(repoRoot, '.venv', 'Scripts', 'python.exe'),

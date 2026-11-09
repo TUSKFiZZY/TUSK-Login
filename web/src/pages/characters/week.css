@@ -42,8 +42,8 @@
 .wk-opt.in:not(.pre) .cx-ava { border-color: var(--fill); }
 .wk-none { padding: 14px 6px; color: var(--ink2); font-size: 14px; }
 /* With four in the focus: the line that says so, above rows that cannot be picked. */
-.wk-full { margin: 10px 2px 0; color: var(--wk-warn-ink); font-size: 13.5px; font-weight: 700; }
-.wk-hint { min-height: 18px; margin-left: 6px; color: var(--wk-warn-ink); font-size: 13.5px; }
+.wk-full { margin: 10px 2px 0; color: var(--gold-ink); font-size: 13.5px; font-weight: 700; }
+.wk-hint { min-height: 18px; margin-left: 6px; color: var(--gold-ink); font-size: 13.5px; }
 .wk-focus { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .wk-fc {
   position: relative; display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center; padding: 12px 12px 12px 14px;
@@ -93,7 +93,7 @@
 .wk-rbar { display: flex; gap: 3px; height: 30px; border-radius: 10px; overflow: hidden; background: var(--tint); }
 .wk-seg {
   display: flex; align-items: center; gap: 6px; min-width: 0; padding: 0 8px; overflow: hidden; white-space: nowrap; font-size: 12.5px; font-weight: 800;
-  background: var(--gold-ink); color: #fff; transition: background-color var(--t-state);
+  background: var(--button); color: var(--button-text); transition: background-color var(--t-state);
 }
 .wk-seg .cx-ava { --size: 22px; flex: none; border-width: 1.5px; }
 .wk-seg.done { background: #4F7C42; }
@@ -140,7 +140,7 @@
 .wk-tick:hover .sign { opacity: .55; }
 .wk-step.done { opacity: .6; }
 .wk-step.done .wk-what { text-decoration: line-through; text-decoration-color: var(--muted); }
-.wk-step.done .wk-tick { background: var(--wk-good-soft); border-color: var(--good); color: var(--good); }
+.wk-step.done .wk-tick { background: var(--wk-good-soft); border-color: #2E6B1F; color: #2E6B1F; }
 .wk-step.done .wk-tick .sign { opacity: 1; }
 .wk-step.dim { opacity: .3; }
 .wk-along { margin: 4px 0 -2px; font-size: 13.5px; color: var(--muted); font-weight: 800; }
@@ -201,6 +201,6 @@
 .wk-cell .t span { color: var(--muted); font-size: 11.5px; }
 .wk-cell .t.free { background: transparent; border-style: dashed; border-color: var(--border); }
 .wk-cell .t.dim { opacity: .28; }
-.wk-cell .ready { display: inline-flex; align-items: center; gap: 5px; justify-self: start; padding: 2px 8px; border-radius: 999px; background: var(--wk-good-soft); font-size: 12px; font-weight: 800; color: var(--good); }
+.wk-cell .ready { display: inline-flex; align-items: center; gap: 5px; justify-self: start; padding: 2px 8px; border-radius: 999px; background: var(--wk-good-soft); font-size: 12px; font-weight: 800; color: #2E6B1F; }
 .wk-cell .ready .sign { width: 13px; height: 13px; }
 .wk-reset { position: absolute; top: 4px; bottom: 4px; z-index: 2; width: 0; border-left: 2px dashed var(--r1); pointer-events: none; }
