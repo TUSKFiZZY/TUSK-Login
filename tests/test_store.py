@@ -1435,18 +1435,18 @@ def test_tuskfizzy_legacy_import_keeps_profiles_and_daily_history_idempotently(s
         "2026-11-08": {
             "profile-a": [True, False, True],
             "profile-b": [False, True, False],
-            "_resinLast": {"profile-a": True},
+            "_resinLast": {"profile-a": 55},
         }
     }
     expected = {"accounts": 2, "genshinAccounts": 1, "dailyRecords": 2}
     assert store.import_tuskfizzy_data(accounts, daily, genshin, "genshin-a") == expected
     assert store.import_tuskfizzy_data(accounts, daily, genshin, "genshin-a") == expected
     rows = store._conn.execute(
-        "SELECT day, account_id, login, commission, resin, resin_last, resin_transition FROM tuskfizzy_daily ORDER BY account_id"
+        "SELECT day, account_id, login, commission, resin, resin_last FROM tuskfizzy_daily ORDER BY account_id"
     ).fetchall()
     assert rows == [
-        ("2026-11-08", "profile-a", 1, 0, 1, None, 1),
-        ("2026-11-08", "profile-b", 0, 1, 0, None, None),
+        ("2026-11-08", "profile-a", 1, 0, 1, 55),
+        ("2026-11-08", "profile-b", 0, 1, 0, None),
     ]
     assert store.meta("tuskfizzy_selected_genshin_id") == "genshin-a"
 
