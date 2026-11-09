@@ -88,7 +88,7 @@ def no_game_files_of_the_player(tmp_path):
 def away_from_the_players_files(tmp_path):
     """Every test runs with APPDATA, LOCALAPPDATA and USERPROFILE in its own folder, so that no test finds the player's
     Guild Board folder or the game's log. A start with no --data-dir, here or in a process the test starts, uses a
-    folder of the test's own, whatever GUILDBOARD_DATA_DIR the player has. A test that needs a real value sets it
+    folder of the test's own, whatever TUSKFIZZY_DATA_DIR the player has. A test that needs a real value sets it
     itself.
 
     All of this is held by a patch of this fixture's own, apart from the test's `monkeypatch`: a test that calls
@@ -98,7 +98,7 @@ def away_from_the_players_files(tmp_path):
     folders.setenv("APPDATA", str(tmp_path / "Roaming"))
     folders.setenv("LOCALAPPDATA", str(tmp_path / "Local"))
     folders.setenv("USERPROFILE", str(tmp_path / "Profile"))
-    folders.setenv("GUILDBOARD_DATA_DIR", str(tmp_path / "default-data"))
+    folders.setenv("TUSKFIZZY_DATA_DIR", str(tmp_path / "default-data"))
     try:
         yield
     finally:

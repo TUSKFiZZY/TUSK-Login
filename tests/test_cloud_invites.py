@@ -240,5 +240,5 @@ def test_the_installer_registers_the_link_and_removes_it():
     recipe = (ROOT / "packaging" / "installer.iss").read_text(encoding="utf-8")
     assert 'Root: HKCU; Subkey: "Software\\Classes\\guildboard"; ValueType: string; ValueName: ""; ValueData: "URL:TUSKFiZZY"; Flags: uninsdeletekey' in recipe
     assert 'ValueName: "URL Protocol"; ValueData: ""' in recipe
-    assert 'Subkey: "Software\\Classes\\guildboard\\shell\\open\\command"; ValueType: string; ValueName: ""; ValueData: """{app}\\guildboard-app.exe"" -- ""%1"""' in recipe
+    assert 'Subkey: "Software\\Classes\\guildboard\\shell\\open\\command"; ValueType: string; ValueName: ""; ValueData: """{app}\\tuskfizzy-app.exe"" -- ""%1"""' in recipe
     assert "HKLM" not in recipe  # the current user's own classes, and no administrator rights
