@@ -355,7 +355,7 @@ def test_the_latest_release_is_asked_of_its_one_address(monkeypatch):
     sent = []
     monkeypatch.setattr(netpolicy, "_open", lambda request, timeout: sent.append(request) or _Answer(b"{}"))
     assert netpolicy.fetch_latest_release() == b"{}"
-    assert sent[0].full_url == "https://api.github.com/repos/QL1STY/guild-board/releases/latest"
+    assert sent[0].full_url == "https://api.github.com/repos/TUSKFiZZY/TUSK-Login/releases/latest"
     assert sent[0].follow_redirects is False
     assert sent[0].get_header("User-agent") == "TUSKFiZZY"
 
