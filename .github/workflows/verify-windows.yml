@@ -1,0 +1,60 @@
+name: Verify Windows
+
+on:
+  push:
+    branches:
+      - migration/tuskfizzy-integration
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04 # v6.0.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            shell/package-lock.json
+
+      - name: Install Python packages
+        run: uv sync --frozen
+
+      - name: Install web packages
+        run: npm ci --prefix web
+
+      - name: Install desktop shell packages
+        run: npm ci --prefix shell
+
+      - name: Test desktop shell
+        run: npm test --prefix shell
+
+      - name: Test Python core
+        shell: powershell
+        run: uv run --frozen python -m pytest -q -p no:cacheprovider
+
+      - name: Test web interface
+        working-directory: web
+        run: npx vitest run
+
+      - name: Build web interface for desktop E2E
+        run: npm run build --prefix web
+
+      - name: Test desktop end-to-end on Windows
+        run: npm run e2e --prefix shell
