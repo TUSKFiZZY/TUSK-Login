@@ -16,10 +16,10 @@ def _text(*parts: str) -> str:
 
 def test_the_core_is_one_console_program_in_a_folder_named_core_and_carries_no_qt():
     spec = _text("packaging", "guildboard.spec")
-    assert 'name="guildboard-core"' in spec and "console=True" in spec
-    assert re.search(r'^\s+name="core",$', spec, re.MULTILINE)  # shell/src/paths.ts: resources\core\guildboard-core.exe
+    assert 'name="tuskfizzy-core"' in spec and "console=True" in spec
+    assert re.search(r'^\s+name="core",$', spec, re.MULTILINE)  # shell/src/paths.ts: resources\core\tuskfizzy-core.exe
     assert "core_entry.py" in spec and "PySide6" in spec.split("excludes=", 1)[1].split("]", 1)[0]
-    assert "guildboard-app" not in spec and "guildboard-tray" not in spec
+    assert "tuskfizzy-app" not in spec and "tuskfizzy-tray" not in spec
     assert "main()" in _text("packaging", "core_entry.py")
 
 
@@ -30,7 +30,7 @@ def test_the_shell_is_packed_with_the_six_fuses_and_only_what_it_runs():
         ("EnableEmbeddedAsarIntegrityValidation", "true"), ("OnlyLoadAppFromAsar", "true"), ("EnableCookieEncryption", "true"),
     ):
         assert f"[FuseV1Options.{fuse}]: {state}" in script, fuse
-    assert "executableName: 'guildboard-app'" in script and "asar: true" in script and "extraResource: [core, join(shellRoot, 'assets', 'icon.ico')]" in script
+    assert "executableName: 'tuskfizzy-app'" in script and "asar: true" in script and "extraResource: [core, join(shellRoot, 'assets', 'icon.ico')]" in script
     assert "'/package.json'" in script
     # The tray's icon is a plain file in the resources: Electron copies an .ico out of an asar into a temporary file.
     assert "'/assets" not in script
@@ -49,21 +49,21 @@ def test_the_shell_build_empties_dist_first_so_a_removed_page_is_not_packed():
 def test_packing_stops_unless_the_core_folder_is_named_core(tmp_path):
     other = tmp_path / "other"
     other.mkdir()
-    (other / "guildboard-core.exe").write_bytes(b"MZ")
+    (other / "tuskfizzy-core.exe").write_bytes(b"MZ")
     done = subprocess.run(
         ["node", "build/package.mjs", "--core", str(other), "--version", "2.0.0"],
         cwd=ROOT / "shell", capture_output=True, text=True, timeout=60,
     )
     assert done.returncode == 2 and "must be named core" in done.stderr
-    assert not (ROOT / "shell" / "out" / "Guild Board-win32-x64" / "resources" / "other").exists()
+    assert not (ROOT / "shell" / "out" / "TUSKFiZZY-win32-x64" / "resources" / "other").exists()
 
 
 def test_the_installer_removes_what_the_old_build_left_and_the_build_script_packs_the_shell_last():
     recipe = _text("packaging", "installer.iss")
-    assert r'Name: "{app}\_internal"' in recipe and r'Name: "{app}\guildboard-tray.exe"' in recipe
+    assert r'Name: "{app}\_internal"' in recipe and r'Name: "{app}\tuskfizzy-tray.exe"' in recipe
     assert r'Name: "{app}\resources\core"' in recipe and r'Name: "{app}\resources"' not in recipe  # a shared folder's own resources stay
     build = _text("build-installer.ps1")
-    # A Guild Board running from the checkout's Electron program stops the build before npm ci deletes it.
+    # A TUSKFiZZY running from the checkout's Electron program stops the build before npm ci deletes it.
     # It opens the file for writing, shared with all, and only an IOException (the file being in use) stops the build; it is
     # checked again just before npm ci of the shell.
     assert "[IO.FileAccess]::Write, [IO.FileShare]'ReadWrite, Delete'" in build and "catch [System.IO.IOException]" in build
@@ -79,8 +79,8 @@ def test_the_installer_removes_what_the_old_build_left_and_the_build_script_pack
 
 
 def test_the_build_stops_while_a_guild_board_runs_from_either_program_of_the_checkout():
-    # setup.ps1's desktop shortcut starts the copy of Electron's program named for Guild Board (shell\app-dev), and npm start
-    # runs Electron's own. The build replaces what a Guild Board running from either uses, and npm ci deletes the second.
+    # setup.ps1's desktop shortcut starts the copy of Electron's program named for TUSKFiZZY (shell\app-dev), and npm start
+    # runs Electron's own. The build replaces what a TUSKFiZZY running from either uses, and npm ci deletes the second.
     build = _text("build-installer.ps1")
     guard = build.split("function Assert-ShellNotRunning")[1].split("\nAssert-ShellNotRunning")[0]
     assert "foreach ($program in 'shell\\app-dev\\electron.exe', 'shell\\node_modules\\electron\\dist\\electron.exe')" in guard

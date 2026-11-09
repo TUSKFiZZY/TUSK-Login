@@ -49,7 +49,7 @@ def test_a_start_with_neither_switch_says_where_the_window_is(tmp_path, monkeypa
     assert main(["--demo", "--data-dir", str(tmp_path / "data")]) == 2
     printed = capsys.readouterr().out
     assert printed.strip() == (
-        "Guild Board's window is its shell. Start it with guildboard-app.exe, or with npm start --prefix shell in a checkout."
+        "TUSKFiZZY's window is its shell. Start it with tuskfizzy-app.exe, or with npm start --prefix shell in a checkout."
     )
     assert printed.strip() == NO_SHELL_TEXT
     assert not (tmp_path / "data").exists()
@@ -74,7 +74,7 @@ def test_the_installers_command_hands_the_link_over_to_the_core_alone(tmp_path, 
 def test_a_link_brings_no_options_of_its_own(tmp_path, monkeypatch):
     # A quotation mark in a link would end the argument Windows quoted for it. What follows it comes after the installer's
     # `--`, where it can't be an option, and Guild Board doesn't start.
-    monkeypatch.setattr("guildboard.__main__.run_headless", lambda *args, **kwargs: pytest.fail("Guild Board started"))
+    monkeypatch.setattr("guildboard.__main__.run_headless", lambda *args, **kwargs: pytest.fail("TUSKFiZZY started"))
     with pytest.raises(SystemExit):
         main(["--no-shell", "--", "guildboard://invite/abcDEF0123456789_-abcdef", "--data-dir", str(tmp_path / "data")])
     assert not (tmp_path / "data").exists()

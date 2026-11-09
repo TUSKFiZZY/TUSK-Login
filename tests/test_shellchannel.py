@@ -232,7 +232,7 @@ async def test_an_unreachable_hoyolab_is_an_offline_outcome(core, channel, lines
 
 async def test_a_backup_and_a_picture_answer_with_their_texts(channel, lines, tmp_path):
     await channel.answer('{"id": 1, "call": "backup_file_name", "args": {}}')
-    assert json.loads(lines[-1])["result"].startswith("Guild Board backup 2026-10-")
+    assert json.loads(lines[-1])["result"].startswith("TUSKFiZZY backup 2026-10-")
     await channel.answer('{"id": 2, "call": "picture_offer", "args": {}}')
     assert json.loads(lines[-1]) == {"id": 2, "result": None}
     await channel.answer(json.dumps({"id": 3, "call": "save_picture", "args": {"path": str(tmp_path / "a.png"), "number": 1}}))
