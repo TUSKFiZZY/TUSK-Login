@@ -87,7 +87,7 @@ def test_newer_schema_is_refused(tmp_path):
     conn.close()
     with pytest.raises(StoreError) as error:
         Store.open(path, tmp_path / "backups", NOW)
-    assert "newer Guild Board" in str(error.value)
+    assert "newer TUSKFiZZY" in str(error.value)
 
 
 def test_manual_backup_writes_a_copy(tmp_path):
@@ -796,7 +796,7 @@ def test_an_import_left_running_is_failed_at_the_next_start(store):
     store.finish_wish_import(done, NOW + timedelta(minutes=6), "ok", UID, 3, 1, None, ("character",))
     store.fail_running_wish_imports(NOW + timedelta(hours=1))
     rows = {row.id: row for row in store.wish_imports()}
-    assert (rows[left].outcome, rows[left].message) == ("failed", "Guild Board closed before this import finished.")
+    assert (rows[left].outcome, rows[left].message) == ("failed", "TUSKFiZZY closed before this import finished.")
     assert rows[left].finished_at == NOW + timedelta(hours=1)
     assert (rows[done].outcome, rows[done].message, rows[done].found) == ("ok", None, 3)  # a finished one stays
 
@@ -975,7 +975,7 @@ def test_a_version_10_database_gains_the_characters_tables_after_a_backup(tmp_pa
     # and the ledger took 8 to 10. Sync is the 12th (the online plan, Task C2), its outbox's numbered lines the 13th, and the
     # database moves on to them. The 14th only deletes rows, the 15th keeps the endgame's cycles (the Stats design, 3.5),
     # and the 16th lets the wiki's table hold the Tutorial entries (the Stats design, 3.2).
-    assert len(MIGRATIONS) == 16
+    assert len(MIGRATIONS) == 17
     path = tmp_path / "guildboard.db"
     old = sqlite3.connect(path)
     old.executescript("".join(MIGRATIONS[:10]))

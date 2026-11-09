@@ -45,11 +45,11 @@ PUBLIC_PICTURE_HOSTS: tuple[str, ...] = tuple(
 # sends the installer from its download host, the one redirect such a request follows. Neither carries anything of
 # the player's. Since 2.0.1 the releases are those of the code's own repository (the player's choice, 2026-11-08):
 # 2.0.0 and earlier look in QL1STY/guild-board-releases, which got 2.0.1 too, to bring them here.
-RELEASES_REPO = "QL1STY/guild-board"
+RELEASES_REPO = "TUSKFiZZY/TUSK-Login"
 LATEST_RELEASE_URL = f"https://api.github.com/repos/{RELEASES_REPO}/releases/latest"
 INSTALLER_ASSET = re.compile(rf"https://api\.github\.com/repos/{re.escape(RELEASES_REPO)}/releases/assets/[0-9]+")
 DOWNLOAD_HOSTS = ("release-assets.githubusercontent.com", "objects.githubusercontent.com")
-USER_AGENT = "GuildBoard"
+USER_AGENT = "TUSKFiZZY"
 # The one address that gives the stored HoYoLAB login a read-only key for the wish history or the game's own history
 # logs, and the only cookies of the login it is sent (found at the check with the player, 2026-10-27).
 MINT_URL = "https://api-account-os.hoyoverse.com/binding/api/genAuthKeyByCookieToken"
